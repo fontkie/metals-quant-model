@@ -41,4 +41,52 @@ Run `Setup_Once.bat` once to create the venv and install packages.
 ### Daily Run
 Just double-click `Run_All.bat`.
 
+Short Git Cheat Sheet (stick at bottom of README)
+## Git Quick Reference
+
+Check what’s connected:
+
+
+git remote -v
+
+Stage changes:
+
+git add .
+
+Commit snapshot:
+
+git commit -m "describe your change"
+
+Push to GitHub:
+
+git push
+
+View history:
+
+
+git log --oneline
 ---
+
+## Commit Message Guide
+
+Follow this simple style for clean history:
+
+- `feat:` → new feature  
+  *e.g.* `feat: add hook signal to build_signals.py`
+
+- `fix:` → bug fix  
+  *e.g.* `fix: correct backtest to use --db argument`
+
+- `docs:` → documentation only  
+  *e.g.* `docs: update README with workflow steps`
+
+- `chore:` → maintenance / setup / config changes  
+  *e.g.* `chore: update .gitignore`
+
+- `refactor:` → code reorganisation (no new features or bug fixes)  
+  *e.g.* `refactor: clean up argument parsing in load_data.py`
+
+### Workflow
+1. Stage changes  
+   ```bash
+   git add .
