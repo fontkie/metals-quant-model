@@ -1,114 +1,44 @@
-Perfect — here’s a starter README.md you can place in your project root (C:\Code\Metals\README.md).
-It gives a high-level overview plus the precise workflow (so you and any new chat are aligned).
+# Base Metals Quant Model
 
-# 🪙 Base Metals Quant Model
+## Workflow Overview
+Pipeline = **Excel → SQLite DB → Signals → Sanity Check → Backtest**
 
-Quantamental trading model for base metals, combining simple quant sleeves with fundamentals, positioning, and macro drivers.
+### Steps (one-button run)
+1. Place your Excel file at `Copper/pricing_values.xlsx`  
+   - Tab name: `Raw`  
+   - Column A: `Date`  
+   - Other columns: prices (e.g. `copper_lme_3mo`, `copper_lme_cash_3mo`)  
+2. Double-click `Run_All.bat`  
+3. Outputs appear in `outputs/Copper/...`
 
----
+### What Run_All.bat does
+1. **Loader**  
+   - `load_data.py`  
+   - Reads Excel (`Raw` sheet) → cleans headers → writes `prices` table into `Copper/quant.db`  
 
-## 📂 Folder Structure
+2. **Signals**  
+   - `build_signals.py`  
+   - Reads `prices` → creates `prices_std` view & `signals` table  
+   - Exports CSV to `outputs/Copper/Copper/signals_export.csv`  
 
+3. **Sanity Checks**  
+   - `test_db.py`  
+   - Confirms row counts and date ranges for `prices_std` and `signals`  
 
+4. **Backtest**  
+   - `backtest_prices.py`  
+   - Reads from DB (`prices_std` + `signals`)  
+   - Saves charts + summary into `outputs/Copper/...`
 
-C:\Code\Metals
-├─ src\ ← Python scripts
-│ ├─ load_data.py
-│ ├─ build_signals.py
-│ ├─ backtest_prices.py
-│ └─ test_db.py
-├─ Copper
-│ ├─ quant.db ← SQLite DB for copper
-│ └─ pricing_values.xlsx ← Excel source file
-├─ outputs
-└─ Copper\ ← signals + backtest outputs
-├─ README.md
-└─ CHANGELOG.md
+### Environment
+- Python 3.x
+- Virtual environment stored in `.venv/`
+- Dependencies: pandas, numpy, matplotlib, openpyxl, sqlalchemy
 
+### First-time Setup
+Run `Setup_Once.bat` once to create the venv and install packages.
 
----
-
-## ⚙️ Workflow
-
-Run all commands from the project root: `C:\Code\Metals`
-
-### 1. Load Excel → DB
-Load raw pricing data into the metal’s database.
-
-```bat
-python src\load_data.py --excel .\Copper\pricing_values.xlsx --db .\Copper\quant.db --table prices
-
-
-Cleans and dedupes by date
-
-Creates canonical date column
-
-Writes to prices table in <Metal>\quant.db
-
-2. Build Signals
-
-Creates standardised view prices_std (date, px_3m, px_cash) and generates sleeves.
-
-python src\build_signals.py --db .\Copper\quant.db --source-table prices
-
-
-DB table: signals
-
-CSV: outputs\Copper\signals_export.csv
-
-Signals trade next day (shifted)
-
-3. Sanity Check
-
-Confirm tables and ranges are correct.
-
-python src\test_db.py --db .\Copper\quant.db
-
-4. Backtest
-
-Run performance tests on Trend, Hook, and Combo sleeves.
-
-python src\backtest_prices.py --db .\Copper\quant.db --prices-table prices_std --signals-table signals
-
-
-Outputs → outputs\Copper\:
-
-equity_curves_prices.csv
-
-backtest_summary_prices.csv
-
-equity_trend.png, equity_hook.png, equity_combo.png
-
-📊 Model Notes
-
-History starts: 2008-01-01
-
-Signals: Trend (momentum, curve-gated), Hook (fade curve extremes)
-
-Trade rule: all signals shifted → enter next day
-
-Vol targeting: 10% annualised, 60-day lookback
-
-Turnover cost: 2 bps per 1.0 notional turnover
-
-Metrics: Sharpe, Sortino, Max Drawdown, hit rate, win/loss ratio
-
-🚧 Next Steps
-
-Extend load_data.py for inventories, positioning, macro, trade flows
-
-Add new sleeves:
-
-Physical Pulse (inventories, TC/RCs)
-
-Positioning (COT, OI, ETF flows)
-
-Macro Pulse (USD, yields, China credit)
-
-Sensitivity analysis on lookbacks & thresholds
-
-Integrate with Excel dashboard for weights and attribution
-
+### Daily Run
+Just double-click `Run_All.bat`.
 
 ---
-
