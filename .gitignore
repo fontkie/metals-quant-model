@@ -1,0 +1,8 @@
+*.xlsx
+*.csv
+outputs/
+__pycache__/
+*.pyc
+.venv/
+*.db
+!Copper/quant.db
