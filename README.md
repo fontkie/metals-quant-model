@@ -106,4 +106,9 @@ matplotlib
 sqlalchemy
 openpyxl
 
+## Utilities
+
+- `list_series.py` – helper script to inspect database tables, views, and distinct symbols loaded from Excel.
+
+
 *****

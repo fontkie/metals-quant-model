@@ -15,3 +15,6 @@
 
 ## 2025-09-30
 - Initial repo setup with Copper pricing data, SQLite database, and early scripts.
+
+2025-10-02 – Added `list_series.py` helper to list DB tables/views and confirm series loaded from Excel.
+
