@@ -1,0 +1,15 @@
+version: 1
+datasets:
+  prices:
+    primary_key: [date]
+    required_since: "2008-01-01"
+    columns:
+      date:
+        dtype: date
+        nullable: false
+        aliases: [trade_date, dt]
+      copper_lme_3mo:
+        dtype: float
+        units: USD_per_t
+        nullable: false
+        aliases: [cu_3m, lme_cu_3m]

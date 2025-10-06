@@ -1,0 +1,114 @@
+# Copper — Pricing Sleeve (frozen candidate parameters)
+# Version: 0.3.0
+# Date: 2025-10-06
+# All times Europe/London; business-day calendar
+
+data:
+  source_excel: data/raw/Copper/pricing_values.xlsx
+  sheet_index: 0
+  date_column: auto           # first column
+  series:
+    price_col: copper_lme_3mo
+    # If present, enables cash-3m curve mod either from a ready spread or computed:
+    cash3m_spread_col: copper_lme_cash_3mo   # use this if provided
+    cash_col: null           # if provided (and no spread col), compute (cash - 3m)/3m
+  start_date: "2008-01-01"
+  resample: business_day_ffill: true
+
+split:
+  in_sample:
+    start: "2008-01-01"
+    end:   "2017-12-31"
+  out_of_sample:
+    start: "2018-01-01"
+
+execution:
+  t_plus: 1    # trade next day close after signal day
+  costs:
+    turnover_bps: 1.5
+
+risk:
+  vol_target:
+    annual_target: 0.10
+    lookback_days: 21
+    leverage_cap: 3.0
+
+sleeves:
+  trend:
+    type: ema_spread_tanh
+    ema_fast: 30
+    ema_slow: 120
+    zscore_lookback: 126
+    clip: [-1.0, 1.0]
+
+  hook:
+    type: pullback_reentry
+    tau_consecutive_below_ema10: 3   # τ
+    hold_days_after_reentry: 3
+    intensity:
+      numerator: price_minus_ema10
+      denom: atr_proxy_pct14_times_price   # mean(|ret|, 14) * price
+      squash: tanh
+      clip: [-1.0, 1.0]
+    uptrend_filter:
+      ema_fast: 20
+      ema_slow: 100
+
+  rsi:
+    length: 7
+    mapping: linear_centered   # (RSI-50)/20
+    clip: [-1.0, 1.0]
+
+combination:
+  base_weights:
+    trend: 0.50
+    hook:  0.25
+    rsi:   0.25
+  gates:
+    trend_gate_abs: 0.20   # require |trend| >= 0.20
+    base_abs_threshold: 0.35
+  curve_modulator:
+    enable: true
+    source: cash3m
+    zscore_lookback: 252
+    alpha: 0.25
+    multiplier_clip: [0.5, 1.5]
+  final_clip: [-1.0, 1.0]
+
+backtest:
+  apply_costs: true
+  metrics: [CAGR, AnnVol, Sharpe, MaxDD, TurnoverYr]
+  save_columns:
+    - price
+    - trend_sig
+    - hook_sig
+    - rsi_scaled
+    - base_signal
+    - curve_cash3m_z
+    - curve_modulator
+    - combined_signal
+    - position_10pct
+    - pnl_daily_net
+    - equity
+
+grid_search:  # used to produce Top-10 combos gate
+  ema_pairs: [[20,100],[30,120],[50,200]]
+  hook_taus: [3,5]
+  hook_holds: [1,3,5]
+  rsi_lengths: [7,14,21]
+  vol_lookbacks: [21,63]
+  curve_options: [none, cash3m]
+  gates:
+    trend_gate_abs: [0.0, 0.20]
+    base_abs_threshold: [0.20, 0.35, 0.50]
+  objective:
+    primary: Sharpe_OOS
+    tie_breaker: Sharpe_ALL
+  costs_bps: 1.5
+  execution_t_plus: 1
+
+artifacts:
+  sleeves_csv: outputs/Copper/copper_sleeves_combined.csv
+  grid_top10_csv: outputs/Copper/copper_grid_top10.csv
+  weighted_portfolio_csv: outputs/Copper/copper_weighted_portfolio.csv
+  reports_dir: outputs/Copper/reports
