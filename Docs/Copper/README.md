@@ -108,3 +108,105 @@ Future iterations:
 
 **Status:** ✅ *Frozen (v0.4.0 — Bi-weekly, z=0.75)*  
 **Confidence:** High (simple, interpretable, stable enough for integration)
+
+---
+
+# 🧱 Copper Stocks — StocksCore v0.1.1
+
+**Type:** Physical-Tightness (Inventory)  
+**Version:** v0.1.1 – Final (Oct 2025)  
+**Author:** Metals Quant Model  
+**Purpose:** Capture tightening and loosening in copper supply via LME inventory changes.
+
+---
+
+## 1️⃣ Concept
+
+StocksCore quantifies **inventory momentum** — it reacts when copper stocks are drawing down or building unusually fast relative to recent history.
+
+- **Draws (large negative Δstocks)** → market tightening → **long copper**  
+- **Builds (large positive Δstocks)** → market loosening → **short copper**  
+- **Stable stocks** → no position
+
+It trades *the rate of change* in inventories, not absolute levels.
+
+---
+
+## 2️⃣ Model Specification
+
+| Parameter | Value / Description |
+|------------|---------------------|
+| Base data | LME total copper stocks (`copper_lme_stocks_total`) |
+| Signal type | Discrete z(Δstocks): ±1 / 0 |
+| Lookback | 20-day rolling z-score |
+| Z-threshold | ±1.0 |
+| Execution | **Daily, T+1** |
+| Vol target | 10% annual (21d lookback, cap = 2.5×) |
+| Transaction cost | 1.5 bps per unit turnover |
+| IS period | 2008-01-01 → 2017-12-31 |
+| OOS period | 2018-01-01 → present |
+
+---
+
+## 3️⃣ Behaviour Summary
+
+| Metric | StocksCore v0.1.1 |
+|--------|--------------------|
+| IS Sharpe | ~0.23 |
+| OOS Sharpe | **~0.59** |
+| Max Drawdown | **<10%** |
+| Annual Vol (targeted) | 10% |
+| Typical Hold | 10–30 days |
+| Turnover p.a. | Low (selective signal) |
+
+- Positions flip only when z(Δstocks) crosses ±1.  
+- Captures medium-term tightening/loosening cycles in LME inventories.
+
+---
+
+## 4️⃣ Data Inputs
+
+| Source | Description |
+|---------|--------------|
+| Excel | `data/copper/stocks/pricing_stocks_values.xlsx` (sheet `Sheet1`) |
+| Columns | `Date`, `copper_lme_stocks_total`, `..._onwarrant`, `..._cancelled` |
+| Price (for PnL) | From SQLite table `prices(dt, symbol, px_settle)` → symbol: `copper_lme_3mo` |
+
+---
+
+## 5️⃣ Signal Logic
+
+1. Compute **Δ total stocks** (today − yesterday).  
+2. Compute **20-day z-score** of that series.  
+3. Apply threshold:
+   - z ≤ −1.0 → **+1 (long)**  
+   - z ≥ +1.0 → **−1 (short)**  
+   - Else 0  
+4. Trade signal **T+1** (next day).  
+5. Apply vol-targeting and costs as above.
+
+---
+
+## 6️⃣ Outputs
+
+| File | Description |
+|------|--------------|
+| `daily_series.csv` | Raw signals, positions, and daily PnL |
+| `equity_curves.csv` | Equity curve (all / IS / OOS) |
+| `summary_metrics.csv` | Key performance stats |
+| `annual_returns.csv` | Yearly returns summary |
+
+---
+
+## 7️⃣ Next Steps
+
+Future developments:
+- v0.2.0 — **StocksLevelCore**: add absolute inventory level / percentile vs history  
+- v0.3.x — Combine StocksCore + LevelCore → composite “inventory tightness” sleeve  
+- Integration with HookCore & TrendCore in cross-sleeve optimisation
+
+---
+
+**Status:** ✅ *Frozen (v0.1.1 — Δstocks, lb20, thr=1.0)*  
+**Confidence:** High (selective, stable, low correlation to price-based sleeves)
+*****
