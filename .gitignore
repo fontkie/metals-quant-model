@@ -2,7 +2,7 @@
 # 🧱 Metals Quant Model - .gitignore
 # -----------------------------
 
-# --- Virtual environment ---
+# --- Virtual environments ---
 .venv/
 env/
 venv/
@@ -23,9 +23,13 @@ __pycache__/
 *.xls
 *.csv
 
-# --- Local
-
+# --- Images, bundles, and misc local files ---
 *.png
 *.bundle
+
+# --- Local-only directories (not versioned) ---
 Database/
 python/
+Copper/quant.db
+outputs/
+data/

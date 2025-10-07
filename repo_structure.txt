@@ -1,0 +1,58 @@
+
+Repo structure for: Metals
+
++-- Config
+|   +-- schema.yaml
++-- Copper
+|   +-- .gitkeep
+|   +-- backtest_summary_prices.csv
+|   +-- equity_combo.png
+|   +-- equity_curves_prices.csv
+|   +-- equity_hook.png
+|   +-- equity_trend.png
+|   +-- metals_pricing.xlsx
+|   +-- pricing.xlsx
+|   +-- pricing_values.xlsx
+|   +-- quant.db
+|   +-- signals_export.csv
+|   +-- ~$metals_pricing.xlsx
++-- Database
+|   +-- .gitkeep
+|   +-- metals.db
++-- Docs
+|   +-- Copper
+|   |   +-- positioning
+|   |   +-- pricing
+|   |   |   +-- CHANGELOG.md
+|   |   |   +-- params.yaml
+|   |   +-- stocks
+|   |   +-- README.md
+|   +-- SEED_CHAT.md
++-- src
+|   +-- backtest_prices.py
+|   +-- build_signals.py
+|   +-- build_signals_v1.py
+|   +-- db.py
+|   +-- db_views.py
+|   +-- fix_views.py
+|   +-- list_series.py
+|   +-- load_data.py
+|   +-- load_data_prev.py
+|   +-- preflight.py
+|   +-- show_layout.py
+|   +-- test_db.py
++-- Zinc
++-- .gitignore
++-- CHANGELOG.md
++-- hello.py
++-- load_excel_to_db.py
++-- metals-quant-model.bundle
++-- python
++-- README.md
++-- repo_structure.txt
++-- requirements.txt
++-- run_all.bat
++-- setup_once.bat
+
+Tip: run with --all to include data/ and outputs/ if needed.
+

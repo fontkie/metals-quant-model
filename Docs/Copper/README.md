@@ -1,134 +1,110 @@
-docs/copper/README.md
-# 🧱 Copper Quant Strategy – Master README
+# 🧩 Copper Pricing — HookCore v0.4.0
 
-**Objective:**  
-Develop a modular framework of complementary copper trading sleeves — each capturing different drivers of market behaviour — to be combined into a single, risk-balanced copper portfolio.
-
----
-
-## 📂 Folder structure
-
-
-docs/
-copper/
-README.md ← you’re here (master for copper)
-pricing/
-params.yaml
-CHANGELOG.md
-stocks/
-params.yaml
-CHANGELOG.md
-positioning/
-params.yaml
-CHANGELOG.md
-
-
-### Supporting folders
-
-
-data/raw/Copper/ # input data (Excel or CSV)
-outputs/Copper/ # generated sleeves, backtests, portfolios
-src/ # shared Python scripts
-config/ # global settings (vol target, costs, IS/OOS)
-
+**Type:** Mean-Reversion (Hook)  
+**Version:** v0.4.0 – Final (Oct 2025)  
+**Author:** Metals Quant Model  
+**Purpose:** Short-term contrarian sleeve to complement slower trend and macro signals.
 
 ---
 
-## ⚙️ Active sleeves
+## 1️⃣ Concept
 
-| Sleeve | Description | Key Inputs | Status | Params | Changelog |
-|:--------|:-------------|:------------|:--------|:----------|:-------------|
-| **Pricing** | Trend + Hook + RSI on `copper_lme_3mo`, optional cash–3m modulation | `pricing_values.xlsx` | ✅ Frozen v0.3.0 | [params.yaml](pricing/params.yaml) | [CHANGELOG.md](pricing/CHANGELOG.md) |
-| **Stocks** | LME on-warrant, cancelled, and total stocks (NLECA, NLFCA, NLSCA) as supply-side sentiment indicators | `copper_stocks.xlsx` | 🧪 Under calibration | [params.yaml](stocks/params.yaml) | [CHANGELOG.md](stocks/CHANGELOG.md) |
-| **Positioning** | Managed-money and fund positioning (CFTC, SHFE) as crowding / mean-reversion signals | `copper_positioning.xlsx` | 🧪 Early-stage build | [params.yaml](positioning/params.yaml) | [CHANGELOG.md](positioning/CHANGELOG.md) |
+HookCore captures **short-term exhaustion** in copper prices — fading short bursts of momentum
+when daily returns become statistically extreme.
 
----
+- Long when recent returns are very negative (“oversold”)
+- Short when recent returns are very positive (“overbought”)
+- Flat otherwise
 
-## 🪜 Overall workflow
-
-Each sleeve goes through the same 3-stage pipeline using shared code in `src/`:
-
-| Step | Script | Purpose |
-|:--|:--|:--|
-| **1️⃣ Build sleeves** | `build_sleeves.py` | Generate daily signals (trend, hook, RSI, etc.), vol-targeted positions, and backtest results |
-| **2️⃣ Optimise parameters** | `grid_optimize_combo.py` | Run coarse grid to rank Top 10 IS/OOS parameter combinations |
-| **3️⃣ Combine & weight** | `optimise_weights.py` | Blend sleeves (non-negative, sum=1) based on IS Sharpe, check OOS stability |
-
-Each sleeve outputs its own CSV(s) in `outputs/Copper/<sleeve_name>/`.
-
-Example:
-
-
-outputs/Copper/pricing/
-copper_sleeves_combined.csv
-copper_grid_top10.csv
-copper_weighted_portfolio.csv
-
+It is **pure price action** — no carry, RSI, or macro overlays.
+Think of it as a *liquidity provision* sleeve, designed to earn small, repeatable alpha in choppy markets.
 
 ---
 
-## 🧩 Current configuration summary (Oct 2025)
+## 2️⃣ Model Specification
 
-| Sleeve | Core Logic | Key Params | Vol Target | Cost Model | IS/OOS Split |
-|:--|:--|:--|:--:|:--:|:--:|
-| **Pricing** | EMA(30/120) trend + hook τ=3 hold=3 + RSI(7); cash–3m modulator | trend_gate=0.20, abs_thresh=0.35 | 10% | 1.5 bps / turnover | IS: 2008–2017 / OOS: 2018– |
-| **Stocks** | Δ(LME on-warrant / total) z-score → sentiment reversal | rolling_z(63 d) | 10% | 1.5 bps | same |
-| **Positioning** | Managed money long–short diff → contrarian mean reversion | 26 w MA deviation | 10% | 1.5 bps | same |
-
----
-
-## 📈 Current status
-
-| Metric | Pricing (v0.3.0) | Stocks | Positioning |
-|:--|:--:|:--:|:--:|
-| **Sharpe IS** | 0.95 | 0.61 | 0.58 |
-| **Sharpe OOS** | 0.46 | 0.32 | 0.41 |
-| **CAGR (OOS)** | 4.2% | 3.0% | 2.7% |
-| **Ann Vol** | 9.1% | 9.7% | 9.8% |
-| **Max DD** | −18% | −16% | −17% |
-
-> *Notes:*  
-> – Pricing sleeve frozen as core component.  
-> – Stocks and Positioning in calibration; early signals promising but not frozen.  
-> – Next milestone: evaluate correlations and static weighting across all three.
+| Parameter | Value / Description |
+|------------|---------------------|
+| Base data | LME 3-month copper price (`copper_lme_3mo`) |
+| Signal type | Discrete Hook: ±1 / 0 |
+| Lookbacks | 3-day and 5-day (equal-weight blend) |
+| Z-threshold | ±0.75 (bi-weekly) / ±0.85 (weekly) |
+| Rebalance | **Bi-weekly** – Monday (using Fri signal) + Wednesday (using Tue signal) |
+| Execution | **T+1** |
+| Vol target | 10% annual (21d lookback, cap = 2.5×) |
+| Transaction cost | 1.5 bps per unit turnover |
+| IS period | 2008-01-01 → 2017-12-31 |
+| OOS period | 2018-01-01 → present |
 
 ---
 
-## 🧠 Portfolio logic (future phase)
-- Each sleeve vol-targeted to 10% with a 21-day estimator, 3× leverage cap.  
-- Static weights (`w_pricing`, `w_stocks`, `w_positioning`) optimised on IS Sharpe with non-neg constraints, sum = 1.  
-- OOS performance checked for degradation.  
-- Combined book saved to `outputs/Copper/copper_portfolio_static.csv`.
+## 3️⃣ Behaviour Summary
+
+| Metric | Weekly (z=0.85) | Bi-weekly (z=0.75) |
+|--------|-----------------|--------------------|
+| IS Sharpe | ~0.55 | ~0.60 |
+| OOS Sharpe | ~0.40 | **~0.50** |
+| Max Drawdown | ~-18% | **~-15%** |
+| Turnover p.a. | ~5.5× | **~6.5×** |
+| Participation | ~25% | **~30%** |
+| Annual Vol (targeted) | 10% | 10% |
+| Avg Trades / year | ~40 | ~60 |
+
+- Bi-weekly version shows slightly higher OOS Sharpe and more consistent returns.
+- Weekly version serves as a stability benchmark and sanity check.
 
 ---
 
-## 🔧 Shared configuration (from `config/global.yaml`)
-```yaml
-execution:
-  t_plus: 1
-risk:
-  vol_target_ann: 0.10
-  vol_lookback_days: 21
-  leverage_cap: 3.0
-costs:
-  turnover_bps: 1.5
-split:
-  is_start: 2008-01-01
-  is_end: 2017-12-31
-  oos_start: 2018-01-01
+## 4️⃣ Usage & Integration
 
-🚀 Roadmap
+HookCore is **not standalone** — it’s intended to be part of a multi-sleeve model.
+It performs best when combined with:
 
- Freeze Pricing sleeve v0.3.0
+- **TrendCore** – slower trend/tracking sleeve (e.g. MA-slope, 60–160d)
+- **StocksCore** – supply-side LME stocks sentiment
+- **PositioningCore** – fund/manager positioning contrarian sleeve
 
- Finalise Stocks sleeve (signal validation + IS/OOS test)
+Each sleeve runs with the same 10% vol-target and 1.5bps cost assumptions to ensure fair comparison.
 
- Finalise Positioning sleeve (contrarian filter calibration)
+Portfolio combination should be based on:
+- Equal risk weights or volatility targeting per sleeve
+- Correlation cap (ρ < 0.5 between sleeves)
+- Monthly sleeve rebalancing
 
- Optimise cross-sleeve weights for static Copper portfolio
+---
 
- Extend structure to other metals (Zinc, Nickel, Aluminium)
+## 5️⃣ Known Regime Bias
 
+HookCore underperforms during:
+- Persistent macro trends (e.g. 2020–2021 uptrends)
+- Sharp volatility expansions (macro events)
 
-✅ **Stop copying at the line of stars.**  
-Everything after (Governance, References, etc.) is optional for later once your copper framework is mature.
+It excels during:
+- Range-bound markets
+- Liquidity-driven short-term reversals
+- Transitional phases between macro trends
+
+---
+
+## 6️⃣ Files
+
+| File | Description |
+|------|--------------|
+| `daily_series.csv` | Raw signals, positions, and daily returns |
+| `equity_curves.csv` | Cumulative returns (weekly & bi-weekly) |
+| `summary_metrics.csv` | IS/OOS Sharpe, drawdown, turnover |
+| `annual_returns.csv` | Annual returns table since inception |
+| `README.md` | This document |
+
+---
+
+## 7️⃣ Next Steps
+
+Future iterations:
+- v0.4.1 — Add optional slow-trend veto (`|z₁₀₀| < 0.3`)  
+- v0.5.x — Portfolio integration testing alongside trend, stocks, and positioning sleeves
+
+---
+
+**Status:** ✅ *Frozen (v0.4.0 — Bi-weekly, z=0.75)*  
+**Confidence:** High (simple, interpretable, stable enough for integration)
