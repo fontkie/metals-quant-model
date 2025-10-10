@@ -1,67 +1,37 @@
-version: "CopperComposite v0.1.0"
-asof: "latest"
-
-description: |
-  Equal-risk composite of two frozen copper sleeves:
-    - HookCore v0.4.0 (price mean-reversion; bi-weekly exec; z-threshold 0.75 on 3d/5d hook)
-    - StocksCore v0.1.1 (inventory rate-of-change; 20d z of Δstocks; threshold 1.0)
-  Each sleeve runs at 10% annual volatility target (21d lookback; leverage cap 2.5×; T+1; 1.5 bps per one-way turnover).
-  Composite formed as 0.5*Hook + 0.5*Stocks, then a single scalar is applied so the composite realises ~10% annual vol
-  (scalar estimated on OOS data from 2018-01-01 onward). No additional costs applied at the composite layer.
-
-inputs:
-  hookcore_daily:
-    path: "outputs/copper/pricing/daily_series.csv"   # contains date + return_biweekly or equivalent
-    date_col: "date"
-    pnl_col: "return_biweekly"                        # fallback to return_weekly if needed
-    sleeve: "HookCore v0.4.0"
-    vt_annual: 0.10
-    cost_bps: 1.5
-    leverage_cap: 2.5
-    execution: "bi-weekly, T+1"
-
-  stockscore_daily:
-    path: "outputs/copper/stocks/daily_series.csv"    # contains dt/date + pnl_net
-    date_col: "dt"                                    # fallback: Date
-    pnl_col: "pnl_net"
-    sleeve: "StocksCore v0.1.1"
-    vt_annual: 0.10
-    cost_bps: 1.5
-    leverage_cap: 2.5
-    execution: "daily, T+1"
-
-composite:
-  weighting:
-    method: "equal_risk_static"
-    weights:
-      hookcore: 0.5
-      stockscore: 0.5
-  scaling:
-    target_vol_annual: 0.10
-    # The composite is scaled with a single scalar estimated on OOS:
-    oos_start: "2018-01-01"
-    method: "single_scalar_on_oos"
-    apply_to: "entire_series"
-
-sample:
-  in_sample_start: "2008-01-01"
-  in_sample_end:   "2017-12-31"
-  out_of_sample_start: "2018-01-01"
-  out_of_sample_end:   "latest"
+# CopperComposite v0.2.1 — Frozen (bi-weekly + pnl_net, T+1 VT), 2025-10-10
 
 assumptions:
-  costs_in_components: true
-  additional_composite_costs_bps: 0.0
-  execution_lag: "inherits_from_components"
+  oos_start: 2018-01-01
+  combine:
+    scheme: equal_weight_returns
+  scaling:
+    mode: tplus1_vt
+    target_ann_vol: 10.0       # percent
+    vt_lookback_days: 21
+    leverage_cap: 2.5
 
-outputs:
-  root: "outputs/copper/composite/v0_1_0"
-  artifacts:
-    - "daily_combo.csv"
-    - "summary_metrics.csv"
+inputs:
+  hookcore:
+    sleeve: HookCore
+    version: 0.4.0
+    path: outputs/copper/pricing/daily_series.csv
+    fields:
+      ret_weekly: return_weekly
+      ret_biweekly: return_biweekly
+    use_stream: ret_biweekly
 
-provenance:
-  hookcore_version: "v0.4.0"
-  stockscore_version: "v0.1.1"
-  created: "2025-10-07"
-  author: "Metals Quant Model"
+  stockscore:
+    sleeve: StocksCore
+    version: 0.1.1
+    path: outputs/copper/stocks/daily_series.csv
+    fields:
+      ret_gross: ret
+      ret_net: pnl_net
+    use_field: ret_net
+
+reporting:
+  write:
+    dir: outputs/copper/composite_ad_hoc
+    daily_series: daily_series.csv
+    daily_combo: daily_combo.csv
+    summary: summary_metrics.csv
