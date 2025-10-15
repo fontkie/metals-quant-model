@@ -1,14 +1,23 @@
-# CopperComposite v0.2.1 — Frozen (bi-weekly + pnl_net, T+1 VT), 2025-10-10
+# CopperComposite v0.3.0 — Hook + Stocks + TrendCore (bi-weekly, net returns, T+1 VT), 2025-10-15
 
 assumptions:
   oos_start: 2018-01-01
+
   combine:
-    scheme: equal_weight_returns
+    # Our composite builder uses rolling inverse-vol weights across ALL sleeves.
+    # If you prefer equal-weight later, we can add a flag; for now, keep this in sync with the code.
+    scheme: inverse_vol_returns
+    weight_lookback_days: 63   # used by build_composite.py --weight_lookback (default 63)
+
   scaling:
-    mode: tplus1_vt
+    mode: tplus1_vt            # T+1 portfolio-level vol targeting on the composite returns
     target_ann_vol: 10.0       # percent
     vt_lookback_days: 21
-    leverage_cap: 2.5
+    leverage_cap: 3.0          # aligns with TrendCore cap; change to 2.5 if you must mirror older composites
+
+execution:
+  rebalance_days: ["Mon", "Wed"]  # composite weights recomputed and applied on these days
+  t_plus: 1                       # T+1 execution of composite target
 
 inputs:
   hookcore:
@@ -16,22 +25,33 @@ inputs:
     version: 0.4.0
     path: outputs/copper/pricing/daily_series.csv
     fields:
+      # Returns & positions; pick weekly/biweekly via use_stream below
       ret_weekly: return_weekly
+      pos_weekly: position_weekly
       ret_biweekly: return_biweekly
-    use_stream: ret_biweekly
+      pos_biweekly: position_biweekly
+    use_stream: biweekly          # options: weekly | biweekly
 
   stockscore:
     sleeve: StocksCore
     version: 0.1.1
     path: outputs/copper/stocks/daily_series.csv
     fields:
-      ret_gross: ret
-      ret_net: pnl_net
-    use_field: ret_net
+      # Your file exposes both gross and net; we’ll take the net and its position
+      ret: pnl_net
+      pos: position
+
+  trendcore:
+    sleeve: TrendCore
+    version: 0.1.0
+    path: outputs/copper/trend/daily_series.csv
+    fields:
+      ret: pnl                    # from build_trend.py output
+      pos: position
 
 reporting:
   write:
-    dir: outputs/copper/composite_ad_hoc
+    dir: outputs/copper/composite
     daily_series: daily_series.csv
     daily_combo: daily_combo.csv
     summary: summary_metrics.csv
