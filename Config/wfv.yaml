@@ -1,0 +1,60 @@
+# =========================
+# Global Walk-Forward config
+# =========================
+folds:
+  scheme: rolling
+  train_years: 5
+  test_years: 1
+  step: quarterly
+  embargo_days: 21
+  purge_days: 0
+  start: "2000-01-01"
+  end: null
+
+execution:
+  t_plus_one: true
+  vol_target_annual: 0.10
+  vol_lookback_days: 21
+  vol_cap: 2.5
+  position_clip: 1.0
+
+costs:
+  turn_bps: 1.5
+  slippage_bps: 0.0
+
+metrics:
+  selection:                # <--- THIS is the selection objective
+    primary: composite      # sharpe | composite
+    composite:
+      sharpe_weight: 1.00
+      dd_penalty_weight: 0.30
+      turnover_penalty_weight: 0.10
+      tail_bonus_weight: 0.00
+    tiebreakers: [max_drawdown, turnover]
+  report: [sharpe, hit_rate, max_drawdown, tail_ratio, turnover]
+
+search_mode:                 # <--- THIS is the search mode
+  strategy: "coarse_then_local"  # fixed_grid | coarse_then_local
+  local_band_pct: 0.10
+  min_band: 1
+  step: 1
+  max_total_combos: 80
+
+portfolio:
+  ensemble: equal_weight
+  vintage_ensemble_last_n: 4
+
+# Data map (Excel)
+data:
+  copper:
+    tierA:
+      price:
+        path: "C:\\Code\\Metals\\Data\\copper\\pricing\\pricing_values.xlsx"
+        sheet: "Raw"
+        date_col: "Date"
+        price_col: "copper_lme_3mo"
+      stocks:
+        path: "C:\\Code\\Metals\\Data\\copper\\stocks\\pricing_stocks_values.xlsx"
+        sheet: "Sheet1"     # (fix from 'Sheet 1' earlier)
+        date_col: "Date"
+        stocks_col: "copper_lme_stocks_total"
