@@ -1,0 +1,51 @@
+binds_to_base: "Docs/Copper/pricing/hookcore_config.yaml"
+tier: tierA
+
+optimise: false     # set false to sanity-check fixed params
+
+emit_stitched_oos: true   # <— new flag to tell the runner to write daily series
+folds:
+  embargo_days: 0         # <— for closest parity to a static backtest
+
+
+# Used only if optimise: false
+use_params:
+  threshold: 0.75
+  weekly_backup: false
+  weekly_threshold: 0.90
+  w35: 0.5
+
+# HookCore v0.4.0 grids (small & disciplined)
+grids:
+  threshold: [0.60, 0.75, 0.90, 1.05]
+  weekly_backup: [false, true]
+  weekly_threshold: [0.80, 0.90, 1.00]
+  w35: [0.5, 0.7, 0.3]
+
+# Local refinement (used when search_mode.strategy = coarse_then_local)
+local_refine_template:
+  threshold:
+    band_pct: 0.10
+    min_band: 1
+    step: 1
+  weekly_backup:
+    candidates: [false, true]
+  weekly_threshold:
+    band_pct: 0.10
+    min_band: 1
+    step: 1
+  w35:
+    candidates: [0.3, 0.5, 0.7]
+
+filters:
+  stocks_filter:
+    apply: [false]          # keep off for now; enable later if needed
+    pct_rank_window: [60]
+    threshold_low: [0.2]
+    threshold_high: [0.8]
+    side: ["both"]
+
+acceptance:
+  keep_if:
+    median_oos_sharpe_min: 0.30
+    worst_quartile_sharpe_min: 0.00

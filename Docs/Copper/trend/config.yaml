@@ -1,0 +1,35 @@
+name: TrendCore
+version: "0.1.0"
+as_of: "2025-10-15"
+description: >
+  Copper 3M time-series momentum sleeve. Majority-vote across 20/60/120-day
+  lookbacks on log-momentum (MOM). Executed Mon/Wed with T+1 fills, 10% sleeve
+  vol target (21d), 3x leverage cap, 1.5 bps per unit turnover.
+
+inputs:
+  file: Data/copper/pricing/pricing_values.xlsx
+  sheet: Raw
+  date_col: date
+  price_col: copper_lme_3mo
+
+signal:
+  family: MOM
+  lookbacks: [20, 60, 120]
+  combine: majority_vote   # 2-of-3
+  quiet_filter:
+    enabled: false         # can be enabled via --quiet_q > 0
+    q_default: 0.6
+
+execution:
+  cadence: MON_WED         # MON_WED | WEEKLY_WED | FORTNIGHTLY_WED | DAILY
+  t_plus_1: true
+  vol_target_annual: 0.10
+  vol_lookback_days: 21
+  leverage_cap: 3.0
+  turnover_cost_bps: 1.5
+
+outputs:
+  dir: outputs/copper/trend/
+  daily_series: daily_series.csv
+  equity_curves: equity_curves.csv
+  summary_metrics: summary_metrics.csv

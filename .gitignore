@@ -33,3 +33,6 @@ python/
 Copper/quant.db
 outputs/
 data/
+outputs/
+*.parquet
+*.tmp_*
