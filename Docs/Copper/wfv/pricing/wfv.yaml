@@ -1,4 +1,4 @@
-binds_to_base: "Docs/Copper/pricinghookcore/hookcore_config.yaml"
+binds_to_base: "Docs/Copper/hookcore/hookcore_config.yaml"
 tier: tierA
 
 optimise: false     # set false to sanity-check fixed params
