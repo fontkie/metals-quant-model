@@ -18,7 +18,7 @@ Metals/
     Copper/               # Signals + backtest outputs
   src/
     load_data.py          # Load Excel → SQLite (prices table, clean-load replace mode)
-    build_signals.py      # Generate momentum, hook, carry signals → CSV
+    build_hookcore.py      # Generate momentum, hook, carry signals → CSV
     backtest_prices.py    # Simple backtester (reads prices_std + signals)
     test_db.py            # Sanity checks (prices_long + signals)
     fix_views.py          # Creates views: prices_long (long), prices_std (wide)

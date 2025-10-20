@@ -57,7 +57,7 @@ The v1.1 (35/65, vol-gate 1.0) configuration delivered:
 From repo root:
 
 ```bash
-python src/build_signals.py \
+python src/build_hookcore.py \
   --excel "Data/copper/pricing/pricing_values.xlsx" \
   --sheet Raw \
   --date-col Date \
