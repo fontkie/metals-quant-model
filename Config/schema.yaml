@@ -1,4 +1,5 @@
 version: 1
+
 datasets:
   prices:
     primary_key: [date]
@@ -13,3 +14,40 @@ datasets:
         units: USD_per_t
         nullable: false
         aliases: [cu_3m, lme_cu_3m]
+
+# --------------------------------------------------------------------
+# Canonical real-world execution & accounting policy (project-wide)
+# Sleeves may override locally, but must state deviations explicitly.
+# --------------------------------------------------------------------
+execution:
+  calendar:
+    exec_weekdays: [0, 2]           # Monday=0, Wednesday=2
+    origin_for_exec:
+      "0": -3B                      # Monday uses Friday (3 business days back)
+      "2": -1B                      # Wednesday uses Tuesday (1 business day back)
+    fill_default: close_T           # Default for PRICING sleeves: trade on same-day close
+    pnl_starts_next_day: true
+
+  sizing:
+    ann_target: 0.10
+    vol_lookback_days_default: 21
+    vol_estimator: simple_returns_std  # realised std of daily simple returns
+    vol_info_timing_default: T        # PRICING default (TrendCore): use data up to T
+    leverage_cap_default: 2.5
+    hold_between_rebalances: true
+
+  costs:
+    one_way_bps_default: 1.5
+    apply_on_position_change_only: true
+
+  pnl:
+    formula: pos_lag_times_simple_return
+
+  # Allow per-sleeve overrides without changing global defaults
+  per_sleeve_overrides:
+    # Example (documented, not required now):
+    # HookCore:
+    #   fill_timing: close_Tplus1
+    #   vol_info_timing: T-1
+    #   vol_lookback_days: 21
+    #   leverage_cap: 2.5
