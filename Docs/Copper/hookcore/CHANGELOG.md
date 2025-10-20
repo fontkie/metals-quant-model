@@ -55,3 +55,7 @@ Expected components:
 
 _Last updated: 2025-10-07_
 
+
+## Change log
+- **v1.1 (2025-10-17):** Introduced **RSI(3) 35/65** thresholds with **vol gate < 1.0**. Added `--exec` switch (T vs next). Standardised outputs and JSON summary.  
+- **v1.0:** Prototype RSI(3) cross 30/70 with strict filters and exploratory settings.

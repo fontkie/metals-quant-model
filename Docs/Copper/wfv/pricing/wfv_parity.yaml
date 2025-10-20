@@ -1,0 +1,17 @@
+binds_to_base: "Docs/Copper/pricing/hookcore_config.yaml"
+tier: tierA
+
+optimise: false
+
+# your deployed params here
+use_params:
+  threshold: 0.75
+  weekly_backup: false
+  weekly_threshold: 0.90
+  w35: 0.5
+
+# override folds just for parity
+folds:
+  embargo_days: 0
+
+parity_check: true

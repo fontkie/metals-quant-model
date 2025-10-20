@@ -1,50 +1,7 @@
-# =========================
-# Global Walk-Forward config
-# =========================
-folds:
-  scheme: rolling
-  train_years: 5
-  test_years: 1
-  step: quarterly
-  embargo_days: 21
-  purge_days: 0
-  start: "2000-01-01"
-  end: null
+# Global WFV config (Metals models 2.0)
 
-execution:
-  t_plus_one: true
-  vol_target_annual: 0.10
-  vol_lookback_days: 21
-  vol_cap: 2.5
-  position_clip: 1.0
+tier: tierA
 
-costs:
-  turn_bps: 1.5
-  slippage_bps: 0.0
-
-metrics:
-  selection:                # <--- THIS is the selection objective
-    primary: composite      # sharpe | composite
-    composite:
-      sharpe_weight: 1.00
-      dd_penalty_weight: 0.30
-      turnover_penalty_weight: 0.10
-      tail_bonus_weight: 0.00
-    tiebreakers: [max_drawdown, turnover]
-  report: [sharpe, hit_rate, max_drawdown, tail_ratio, turnover]
-
-search_mode:                 # <--- THIS is the search mode
-  strategy: "coarse_then_local"  # fixed_grid | coarse_then_local
-  local_band_pct: 0.10
-  min_band: 1
-  step: 1
-  max_total_combos: 80
-
-portfolio:
-  ensemble: equal_weight
-  vintage_ensemble_last_n: 4
-
-# Data map (Excel)
 data:
   copper:
     tierA:
@@ -53,8 +10,46 @@ data:
         sheet: "Raw"
         date_col: "Date"
         price_col: "copper_lme_3mo"
-      stocks:
+      stocks:  # optional; kept defined but OFF by default
         path: "C:\\Code\\Metals\\Data\\copper\\stocks\\pricing_stocks_values.xlsx"
-        sheet: "Sheet1"     # (fix from 'Sheet 1' earlier)
+        sheet: "Sheet1"
         date_col: "Date"
         stocks_col: "copper_lme_stocks_total"
+
+folds:
+  start: "2008-01-01"
+  # end:   (default: latest available date)
+  train_years: 5
+  test_years: 1
+  embargo_days: 21   # set 0 in sleeve for parity runs
+
+execution:
+  vol_target_annual: 0.10
+  vol_cap: 2.5
+  vol_lookback_days: 21
+  position_clip: 2.5    # DO NOT set below vol_cap; positions only change on exec days
+  # execution cadence (fixed in code): Mon & Wed, T+1 fills
+
+costs:
+  turn_bps: 1.5         # per |Δposition|; only on exec days (positions change only there)
+
+metrics:
+  selection:
+    primary: composite
+    composite:
+      sharpe_weight: 1.0
+      dd_penalty_weight: 0.30
+      turnover_penalty_weight: 0.10
+      tail_bonus_weight: 0.0
+
+# Parameter grids for optimisation (fixed for parity in sleeve)
+grids:
+  threshold: [0.55, 0.65, 0.75, 0.85, 0.95]
+  w35: [0.25, 0.50, 0.75]
+
+search_mode:
+  strategy: "coarse_then_local"   # (coarse only is fine too)
+  max_total_combos: 120
+
+optimise: false
+emit_stitched_oos: true

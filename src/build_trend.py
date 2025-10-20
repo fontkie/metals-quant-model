@@ -1,445 +1,266 @@
-# src/build_trend.py
-import argparse
-import math
-import os
-from typing import Optional, Union
+#!/usr/bin/env python
+# TrendCore — Copper (T-close execution)
+# Mon/Wed exec (Fri/Tue origins), fill at same-day close (T)
+# Vol targeting 10% (21d) with info up to T (no look-ahead beyond the close)
+# Costs: 1.5 bps per |Δpos| on trade days
+# PnL: pos_{t-1} * simple_return_t
+
+from __future__ import annotations
+import argparse, json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from pandas.tseries.offsets import BDay
+
+from utils.policy import load_execution_policy, policy_banner, warn_if_mismatch
+
+# ---------- IO ----------
 
 
-# =========================
-# Defaults / Global Params
-# =========================
-TARGET_VOL_ANNUAL = 0.10  # 10% sleeve vol
-ROLL_DAYS = 21  # vol lookback (trading days)
-LEVERAGE_CAP = 3.0  # max absolute leverage
-TURNOVER_COST_BPS = 1.5  # per unit turnover (bps)
-APPLY_T_PLUS_1 = True  # apply orders the next trading day
-
-# Production signal defaults
-PROD_LOOKBACKS = [20, 60, 120]
-DEFAULT_MODE = "MOM"  # "SMA", "MOM", or "BOTH"
-DEFAULT_CADENCE = "MON_WED"  # "DAILY", "MON_WED", "WEEKLY_WED", "FORTNIGHTLY_WED"
-DEFAULT_QUIET_Q = 0.0  # OFF by default (enable with >0, e.g. 0.5–0.7)
-
-POPULAR_MA = [5, 10, 50, 100, 200]  # diagnostics only; not used in composite
-
-# IS/OOS split per repo convention
-IS_START = pd.Timestamp("2008-01-01")
-IS_END = pd.Timestamp("2017-12-31")
-OOS_START = pd.Timestamp("2018-01-01")
+def load_prices_excel(path, sheet, date_col, price_col, symbol) -> pd.Series:
+    df = pd.read_excel(path, sheet_name=sheet, engine="openpyxl")
+    df.columns = [str(c).strip() for c in df.columns]
+    df = df.rename(columns={date_col: "dt", price_col: symbol})[["dt", symbol]]
+    df["dt"] = pd.to_datetime(df["dt"])
+    df = (
+        df.dropna()
+        .sort_values("dt")
+        .drop_duplicates("dt")
+        .set_index("dt")
+        .asfreq("B")
+        .ffill()
+    )
+    return df[symbol].rename(symbol)
 
 
-# =========================
-# Loaders
-# =========================
-def _standardise_columns(df: pd.DataFrame) -> pd.DataFrame:
-    out = df.copy()
-    out.columns = [str(c).strip().lower() for c in out.columns]
-    return out
+# ---------- Signal maths ----------
 
 
-def _load_from_tabular(
-    path: str,
-    price_col: str = "price",
-    date_col: str = "date",
-    sheet: Optional[Union[str, int]] = None,
-) -> pd.DataFrame:
-    ext = os.path.splitext(path)[1].lower()
-    if ext == ".csv":
-        df = pd.read_csv(path)
-    elif ext in (".xlsx", ".xls"):
-        try:
-            df = pd.read_excel(path, sheet_name=sheet)
-        except ImportError as e:
-            raise ImportError(
-                "Reading Excel requires 'openpyxl' (for .xlsx) or 'xlrd' (legacy .xls). "
-                "Install with: pip install openpyxl"
-            ) from e
-    else:
-        raise ValueError(f"Unsupported file extension '{ext}'. Use .csv or .xlsx/.xls")
-
-    df = _standardise_columns(df)
-    if date_col.lower() not in df.columns:
-        raise ValueError(
-            f"Could not find date column '{date_col}' in {list(df.columns)}"
-        )
-    if price_col.lower() not in df.columns:
-        raise ValueError(
-            f"Could not find price column '{price_col}' in {list(df.columns)}"
-        )
-
-    out = pd.DataFrame(
-        {
-            "date": pd.to_datetime(df[date_col.lower()], errors="coerce"),
-            "price": pd.to_numeric(df[price_col.lower()], errors="coerce"),
-        }
-    ).dropna(subset=["date", "price"])
-
-    out = out.sort_values("date").drop_duplicates("date").reset_index(drop=True)
-    if (out["price"] <= 0).any():
-        raise ValueError(
-            "Non-positive prices detected; please validate the input series."
-        )
-    return out
+def hday_log_return(px: pd.Series, h: int) -> pd.Series:
+    return np.log(px / px.shift(h))
 
 
-def _load_from_sqlite(db_path: str, table: str, symbol: str) -> pd.DataFrame:
-    import sqlite3
+def z_of_hday_return(px: pd.Series, h: int, stdev_lb: int) -> pd.Series:
+    r_h = hday_log_return(px, h)
+    sd_h = r_h.rolling(window=stdev_lb, min_periods=stdev_lb).std(ddof=0)
+    return r_h / sd_h.replace(0.0, np.nan)
 
-    q = f"""
-    SELECT date, price
-    FROM {table}
-    WHERE symbol = ?
-    ORDER BY date ASC
+
+def trend_signal_from_z(z: pd.Series, threshold: float) -> pd.Series:
+    s = pd.Series(0.0, index=z.index, dtype=float)
+    s[z >= threshold] = 1.0  # ride strength
+    s[z <= -threshold] = -1.0  # ride weakness
+    return s
+
+
+# ---------- Exec calendar (Mon/Wed close; origins Fri/Tue) ----------
+
+
+def biweekly_exec_origin(idx: pd.DatetimeIndex) -> pd.Series:
+    wk = idx.weekday
+    origin = pd.Series(pd.NaT, index=idx, dtype="datetime64[ns]")
+    # Monday uses Friday (3 business days back), Wednesday uses Tuesday (1BD back)
+    origin.loc[wk == 0] = (idx[wk == 0] - BDay(3)).values
+    origin.loc[wk == 2] = (idx[wk == 2] - BDay(1)).values
+    return origin
+
+
+def apply_exec_calendar(raw_sig: pd.Series) -> pd.Series:
     """
-    with sqlite3.connect(db_path) as con:
-        df = pd.read_sql_query(q, con, params=[symbol])
-
-    df = _standardise_columns(df)
-    if "date" not in df.columns or "price" not in df.columns:
-        raise ValueError("SQLite table must have columns: date, price")
-
-    out = pd.DataFrame(
-        {
-            "date": pd.to_datetime(df["date"], errors="coerce"),
-            "price": pd.to_numeric(df["price"], errors="coerce"),
-        }
-    ).dropna(subset=["date", "price"])
-
-    return out.sort_values("date").reset_index(drop=True)
-
-
-# =========================
-# Signal + Portfolio Logic
-# =========================
-def _realized_vol_daily(ret_log: pd.Series, win: int) -> pd.Series:
-    return ret_log.rolling(win).std()
+    On exec days (Mon/Wed), take the signal from the mapped origin (Fri/Tue),
+    then hold between rebalances.
+    """
+    idx = raw_sig.index
+    origin_map = biweekly_exec_origin(idx)
+    exec_only = pd.Series(np.nan, index=idx, dtype=float)
+    for d, od in origin_map.dropna().items():
+        if od not in raw_sig.index:
+            pos = raw_sig.index.searchsorted(od, side="right") - 1
+            if pos < 0:
+                continue
+            od = raw_sig.index[pos]
+        exec_only.loc[d] = raw_sig.loc[od]
+    return exec_only.ffill().fillna(0.0)
 
 
-def _realized_vol_annual(ret_log: pd.Series, win: int) -> pd.Series:
-    return _realized_vol_daily(ret_log, win) * math.sqrt(252.0)
+# ---------- Vol targeting (T-close) ----------
 
 
-def _sma(sig: pd.Series, n: int) -> pd.Series:
-    return sig.rolling(n, min_periods=n).mean()
+def realized_vol_annual_simple(px: pd.Series, lookback_days: int) -> pd.Series:
+    ret = px.pct_change()
+    vol = ret.rolling(lookback_days, min_periods=lookback_days).std(ddof=0) * np.sqrt(
+        252.0
+    )
+    return vol
 
 
-def _mom_log(px: pd.Series, n: int) -> pd.Series:
-    return np.log(px / px.shift(n))
+def size_on_exec_days_Tclose(
+    exec_sig: pd.Series,
+    px: pd.Series,
+    ann_target: float = 0.10,
+    lookback_days: int = 21,
+    lev_cap: float = 2.5,
+) -> pd.Series:
+    """
+    Vol uses data up to *today* (T) when we trade at the close.
+    Compute annualised vol on the full series (including today's return),
+    read it only on exec dates, forward-fill between rebalances. No back-fill.
+    """
+    vol_ann = realized_vol_annual_simple(px, lookback_days).replace(0.0, np.nan)
+
+    idx = exec_sig.index
+    wk = idx.weekday
+    exec_mask = (wk == 0) | (wk == 2)  # Mon/Wed
+    exec_dates = idx[exec_mask]
+
+    lev_on_exec = (ann_target / vol_ann.reindex(exec_dates)).clip(upper=lev_cap)
+    lev_series = pd.Series(np.nan, index=idx, dtype=float)
+    lev_series.loc[exec_dates] = lev_on_exec.values
+    lev_series = lev_series.ffill()
+
+    pos = exec_sig * lev_series
+    pos = pos.where(~lev_series.isna(), 0.0)
+    return pos
 
 
-def _majority_vote(df_signs: pd.DataFrame) -> pd.Series:
-    s = df_signs.sum(axis=1)
-    return pd.Series(np.where(s > 0, 1, np.where(s < 0, -1, 0)), index=df_signs.index)
+# ---------- PnL with costs ----------
 
 
-def _cadence_flag(dates: pd.Series, cadence: str) -> pd.Series:
-    wd = dates.dt.weekday  # Mon=0 ... Fri=4
-    if cadence == "DAILY":
-        return pd.Series(1, index=dates.index)
-    if cadence == "MON_WED":
-        return ((wd == 0) | (wd == 2)).astype(int)
-    if cadence == "WEEKLY_WED":
-        return (wd == 2).astype(int)
-    if cadence == "FORTNIGHTLY_WED":
-        week = dates.dt.isocalendar().week.astype(int)
-        return ((wd == 2) & (week % 2 == 0)).astype(int)
-    raise ValueError("Unknown cadence")
-
-
-def build_trend(
-    df_prices: pd.DataFrame,
-    prod_lookbacks=PROD_LOOKBACKS,
-    mode: str = DEFAULT_MODE,  # "SMA" | "MOM" | "BOTH"
-    cadence: str = DEFAULT_CADENCE,  # "DAILY" | "MON_WED" | "WEEKLY_WED" | "FORTNIGHTLY_WED"
-    quiet_q: float = DEFAULT_QUIET_Q,  # OFF if 0.0; else threshold multiplier
+def pnl_with_costs(
+    px: pd.Series, pos: pd.Series, one_way_bps: float = 1.5
 ) -> pd.DataFrame:
-
-    df = df_prices.copy().sort_values("date").reset_index(drop=True)
-    df["ret_log"] = np.log(df["price"] / df["price"].shift(1))
-
-    # Feature construction
-    for n in prod_lookbacks:
-        df[f"sma_{n}"] = _sma(df["price"], n)
-        df[f"mom_{n}"] = _mom_log(df["price"], n)
-
-    # Signs per family
-    sma_signs = []
-    mom_signs = []
-    for n in prod_lookbacks:
-        sma_sig = np.sign((df["price"] / df[f"sma_{n}"]) - 1.0)
-        mom_sig = np.sign(df[f"mom_{n}"])
-        df[f"sma_sig_{n}"] = (
-            pd.Series(sma_sig).replace([np.inf, -np.inf], np.nan).fillna(0).astype(int)
-        )
-        df[f"mom_sig_{n}"] = (
-            pd.Series(mom_sig).replace([np.inf, -np.inf], np.nan).fillna(0).astype(int)
-        )
-        sma_signs.append(df[f"sma_sig_{n}"])
-        mom_signs.append(df[f"mom_sig_{n}"])
-
-    # Family votes
-    df["raw_signal_sma"] = _majority_vote(pd.concat(sma_signs, axis=1)).astype(int)
-    df["raw_signal_mom"] = _majority_vote(pd.concat(mom_signs, axis=1)).astype(int)
-
-    mode_u = mode.upper()
-    if mode_u == "SMA":
-        raw = df["raw_signal_sma"]
-    elif mode_u == "MOM":
-        raw = df["raw_signal_mom"]
-    else:
-        raw = _majority_vote(df[["raw_signal_sma", "raw_signal_mom"]])
-
-    # Optional quiet-market filter (OFF when quiet_q == 0.0)
-    # Require |mom_N| > quiet_q * daily_vol for a horizon to "count"; otherwise zero out its vote.
-    if quiet_q and quiet_q > 0.0:
-        daily_vol = _realized_vol_daily(df["ret_log"], ROLL_DAYS)
-        votes = []
-        for n in prod_lookbacks:
-            strong = (df[f"mom_{n}"].abs() > quiet_q * daily_vol).astype(int)
-            vote = df[f"mom_sig_{n}"] * strong  # use MOM family for strength gating
-            votes.append(vote)
-        gated = _majority_vote(pd.concat(votes, axis=1))
-        raw = pd.Series(
-            np.where(gated != 0, np.sign(gated), 0), index=raw.index
-        ).astype(int)
-
-    df["raw_signal"] = raw
-
-    # Vol targeting
-    df["roll_vol21"] = _realized_vol_annual(df["ret_log"], ROLL_DAYS)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        lev = TARGET_VOL_ANNUAL / df["roll_vol21"]
-    lev = pd.Series(lev, index=df.index).replace([np.inf, -np.inf], np.nan).fillna(0.0)
-    df["leverage"] = lev.clip(-LEVERAGE_CAP, LEVERAGE_CAP)
-    df["desired_pos"] = df["raw_signal"] * df["leverage"].clip(
-        -LEVERAGE_CAP, LEVERAGE_CAP
+    ret = px.pct_change().fillna(0.0)
+    pos_lag = pos.shift(1).fillna(0.0)
+    pnl_gross = pos_lag * ret
+    turnover = (pos - pos.shift(1)).abs().fillna(0.0)  # nonzero on Mon/Wed only
+    cost = (one_way_bps * 1e-4) * turnover
+    pnl_net = pnl_gross - cost
+    return pd.DataFrame(
+        {
+            "ret": ret,
+            "pos": pos,
+            "pos_lag": pos_lag,
+            "turnover": turnover,
+            "cost": cost,
+            "pnl_gross": pnl_gross,
+            "pnl_net": pnl_net,
+        }
     )
 
-    # Execution schedule + T+1
-    df["rebalance_flag"] = _cadence_flag(df["date"], cadence)
-    df["_apply_pos"] = np.nan
-    df["position"] = 0.0
 
-    last_pos = 0.0
-    for i in range(len(df)):
-        # Apply any pending T+1 first
-        if APPLY_T_PLUS_1 and pd.notna(df.at[i, "_apply_pos"]):
-            last_pos = float(df.at[i, "_apply_pos"])
-            df.at[i, "_apply_pos"] = np.nan
-
-        # If today is a rebalance day, schedule new desired_pos
-        if df.at[i, "rebalance_flag"] == 1:
-            new_pos = float(df.at[i, "desired_pos"])
-            if APPLY_T_PLUS_1:
-                if i + 1 < len(df):
-                    df.at[i + 1, "_apply_pos"] = new_pos
-            else:
-                last_pos = new_pos
-
-        df.at[i, "position"] = last_pos
-
-    # Costs & PnL
-    df["turnover"] = df["position"].diff().abs().fillna(0.0)
-    df["cost"] = (TURNOVER_COST_BPS * 1e-4) * df["turnover"]
-    df["pnl_gross"] = df["position"].shift(1).fillna(0.0) * df["ret_log"].fillna(0.0)
-    df["pnl"] = df["pnl_gross"] - df["cost"]
-    df["cum_pnl"] = df["pnl"].cumsum()
-
-    # Trim warmup
-    warmup = max(max(PROD_LOOKBACKS), ROLL_DAYS) + 2
-    out = df.iloc[warmup:].reset_index(drop=True).drop(columns=["_apply_pos"])
-    return out
+# ---------- Runner ----------
 
 
-# =========================
-# Metrics / Outputs
-# =========================
-def _ann_stats(p: pd.Series) -> tuple[float, float, float]:
-    ann_pnl = float(p.mean() * 252)
-    ann_vol = float(p.std() * math.sqrt(252))
-    sr = float(ann_pnl / (ann_vol + 1e-12))
-    return ann_pnl, ann_vol, sr
+def run_trendcore(
+    px: pd.Series,
+    threshold: float = 0.85,
+    z_std_lb: int = 252,
+    vol_lookback_days: int = 28,
+    lev_cap: float = 2.5,
+    one_way_bps: float = 1.5,
+):
+    # 3/5-day z, equal weight
+    z3 = z_of_hday_return(px, 3, z_std_lb)
+    z5 = z_of_hday_return(px, 5, z_std_lb)
+    z = 0.5 * z3 + 0.5 * z5
+    raw = trend_signal_from_z(z, threshold=threshold)
+
+    exec_sig = apply_exec_calendar(raw)  # Mon/Wed values held between rebalances
+    pos = size_on_exec_days_Tclose(
+        exec_sig, px, ann_target=0.10, lookback_days=vol_lookback_days, lev_cap=lev_cap
+    )
+    pnl = pnl_with_costs(px, pos, one_way_bps=one_way_bps)
+
+    signals = pd.DataFrame(
+        {"signal_raw": raw, "signal_exec": exec_sig, "position_vt": pos}
+    )
+    return signals, pnl
 
 
-def _max_dd(eq: pd.Series) -> float:
-    roll_max = eq.cummax()
-    dd = eq - roll_max
-    return float(dd.min())
+def sharpe_252(s: pd.Series) -> float:
+    s = s.dropna()
+    sd = s.std(ddof=0)
+    return float("nan") if sd == 0 else float((s.mean() / sd) * np.sqrt(252.0))
 
 
-def _write_outputs(dfr: pd.DataFrame, out_path: str, sleeve_name: str) -> None:
-    # 1) Daily series
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    dfr.to_csv(out_path, index=False)
+def main():
+    ap = argparse.ArgumentParser(
+        description="Build TrendCore (Copper) — T-close execution."
+    )
+    ap.add_argument("--excel", required=True)
+    ap.add_argument("--sheet", default="Raw")
+    ap.add_argument("--date-col", default="Date")
+    ap.add_argument("--price-col", default="copper_lme_3mo")
+    ap.add_argument("--symbol", default="COPPER")
+    ap.add_argument("--outdir", required=True)
+    ap.add_argument("--oos-start", default="2018-01-01")
 
-    # 2) Equity curves (ALL/IS/OOS)
-    is_slice = dfr[dfr["date"].between(IS_START, IS_END)]
-    oos_slice = dfr[dfr["date"] >= OOS_START]
+    # Params
+    ap.add_argument("--threshold", type=float, default=0.85)
+    ap.add_argument("--z-std-lb", type=int, default=252)
+    ap.add_argument("--vol-lookback", type=int, default=28)
+    ap.add_argument("--lev-cap", type=float, default=2.5)
+    ap.add_argument("--bps", type=float, default=1.5)
 
-    eq_all = dfr[["date", "cum_pnl"]].copy()
-    eq_all["segment"] = "ALL"
-    eq_is = is_slice[["date", "cum_pnl"]].copy()
-    eq_is["segment"] = "IS"
-    eq_oos = oos_slice[["date", "cum_pnl"]].copy()
-    eq_oos["segment"] = "OOS"
-    eq_curves = pd.concat([eq_all, eq_is, eq_oos], axis=0, ignore_index=True)
+    # Policy path (for banner/mismatch warnings)
+    ap.add_argument("--schema-path", default="Config/schema.yaml")
 
-    eq_path = os.path.join(os.path.dirname(out_path), "equity_curves.csv")
-    eq_curves.to_csv(eq_path, index=False)
+    args = ap.parse_args()
 
-    # 3) Summary metrics
-    all_stats = _ann_stats(dfr["pnl"])
-    is_stats = _ann_stats(is_slice["pnl"]) if len(is_slice) else (float("nan"),) * 3
-    oos_stats = _ann_stats(oos_slice["pnl"]) if len(oos_slice) else (float("nan"),) * 3
+    # --- Policy header check (informational) ---
+    policy = load_execution_policy(args.schema_path)
+    print(policy_banner(policy, sleeve_name="TrendCore-Cu-v1-Tclose"))
+    # Our script uses: exec Mon/Wed, T-close sizing (vol_info=T), cap 2.5, costs 1.5 bps
+    for w in warn_if_mismatch(
+        policy,
+        exec_weekdays=(0, 2),
+        fill_timing="close_T",
+        vol_info="T",
+        leverage_cap=args.lev_cap,
+        one_way_bps=args.bps,
+    ):
+        print(w)
 
-    metrics = pd.DataFrame(
-        [
-            {
-                "Sleeve": sleeve_name,
-                "Sharpe_ALL": all_stats[2],
-                "Vol_ALL": all_stats[1],
-                "MaxDD_ALL": _max_dd(dfr["cum_pnl"]),
-                "Sharpe_IS": is_stats[2],
-                "Vol_IS": is_stats[1],
-                "MaxDD_IS": (
-                    _max_dd(is_slice["cum_pnl"] - is_slice["cum_pnl"].iloc[0])
-                    if len(is_slice)
-                    else float("nan")
-                ),
-                "Sharpe_OOS": oos_stats[2],
-                "Vol_OOS": oos_stats[1],
-                "MaxDD_OOS": (
-                    _max_dd(oos_slice["cum_pnl"] - oos_slice["cum_pnl"].iloc[0])
-                    if len(oos_slice)
-                    else float("nan")
-                ),
-                "AvgDailyTurnover": float(dfr["turnover"].mean()),
-                "%DaysInPosition": float((dfr["position"].abs() > 1e-9).mean()) * 100.0,
-            }
-        ]
+    # --- Load prices & run ---
+    px = load_prices_excel(
+        args.excel, args.sheet, args.date_col, args.price_col, args.symbol
+    )
+    signals, pnl = run_trendcore(
+        px=px,
+        threshold=args.threshold,
+        z_std_lb=args.z_std_lb,
+        vol_lookback_days=args.vol_lookback,
+        lev_cap=args.lev_cap,
+        one_way_bps=args.bps,
     )
 
-    m_path = os.path.join(os.path.dirname(out_path), "summary_metrics.csv")
-    metrics.to_csv(m_path, index=False)
+    out_root = Path(args.outdir) / "copper" / "pricing" / "trendcore_single_Tclose"
+    out_root.mkdir(parents=True, exist_ok=True)
+    signals.to_csv(out_root / "signals.csv", index_label="dt")
+    pnl.to_csv(out_root / "pnl_daily.csv", index_label="dt")
 
-    print(f"Wrote:\n - {out_path}\n - {eq_path}\n - {m_path}")
+    # --- Summary (IS/OOS) ---
+    oos_start = pd.Timestamp(args.oos_start)
+    is_pnl = pnl.loc[pnl.index < oos_start, "pnl_net"].dropna()
+    oos_pnl = pnl.loc[pnl.index >= oos_start, "pnl_net"].dropna()
 
-
-# =========================
-# CLI
-# =========================
-def main() -> None:
-    p = argparse.ArgumentParser(
-        description="Build TrendCore sleeve (momentum) for copper 3M."
-    )
-    # Primary file input (csv/xlsx)
-    p.add_argument(
-        "--file",
-        type=str,
-        default=None,
-        help="Path to CSV/XLSX with a date column and a price series",
-    )
-    p.add_argument(
-        "--sheet", type=str, default=None, help="Excel sheet name (optional)"
-    )
-    p.add_argument(
-        "--price_col",
-        type=str,
-        default="price",
-        help="Column name for price (e.g. copper_lme_3mo)",
-    )
-    p.add_argument(
-        "--date_col",
-        type=str,
-        default="date",
-        help="Column name for the date (default: 'date')",
-    )
-    # Back-compat
-    p.add_argument(
-        "--csv", type=str, default=None, help="[Deprecated] Use --file instead"
-    )
-    # SQLite alternative
-    p.add_argument("--sql", type=str, default=None, help="Path to SQLite DB")
-    p.add_argument(
-        "--table",
-        type=str,
-        default="prices",
-        help="SQLite table name (default: prices)",
-    )
-    p.add_argument(
-        "--symbol", type=str, default="COPPER", help="Symbol to query from SQLite"
-    )
-    # Signal + execution options
-    p.add_argument(
-        "--mode",
-        type=str,
-        default=DEFAULT_MODE,
-        choices=["SMA", "MOM", "BOTH"],
-        help="Signal family (default MOM)",
-    )
-    p.add_argument(
-        "--cadence",
-        type=str,
-        default=DEFAULT_CADENCE,
-        choices=["DAILY", "MON_WED", "WEEKLY_WED", "FORTNIGHTLY_WED"],
-        help="Rebalance cadence",
-    )
-    p.add_argument(
-        "--quiet_q",
-        type=float,
-        default=DEFAULT_QUIET_Q,
-        help="Quiet-market filter multiplier (0=OFF; try 0.5–0.7 to enable)",
-    )
-    # Outputs
-    p.add_argument(
-        "--out",
-        type=str,
-        default="outputs/copper/trend/daily_series.csv",
-        help="Output CSV path for daily series",
-    )
-    args = p.parse_args()
-
-    # Resolve input
-    if args.file or args.csv:
-        path = args.file if args.file else args.csv
-        dfp = _load_from_tabular(
-            path, price_col=args.price_col, date_col=args.date_col, sheet=args.sheet
-        )
-    elif args.sql:
-        dfp = _load_from_sqlite(args.sql, args.table, args.symbol)
-    else:
-        raise SystemExit("Provide --file (CSV/XLSX) or (--sql, --table, --symbol).")
-
-    # Build & write
-    dfr = build_trend(
-        dfp,
-        prod_lookbacks=PROD_LOOKBACKS,
-        mode=args.mode,
-        cadence=args.cadence,
-        quiet_q=args.quiet_q,
-    )
-    _write_outputs(
-        dfr,
-        args.out,
-        sleeve_name=f"TrendCore {PROD_LOOKBACKS} {args.mode} (cadence={args.cadence}, quiet_q={args.quiet_q})",
-    )
-
-    # Console summary
-    ann_pnl = dfr["pnl"].mean() * 252
-    ann_vol = dfr["pnl"].std() * math.sqrt(252)
-    sr = ann_pnl / (ann_vol + 1e-12)
-    avg_turnover = dfr["turnover"].mean()
-    pct_in_pos = (dfr["position"].abs() > 1e-9).mean() * 100.0
-
-    print(
-        f"[TrendCore] rows={len(dfr)}  SR={sr:0.2f}  ann_vol={ann_vol:0.2%}  avg_daily_turnover={avg_turnover:0.3f}  %in_pos={pct_in_pos:0.1f}%"
-    )
-    print(
-        f"Wrote daily_series/equity_curves/summary_metrics under {os.path.dirname(args.out)}"
-    )
+    summary = {
+        "params": {
+            "threshold": args.threshold,
+            "z_std_lb": args.z_std_lb,
+            "vol_lookback_days": args.vol_lookback,
+            "lev_cap": args.lev_cap,
+            "bps": args.bps,
+            "ann_target": 0.10,
+            "execution": "Mon/Wed close (T); Fri/Tue origins; PnL next day",
+        },
+        "IS": {"sharpe_252": sharpe_252(is_pnl), "n": int(is_pnl.size)},
+        "OOS": {"sharpe_252": sharpe_252(oos_pnl), "n": int(oos_pnl.size)},
+    }
+    with open(out_root / "summary.json", "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
+    print(f"[trendcore] wrote → {out_root}")
 
 
 if __name__ == "__main__":

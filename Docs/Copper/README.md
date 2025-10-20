@@ -210,3 +210,54 @@ Future developments:
 **Status:** ✅ *Frozen (v0.1.1 — Δstocks, lb20, thr=1.0)*  
 **Confidence:** High (selective, stable, low correlation to price-based sleeves)
 *****
+
+
+---
+
+# 🧩 Copper Composite — v0.1.0
+
+**Type:** Equal-Risk Multi-Sleeve Composite  
+**Version:** v0.1.0 – Initial (Oct 2025)  
+**Author:** Metals Quant Model  
+**Purpose:** Evaluate how combining uncorrelated sleeves (price vs. physical flow) improves overall stability and Sharpe.
+
+---
+
+## 1️⃣ Composition
+
+| Sleeve | Version | Weight | Vol Target | Execution | Cost | Notes |
+|---------|----------|---------|-------------|------------|-------|
+| HookCore | v0.4.0 | 0.5 | 10% | Bi-weekly (Mon/Wed, T+1) | 1.5 bps | Price-based mean-reversion |
+| StocksCore | v0.1.1 | 0.5 | 10% | Daily (T+1) | 1.5 bps | LME stocks Δz(20) sentiment |
+
+Composite built as **0.5 × Hook + 0.5 × Stocks**, then scaled to **10% annual vol** using a single scalar estimated on the OOS period (2018-01-01 → present).
+
+---
+
+## 2️⃣ Headline Results
+
+| Period | Ann. Return | Ann. Vol | Sharpe | Max DD | Comment |
+|---------|-------------|----------|--------|--------|----------|
+| IS (2008-2017) | ~6.0 % | 10 % | ~0.55 – 0.60 | ~13 % | Stable diversification |
+| OOS (2018-present) | **~6.0 %** | 10 % | **~0.60** | **~12 %** | Solid uplift vs. sleeves alone |
+
+OOS correlation between Hook and Stocks ≈ 0.25, confirming diversification.
+
+---
+
+## 3️⃣ Files
+
+| File | Description |
+|------|--------------|
+| `composite_config.yaml` | Registry of inputs, weights, scaling, and metadata |
+| `CHANGELOG.md` | Version notes and provenance |
+| `outputs/copper/composite_ad_hoc/daily_combo.csv` | Combined daily PnL (equal-risk, scaled to 10%) |
+| `outputs/copper/composite_ad_hoc/summary_metrics.csv` | Summary metrics for Hook, Stocks, and composite |
+
+---
+
+## 4️⃣ Status
+
+✅ *Frozen (v0.1.0)*  
+Serves as the first composite benchmark for Copper sleeves.  
+Next: extend to **TrendCore** and **PositioningCore** before full sleeve portfolio integration.

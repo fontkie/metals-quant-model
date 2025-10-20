@@ -1,53 +1,52 @@
-# TrendCore — Copper Pricing Momentum (Sleeve 3)
+# TrendCore-Cu-v1-Tclose (Copper pricing sleeve)
 
-**Goal:** Add a robust, orthogonal **trend sleeve** to diversify **Hook** (mean-reversion) and **Stocks** (fundamental).
-
----
-
-## 🔧 Specification (MVP)
-
-| Parameter | Value |
-|------------|--------|
-| **Signals** | Majority vote across 20/60/120-day log-momentum (`MOM_N = sign(log return N)`) |
-| **Execution** | Rebalance **Mon/Wed**, **T+1** application |
-| **Risk Target** | 10% annual volatility (21-day rolling window) |
-| **Leverage Cap** | 3× |
-| **Transaction Cost** | 1.5 bps × daily turnover |
-| **Output** | `outputs/copper/trend/daily_series.csv` |
-
-**Note:** Early experiments also tested SMA families (`SMA_N = sign(price/SMA_N – 1)`), but production TrendCore uses pure MOM logic.
+**Type:** Directional trend using 3/5-day return z-scores (equal weight).  
+**Exec cadence:** Monday & Wednesday (business-day aware).  
+**Fill timing:** **Trade on T (same-day close)** using orders into the close (e.g., MOC/VWAP-to-close).  
+**Signal origins:** Friday → Monday trade; Tuesday → Wednesday trade.  
+**Sizing:** Vol-target to **10%** annualised using **21-day** realised **simple** returns, **info up to T** (inclusive).  
+**Cap:** **2.5×** leverage at sizing, held between rebalances.  
+**Costs:** **1.5 bps** per \|Δposition\| charged **only on trade days** (Mon/Wed).  
+**PnL:** `position_{t-1} × simple_return_t` (ΔP/P).  
+**z-window:** 252 trading days for the 3-day and 5-day log-return z-scores (equal weight).  
+**Threshold:** 0.85 (z ≥ +0.85 → long; z ≤ −0.85 → short; else flat).
 
 ---
 
-## 🧮 Columns (outputs)
+## Files & outputs
+- Builder: `src/build_trend.py`  
+- Config (static): `Docs/Copper/trend/config.yaml`  
+- Policy reference: `Docs/standards/real_world_rules.md` and `Config/schema.yaml`  
+- Outputs (single run):  
 
-`date, price, ret_log, mom_20, mom_60, mom_120, mom_sig_*, raw_signal, roll_vol21, leverage, desired_pos, rebalance_flag, position, turnover, cost, pnl_gross, pnl, cum_pnl`
+outputs/copper/pricing/trendcore_single_Tclose/
+├─ signals.csv # signal_raw, signal_exec, position_vt
+├─ pnl_daily.csv # ret, pos, pos_lag, turnover, cost, pnl_gross, pnl_net
+└─ summary.json # IS/OOS Sharpe (252)
+
 
 ---
 
-## 📊 Diagnostics (non-production)
+## Invariants (quick self-check)
+1. **Turnover > 0 only on Mon/Wed.**  
+2. **Position changes only on Mon/Wed;** held constant otherwise.  
+3. **First PnL day is Tue/Thu** (day after the trade).  
+4. **Vol series used for sizing includes T** (T-close convention).  
+5. **No positions** before z-window (252) and vol lookback (21) warm-ups complete.
 
-For research only, we sometimes compute **5/10/50/100/200-day** MAs and N-day momentum for cross-checks.  
-If these outperform after costs at Mon/Wed cadence, they may inform future blends.
-
----
-
-## 🚀 TrendCore v0.1 — Production Spec
-
-**Spec:** 20/60/120-day log-momentum (MOM), majority vote, Mon/Wed execution, T+1, 10% vol (21d), 3× cap, 1.5 bps cost.
-
-### Rationale
-Adds a clean **directional/convex** sleeve to diversify Hook (mean-reversion) and Stocks (fundamental).  
-Not expected to generate steady standalone alpha; pays off during persistent price trends.
-
-### How to build
+Use:
 ```bash
-python src/build_trend.py \
-  --file Data/copper/pricing/pricing_values.xlsx \
-  --sheet Raw \
-  --price_col copper_lme_3mo \
-  --date_col date \
-  --mode MOM \
-  --cadence MON_WED \
-  --quiet_q 0 \
-  --out outputs/copper/trend/daily_series.csv
+python tools/validate_realworld.py \
+--pnl-csv outputs/copper/pricing/trendcore_single_Tclose/pnl_daily.csv \
+--signals-csv outputs/copper/pricing/trendcore_single_Tclose/signals.csv \
+--exec-weekdays "0,2"
+
+Notes & rationale
+
+T-close vs T+1: Trading on T with sizing that sees T’s data is realistic for close-algos and lifted OOS robustness in testing.
+
+Cap at 2.5×: Safer tail profile; moving to 3× mainly scales risk without improving Sharpe.
+
+Why trend (not hook): Under real-world timing/costs, the mean-revert mapping was loss-making; the trend mapping is credibly positive OOS.
+
+WFV plan: When ready, run WFV with narrow grids around (threshold 0.75–0.95, z-window 200–300, vol LB 21–35).

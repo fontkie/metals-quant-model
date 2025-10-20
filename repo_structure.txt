@@ -30,7 +30,7 @@ Repo structure for: Metals
 |   +-- SEED_CHAT.md
 +-- src
 |   +-- backtest_prices.py
-|   +-- build_signals.py
+|   +-- build_hookcore.py
 |   +-- build_signals_v1.py
 |   +-- db.py
 |   +-- db_views.py
