@@ -1,8 +1,18 @@
-# src/utils/policy.py
 from __future__ import annotations
-import yaml
 from pathlib import Path
 from typing import Any, Dict
+import yaml
+
+"""
+Purpose:
+- Load a single execution/cost policy block for the whole project.
+- Provide safe defaults if Config/schema.yaml is missing.
+- Print a clear banner so every run shows the real-world assumptions.
+- Warn when a script's hard-coded assumptions diverge from policy.
+
+Per-sleeve differences (exec weekdays, event-driven etc.) live in each sleeve's YAML.
+Each sleeve must still export `position_Tplus1` so the composite can line them up.
+"""
 
 DEFAULT_SCHEMA_PATH = Path("Config/schema.yaml")
 
@@ -21,13 +31,13 @@ def load_execution_policy(
 ) -> Dict[str, Any]:
     p = Path(schema_path)
     if not p.exists():
-        # Minimal safe defaults if schema not present
+        # SAFE DEFAULTS (Mon/Wed/Fri exec; T-1 origin for midweek; PnL starts next day)
         return {
             "calendar": {
-                "exec_weekdays": [0, 2],
-                "origin_for_exec": {"0": "-3B", "2": "-1B"},
-                "fill_default": "close_T",
-                "pnl_starts_next_day": True,
+                "exec_weekdays": [0, 2, 4],  # Mon, Wed, Fri
+                "origin_for_exec": {"0": "-3B", "2": "-1B", "4": "-1B"},
+                "fill_default": "close_T",  # signals formed on T close
+                "pnl_starts_next_day": True,  # positions effective next day
             },
             "sizing": {
                 "ann_target": 0.10,
@@ -57,21 +67,16 @@ def load_execution_policy(
 def policy_banner(
     policy: Dict[str, Any], sleeve_name: str, overrides: Dict[str, Any] | None = None
 ) -> str:
-    cal = policy.get("calendar", {})
-    siz = policy.get("sizing", {})
-    cst = policy.get("costs", {})
-    pnl = policy.get("pnl", {})
     ov = overrides or {}
 
     def pick(key_path, default):
-        # override → policy.default → provided default
         return ov.get(key_path, _get(policy, key_path, default))
 
     lines = [
         f"[policy] schema: {policy.get('schema_path')}",
         f"[policy] sleeve: {sleeve_name}",
-        f"[policy] calendar.exec_weekdays: {pick('calendar.exec_weekdays', [0,2])}",
-        f"[policy] calendar.origin_for_exec: {pick('calendar.origin_for_exec', {'0':'-3B','2':'-1B'})}",
+        f"[policy] calendar.exec_weekdays: {pick('calendar.exec_weekdays', [0,2,4])}",
+        f"[policy] calendar.origin_for_exec: {pick('calendar.origin_for_exec', {'0':'-3B','2':'-1B','4':'-1B'})}",
         f"[policy] calendar.fill_default: {pick('calendar.fill_default', 'close_T')}",
         f"[policy] sizing.ann_target: {pick('sizing.ann_target', 0.10)}",
         f"[policy] sizing.vol_lookback_days_default: {pick('sizing.vol_lookback_days_default', 21)}",
@@ -86,14 +91,14 @@ def policy_banner(
 def warn_if_mismatch(
     policy: Dict[str, Any],
     *,
-    exec_weekdays=(0, 2),
+    exec_weekdays=(0, 2, 4),
     fill_timing="close_T",
     vol_info="T",
     leverage_cap=2.5,
     one_way_bps=1.5,
 ) -> list[str]:
     msgs = []
-    pol_days = tuple(_get(policy, "calendar.exec_weekdays", [0, 2]))
+    pol_days = tuple(_get(policy, "calendar.exec_weekdays", [0, 2, 4]))
     if pol_days != tuple(exec_weekdays):
         msgs.append(
             f"[policy][WARN] exec_weekdays policy={pol_days} script={exec_weekdays}"
@@ -106,12 +111,12 @@ def warn_if_mismatch(
     pol_volinfo = _get(policy, "sizing.vol_info_timing_default", "T")
     if pol_volinfo != vol_info:
         msgs.append(f"[policy][WARN] vol_info policy={pol_volinfo} script={vol_info}")
-    pol_cap = _get(policy, "sizing.leverage_cap_default", 2.5)
-    if float(pol_cap) != float(leverage_cap):
+    pol_cap = float(_get(policy, "sizing.leverage_cap_default", 2.5))
+    if pol_cap != float(leverage_cap):
         msgs.append(
             f"[policy][WARN] leverage_cap policy={pol_cap} script={leverage_cap}"
         )
-    pol_bps = _get(policy, "costs.one_way_bps_default", 1.5)
-    if float(pol_bps) != float(one_way_bps):
+    pol_bps = float(_get(policy, "costs.one_way_bps_default", 1.5))
+    if pol_bps != float(one_way_bps):
         msgs.append(f"[policy][WARN] one_way_bps policy={pol_bps} script={one_way_bps}")
     return msgs
