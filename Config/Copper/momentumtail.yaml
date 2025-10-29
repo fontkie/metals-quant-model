@@ -1,0 +1,53 @@
+# Config/Copper/momentumtail.yaml (v2.0)
+
+io:
+  commodity: Copper
+  sleeve: MomentumTail
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri daily execution
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10
+    vol_lookback_days_default: 63
+    leverage_cap_default: 2.5  # Higher than other sleeves (high conviction trades)
+
+  costs:
+    one_way_bps_default: 1.5
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true  # REQUIRED: T→T+1 accrual
+
+# MomentumTail-specific signal parameters
+signal:
+  volatility_regime:
+    iv_ma_lookback: 63           # 3-month IV moving average
+    iv_spike_threshold: 1.5      # IV must be 1.5x average (50% spike)
+    iv_exit_threshold: 1.1       # Exit when IV drops to 1.1x average
+  
+  trend_confirmation:
+    donchian_lookback: 20        # 20-day Donchian breakout
+  
+  momentum_persistence:
+    atr_lookback: 14             # 14-day ATR calculation
+    atr_ma_lookback: 63          # 3-month ATR moving average
+    atr_threshold: 1.2           # ATR must be 1.2x average (20% elevation)
+  
+  risk_controls:
+    signal_shift: 1              # Use data up to T-1 (no look-ahead)
+  
+  # Expected behavior:
+  # - Trades only during crisis/high-vol regimes (IV spike)
+  # - Confirms with strong directional moves (Donchian breakout)
+  # - Validates momentum persistence (ATR elevated)
+  # - Low frequency: ~10-20 trades/year
+  # - High conviction: larger positions via 2.5x leverage cap

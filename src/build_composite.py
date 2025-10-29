@@ -1,262 +1,278 @@
-import argparse
-from pathlib import Path
-import sys
+# src/build_composite.py
+import os
+import yaml
 import numpy as np
 import pandas as pd
-import yaml
 
-TRADING_DAYS = 252
+from utils.policy import load_execution_policy, policy_banner, warn_if_mismatch
 
-# ============= helpers =============
+# --- Policy header ---
+POLICY = load_execution_policy()
+policy_banner(POLICY, "Composite")
+warn_if_mismatch(POLICY)
+
+
+# ---------- helpers ----------
 def ann_vol(x: pd.Series) -> float:
-    return x.std(ddof=0) * np.sqrt(TRADING_DAYS)
+    x = pd.to_numeric(x, errors="coerce")
+    return float(np.sqrt(252.0) * np.nanstd(x))
 
-def sharpe(x: pd.Series) -> float:
-    v = ann_vol(x)
-    return float(x.mean() * TRADING_DAYS / v) if v > 0 else np.nan
 
-def max_drawdown(eq: pd.Series) -> float:
-    peak = eq.cummax()
-    dd = eq / peak - 1.0
-    return float(dd.min())
+def realised_vol(x: pd.Series, lookback: int) -> float:
+    x = pd.to_numeric(x, errors="coerce")
+    if lookback and lookback < len(x):
+        x = x.tail(lookback)
+    return float(np.sqrt(252.0) * np.nanstd(x))
 
-def hit_rate(x: pd.Series) -> float:
-    n = (x > 0).sum()
-    d = x.notna().sum()
-    return float(n / d) if d else np.nan
 
-def turnover_series(pos: pd.Series) -> pd.Series:
-    return pos.diff().abs().fillna(0.0)
+def load_sleeve_positions(input_dir: str, sleeves: list) -> list:
+    """
+    Load each sleeve's position from outputs/Copper/<sleeve>/daily_series.csv
+    Accepts date columns: dt or date
+    Accepts position columns: position_Tplus1, position, pos, position_vt
+    """
+    dfs = []
+    meta = []
+    for s in sleeves:
+        path = os.path.join(input_dir, s.lower(), "daily_series.csv")
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Missing sleeve file: {path}")
 
-def read_yaml(path: str) -> dict:
-    with open(path, "r") as f:
-        return yaml.safe_load(f) or {}
+        df = pd.read_csv(path)
+        lower = {c.lower(): c for c in df.columns}
 
-def read_table_auto(path: str, date_col_candidates=("dt","date","Date","datetime","DT")) -> pd.DataFrame:
-    p = Path(path)
-    if not p.exists():
-        raise FileNotFoundError(f"Missing file: {p}")
-    if p.suffix.lower() in (".csv", ".txt"):
-        df = pd.read_csv(p)
-    elif p.suffix.lower() in (".xlsx", ".xls"):
-        try:
-            import openpyxl  # noqa: F401
-        except Exception:
-            pass
-        df = pd.read_excel(p)
-    else:
-        raise ValueError(f"Unsupported file extension for {p.name}")
-    date_col = None
-    for c in date_col_candidates:
-        if c in df.columns:
-            date_col = c
+        date_col = lower.get("date") or lower.get("dt")
+        if date_col is None:
+            raise KeyError(f"No 'dt' or 'date' in {path}. Columns: {list(df.columns)}")
+
+        pos_key = None
+        for cand in ["position_tplus1", "position", "pos", "position_vt"]:
+            if cand in lower:
+                pos_key = lower[cand]
+                break
+        if pos_key is None:
+            raise KeyError(
+                f"No position col in {path}. Need one of position_Tplus1/position/pos/position_vt"
+            )
+
+        out = df[[date_col, pos_key]].copy()
+        out.columns = ["dt", f"{s}_pos"]
+        out["dt"] = pd.to_datetime(out["dt"], errors="coerce")
+        out.sort_values("dt", inplace=True)
+        dfs.append(out)
+        meta.append((s, path, pos_key))
+    return dfs, meta
+
+
+def find_price_series(input_dir: str, sleeves: list) -> pd.DataFrame:
+    """Find any sleeve daily_series.csv that has both date/dt and price."""
+    for s in sleeves:
+        p = os.path.join(input_dir, s.lower(), "daily_series.csv")
+        if os.path.exists(p):
+            df = pd.read_csv(p)
+            lower = {c.lower(): c for c in df.columns}
+            date_col = lower.get("date") or lower.get("dt")
+            price_col = lower.get("price")
+            if date_col and price_col:
+                out = df[[date_col, price_col]].copy()
+                out.columns = ["dt", "price"]
+                out["dt"] = pd.to_datetime(out["dt"], errors="coerce")
+                out.sort_values("dt", inplace=True)
+                return out
+    raise FileNotFoundError(
+        f"Could not find price series with ['dt' or 'date', 'price'] under {input_dir}/<sleeve>/daily_series.csv"
+    )
+
+
+def erc_weights(cov: np.ndarray, tol: float = 1e-10, iters: int = 1000) -> np.ndarray:
+    """
+    Equal Risk Contribution weights via multiplicative updates.
+    cov: covariance matrix of sleeve returns (NxN)
+    """
+    n = cov.shape[0]
+    w = np.ones(n) / n
+    for _ in range(iters):
+        m = cov @ w  # marginal risk
+        port_var = float(w @ m)
+        if port_var <= 0 or not np.isfinite(port_var):
             break
-    if date_col is None:
-        raise ValueError(f"Could not find a date column in {p}. Columns: {list(df.columns)}")
-    df["dt"] = pd.to_datetime(df[date_col])
-    return df.sort_values("dt").reset_index(drop=True)
-
-def read_price_from_excel(xlsx_path: str, sheet: str | None, date_col_idx: int, px_col_idx: int) -> pd.DataFrame:
-    """
-    Read price from Excel by zero-based column indices.
-    date_col_idx: 0 for column A, 3 for column D, etc.
-    """
-    try:
-        import openpyxl  # ensure engine for .xlsx
-    except Exception:
-        pass
-
-    # If sheet is None, read the FIRST sheet; otherwise read that named sheet.
-    sheet_name = 0 if sheet is None else sheet
-    df = pd.read_excel(xlsx_path, sheet_name=sheet_name, header=0)
-
-    # If for any reason we still got a dict (older pandas), take the first sheet
-    if isinstance(df, dict):
-        df = next(iter(df.values()))
-
-    # Select columns by position (zero-based)
-    df = df.iloc[:, [date_col_idx, px_col_idx]].copy()
-    df.columns = ["dt", "copper_3m"]
-    df["dt"] = pd.to_datetime(df["dt"])
-    df = df.sort_values("dt").dropna(subset=["dt"]).reset_index(drop=True)
-    return df
+        target = port_var / n
+        rc = w * m  # risk contributions
+        # avoid zeros
+        rc = np.where(rc <= 0, 1e-12, rc)
+        w_new = w * (target / rc)  # multiplicative update
+        w_new = np.clip(w_new, 1e-10, None)
+        w_new = w_new / w_new.sum()
+        if np.linalg.norm(w_new - w, 1) < tol:
+            w = w_new
+            break
+        w = w_new
+    return w / w.sum()
 
 
-def inverse_vol_weights(r1: pd.Series, r2: pd.Series, lookback: int) -> pd.DataFrame:
-    v1 = r1.rolling(lookback).std(ddof=0)
-    v2 = r2.rolling(lookback).std(ddof=0)
-    w1 = 1.0 / v1.replace(0, np.nan)
-    w2 = 1.0 / v2.replace(0, np.nan)
-    ws = w1 + w2
-    return pd.DataFrame({"w_hook": w1/ws, "w_stocks": w2/ws})
-
-def vol_target_tplus1(ret_raw: pd.Series, target_ann_vol: float, lookback_days: int, cap: float) -> pd.DataFrame:
-    rv_daily = ret_raw.rolling(lookback_days).std(ddof=0)
-    rv_ann = rv_daily * np.sqrt(TRADING_DAYS)
-    lev = (target_ann_vol / rv_ann).clip(upper=cap)
-    lev_t1 = lev.shift(1)  # T+1 execution
-    ret_scaled = ret_raw * lev_t1
-    return pd.DataFrame({"lev": lev_t1, "ret_scaled": ret_scaled})
-
-# ============= main =============
+# ---------- main ----------
 def main():
-    ap = argparse.ArgumentParser(description="Build Copper composite daily series (PM view) with optional price join.")
-    ap.add_argument("--config", required=True, help="Path to docs/Copper/combined/composite_config.yaml")
-    ap.add_argument("--weight_lookback", type=int, default=63, help="Lookback for inverse-vol weights (default 63)")
-    # Price join options (your Excel defaults baked in; can override)
-    ap.add_argument("--price_xlsx", type=str, default=r"C:\Code\Metals\Data\copper\pricing\pricing_values.xlsx")
-    ap.add_argument("--price_sheet", type=str, default=None, help="Sheet name if needed (None = first sheet)")
-    ap.add_argument("--price_date_col_idx", type=int, default=0, help="0-based index (A=0) — you said Date is col A")
-    ap.add_argument("--price_px_col_idx", type=int, default=3, help="0-based index (D=3) — you said 3-mo is col D")
-    ap.add_argument("--no_price", action="store_true", help="Skip joining price even if Excel path exists")
-    args = ap.parse_args()
+    # ---- Load config
+    with open("Docs/Copper/combined/composite_config.yaml", "r") as f:
+        cfg = yaml.safe_load(f)["composite"]
 
-    # ---------- Load configs, tolerate missing bits ----------
-    cfg = read_yaml(args.config)
-    def _load_global_defaults():
-        gpath = Path("config/global.yaml")
-        return read_yaml(str(gpath)) if gpath.exists() else {}
-    global_cfg = _load_global_defaults()
+    sleeves = cfg["sleeves"]
+    input_dir = cfg.get("input_dir", "outputs/Copper")
+    out_csv = cfg.get("out_csv", "outputs/Copper/composite_v0.3.csv")
+    out_summary = cfg.get("out_summary", "outputs/Copper/composite_v0.3_summary.txt")
+    out_diag_txt = cfg.get(
+        "out_diag_txt", "outputs/Copper/composite_v0.3_diagnostics.txt"
+    )
+    out_corr_csv = cfg.get(
+        "out_corr_csv", "outputs/Copper/composite_v0.3_sleeve_corr.csv"
+    )
 
-    ass = cfg.get("assumptions", {})
-    vol_cfg = ass.get("vol_target") or ass.get("vol") or {}
-    g_vol = (global_cfg.get("vol_target") if isinstance(global_cfg, dict) else {}) or {}
+    per_sleeve_target_vol = float(cfg.get("per_sleeve_target_vol", 0.10))
+    cap = float(cfg.get("cap", 1.0))
+    cost_bps = float(cfg.get("cost_bps", 1.5)) / 10000.0
+    use_erc = bool(cfg.get("use_erc_weights", True))
 
-    target_vol   = float(vol_cfg.get("ann_pct",       g_vol.get("ann_pct",       10.0))) / 100.0
-    lookback_vol = int(  vol_cfg.get("lookback_days", g_vol.get("lookback_days", 21)))
-    cap          = float(vol_cfg.get("leverage_cap",  g_vol.get("leverage_cap",  2.5)))
-    costs_bps    = float(ass.get("cost_bps_per_turnover", global_cfg.get("cost_bps_per_turnover", 1.5)))
+    use_comp_vt = bool(cfg.get("use_composite_vol_target", True))
+    comp_target = float(cfg.get("composite_vol_target", 0.10))
+    comp_lev_cap = float(cfg.get("composite_lev_cap", 2.5))
+    comp_lookback = int(cfg.get("composite_vol_lookback", 60))
 
-    exec_cfg = cfg.get("execution", {})
-    rebalance_days = set(exec_cfg.get("rebalance_days", ["Mon","Wed"]))
-    t_plus = int(exec_cfg.get("t_plus", 1))
+    # ---- Load sleeve positions
+    pos_dfs, meta = load_sleeve_positions(input_dir, sleeves)
+    data = pos_dfs[0]
+    for df in pos_dfs[1:]:
+        data = data.merge(df, on="dt", how="inner")
 
-    reporting = cfg.get("reporting", {}).get("write", {})
-    out_combo   = Path(reporting.get("combo_path",   "outputs/copper/composite_ad_hoc/daily_combo.csv"))
-    out_summary = Path(reporting.get("summary_path", "outputs/copper/composite_ad_hoc/summary_metrics.csv"))
-    out_dir = out_combo.parent; out_dir.mkdir(parents=True, exist_ok=True)
+    # ---- Add price & compute single instrument return
+    px = find_price_series(input_dir, sleeves)
+    data = data.merge(px, on="dt", how="inner")
+    data["instr_ret"] = data["price"].pct_change().fillna(0.0)
 
-    # ---------- Inputs ----------
-    hook_cfg   = cfg.get("inputs", {}).get("hookcore", {})
-    stocks_cfg = cfg.get("inputs", {}).get("stockscore", {})
-    if not hook_cfg or not stocks_cfg:
-        raise ValueError("Missing inputs.hookcore / inputs.stockscore in YAML.")
+    # ---- Risk-normalise sleeves vs instrument return
+    pre_vols = {}
+    scales = {}
+    for s in sleeves:
+        raw_ret = pd.to_numeric(data[f"{s}_pos"], errors="coerce") * pd.to_numeric(
+            data["instr_ret"], errors="coerce"
+        )
+        v = ann_vol(raw_ret)
+        pre_vols[s] = v
+        scale = (per_sleeve_target_vol / v) if (v and v > 0 and np.isfinite(v)) else 0.0
+        scales[s] = scale
+        data[f"{s}_pos_scaled"] = (
+            pd.to_numeric(data[f"{s}_pos"], errors="coerce") * scale
+        )
 
-    use_stream = str(hook_cfg.get("use_stream", "biweekly")).lower()
-    hook_path   = hook_cfg.get("path");  stocks_path = stocks_cfg.get("path")
-    if not hook_path or not stocks_path:
-        raise ValueError("inputs.hookcore.path and inputs.stockscore.path must be set.")
-    hook_raw   = read_table_auto(hook_path)
-    stocks_raw = read_table_auto(stocks_path)
+    # ---- Sleeve realised returns (post scaling)
+    r_cols = []
+    for s in sleeves:
+        col = f"{s}_ret_scaled"
+        data[col] = pd.to_numeric(
+            data[f"{s}_pos_scaled"], errors="coerce"
+        ) * pd.to_numeric(data["instr_ret"], errors="coerce")
+        r_cols.append(col)
 
-    # Map Hook fields
-    hf = hook_cfg.get("fields", {})
-    ret_hook_col = hf.get("ret_biweekly") if use_stream == "biweekly" else hf.get("ret_weekly")
-    pos_hook_col = hf.get("pos_biweekly") if use_stream == "biweekly" else hf.get("pos_weekly")
-    if not ret_hook_col or not pos_hook_col:
-        raise ValueError("HookCore fields missing: ret_weekly/ret_biweekly and pos_weekly/pos_biweekly required.")
-    missing_hook = [c for c in [ret_hook_col, pos_hook_col] if c not in hook_raw.columns]
-    if missing_hook:
-        raise ValueError(f"HookCore missing columns {missing_hook}. Found: {list(hook_raw.columns)}")
-    hook = hook_raw.rename(columns={ret_hook_col:"ret_hook", pos_hook_col:"pos_hook"})[["dt","ret_hook","pos_hook"]]
+    # ---- Blending: ERC weights (or equal weight)
+    if use_erc and len(sleeves) > 1:
+        R = data[r_cols].fillna(0.0).to_numpy()
+        # sample covariance of sleeve returns
+        cov = np.cov(R.T, ddof=1) if R.shape[0] > 1 else np.eye(len(sleeves))
+        w = erc_weights(cov)
+    else:
+        w = np.ones(len(sleeves)) / len(sleeves)
 
-    # Map Stocks fields
-    sf = stocks_cfg.get("fields", {})
-    ret_stocks_col = sf.get("ret");  pos_stocks_col = sf.get("pos")
-    if not ret_stocks_col or not pos_stocks_col:
-        raise ValueError("StocksCore fields missing: need 'ret' and 'pos'.")
-    missing_stocks = [c for c in [ret_stocks_col, pos_stocks_col] if c not in stocks_raw.columns]
-    if missing_stocks:
-        raise ValueError(f"StocksCore missing columns {missing_stocks}. Found: {list(stocks_raw.columns)}")
-    stocks = stocks_raw.rename(columns={ret_stocks_col:"ret_stocks", pos_stocks_col:"pos_stocks"})[["dt","ret_stocks","pos_stocks"]]
+    # ---- Composite position & optional vol target
+    scaled_pos_cols = [f"{s}_pos_scaled" for s in sleeves]
+    data["composite_pos_unlev"] = (data[scaled_pos_cols] @ w).clip(-cap, cap)
 
-    # Align & weights
-    df = pd.merge(hook, stocks, on="dt", how="inner", validate="one_to_one").sort_values("dt").reset_index(drop=True)
-    w = inverse_vol_weights(df["ret_hook"], df["ret_stocks"], lookback=args.weight_lookback)
-    df = pd.concat([df, w], axis=1)
+    if use_comp_vt:
+        pnl_unlev = pd.to_numeric(
+            data["composite_pos_unlev"], errors="coerce"
+        ) * pd.to_numeric(data["instr_ret"], errors="coerce")
+        # rolling realised vol (simple stdev over lookback)
+        rv = pnl_unlev.rolling(comp_lookback).std() * np.sqrt(252.0)
+        lev = (comp_target / rv).replace([np.inf, -np.inf], np.nan)
+        lev = lev.clip(0.0, comp_lev_cap).fillna(1.0)
+        data["composite_pos"] = (data["composite_pos_unlev"] * lev).clip(-cap, cap)
+    else:
+        data["composite_pos"] = data["composite_pos_unlev"]
 
-    weekdays = df["dt"].dt.day_name().str[:3]  # Mon, Tue, ...
-    is_rebal = weekdays.isin(rebalance_days)
-    df.loc[~is_rebal, ["w_hook","w_stocks"]] = np.nan
-    df[["w_hook","w_stocks"]] = df[["w_hook","w_stocks"]].ffill()
-    s = df["w_hook"] + df["w_stocks"]; df["w_hook"] /= s; df["w_stocks"] /= s
+    # ---- PnL, costs, equity (costs on what we actually trade)
+    data["pnl_gross"] = pd.to_numeric(
+        data["composite_pos"], errors="coerce"
+    ) * pd.to_numeric(data["instr_ret"], errors="coerce")
+    data["turnover"] = data["composite_pos"].diff().abs().fillna(0.0)
+    data["cost"] = data["turnover"] * cost_bps
+    data["pnl_net"] = data["pnl_gross"] - data["cost"]
+    data["equity"] = (1.0 + data["pnl_net"].fillna(0.0)).cumprod()
 
-    # Composite pre-cost + positions (unlevered)
-    df["ret_combo_raw"] = df["w_hook"]*df["ret_hook"] + df["w_stocks"]*df["ret_stocks"]
-    df["pos_target"]    = df["w_hook"]*df["pos_hook"] + df["w_stocks"]*df["pos_stocks"]
+    # ---- Summary stats
+    pnl = pd.to_numeric(data["pnl_net"], errors="coerce")
+    sharpe = (
+        (np.nanmean(pnl) / np.nanstd(pnl) * np.sqrt(252.0))
+        if np.nanstd(pnl) > 0
+        else np.nan
+    )
+    a_ret = float(np.nanmean(pnl) * 252.0)
+    a_vol = ann_vol(pnl)
+    dd = float((1.0 - data["equity"] / data["equity"].cummax()).max())
 
-    # Executed (T+1), costs, after-cost
-    df["pos_exec"]  = df["pos_target"].shift(t_plus)
-    df["turnover"]  = turnover_series(df["pos_exec"])
-    df["cost"]      = (costs_bps / 10000.0) * df["turnover"]
-    df["ret_after_cost"] = df["ret_combo_raw"] - df["cost"].fillna(0.0)
+    # ---- Diagnostics: per-sleeve vols (pre & post), correlations, weights
+    post_vols = {}
+    for s in sleeves:
+        post_vols[s] = ann_vol(data[f"{s}_ret_scaled"])
 
-    # Vol target (T+1)
-    vt = vol_target_tplus1(df["ret_after_cost"], target_vol, lookback_vol, cap)
-    df["lev"] = vt["lev"]
-    df["ret_combo_net"] = vt["ret_scaled"]
+    corr_df = data[r_cols].corr()
+    weights_series = pd.Series(w, index=sleeves, name="erc_weight")
 
-    # Levered positions, equity, drawdown
-    df["pos_target_lev_T"] = df["pos_target"] * df["lev"]
-    df["pos_exec_lev_T"]   = df["pos_exec"]   * df["lev"]
-    df["equity_net"] = (1.0 + df["ret_combo_net"].fillna(0.0)).cumprod()
-    df["drawdown"]   = df["equity_net"]/df["equity_net"].cummax() - 1.0
+    diag_lines = []
+    diag_lines.append("Composite v0.3 diagnostics")
+    diag_lines.append(f"Sleeves: {', '.join(sleeves)}")
+    diag_lines.append(f"Inputs dir: {input_dir}")
+    diag_lines.append("\nPer-sleeve realised vol vs copper (pre-scale):")
+    for s in sleeves:
+        diag_lines.append(f"  {s:12s}: {pre_vols[s]:6.2%}")
+    diag_lines.append("\nPer-sleeve realised vol vs copper (post-scale to ~target):")
+    for s in sleeves:
+        diag_lines.append(f"  {s:12s}: {post_vols[s]:6.2%}")
+    diag_lines.append("\nERC weights:")
+    for s in sleeves:
+        diag_lines.append(f"  {s:12s}: {weights_series[s]:6.2%}")
+    diag_lines.append("\nScales applied (target_vol / pre_vol):")
+    for s in sleeves:
+        diag_lines.append(f"  {s:12s}: {scales[s]:.4f}")
+    diag_txt = "\n".join(diag_lines)
 
-    # Join Copper 3m price from Excel (your path/cols)
-    if not args.no_price and Path(args.price_xlsx).exists():
-        p = read_price_from_excel(args.price_xlsx, args.price_sheet, args.price_date_col_idx, args.price_px_col_idx)
-        df = df.merge(p, on="dt", how="left")
+    summary = f"""
+Composite v0.3 Summary
+======================
+Sleeves: {', '.join(sleeves)}
+Inputs dir: {input_dir}
 
-    # Write rich daily series
-    daily_cols = [
-        "dt",
-        "copper_3m" if "copper_3m" in df.columns else None,
-        "w_hook","w_stocks",
-        "pos_hook","pos_stocks",
-        "pos_target","pos_target_lev_T",
-        "pos_exec","pos_exec_lev_T",
-        "turnover","cost","lev",
-        "ret_hook","ret_stocks","ret_combo_raw","ret_after_cost","ret_combo_net",
-        "equity_net","drawdown"
-    ]
-    daily_cols = [c for c in daily_cols if c is not None]
-    rich_path = out_dir / "daily_series.csv"
-    df[daily_cols].to_csv(rich_path, index=False)
+Blending: {'ERC (equal risk contribution)' if use_erc and len(sleeves)>1 else 'Equal-weight'}
+Per-sleeve target vol: {per_sleeve_target_vol:.0%} vs copper
+Composite vol target: {'ON ' + str(comp_target) if use_comp_vt else 'OFF'}
+Leverage cap: {comp_lev_cap:.2f}, Lookback: {comp_lookback}d
 
-    # Legacy daily_combo
-    legacy = pd.DataFrame({
-        "dt": df["dt"],
-        "hook": df["ret_hook"],
-        "stocks": df["ret_stocks"],
-        "combo_eqw": (df["ret_hook"] + df["ret_stocks"]) / 2.0,
-        "combo_10vol": df["ret_combo_net"],
-    })
-    legacy_path = out_dir / "daily_combo.csv"
-    legacy.to_csv(legacy_path, index=False)
+Annualised Return: {a_ret:.2%}
+Annualised Vol:    {a_vol:.2%}
+Sharpe:            {sharpe if np.isfinite(sharpe) else float('nan'):.2f}
+Max Drawdown:      {dd:.2%}
+Costs:             {cfg.get('cost_bps', 1.5)} bps on composite turnover
+ERC weights:       {', '.join([f'{s}:{weights_series[s]:.2%}' for s in sleeves])}
+"""
 
-    # Summary
-    summary = pd.DataFrame([{
-        "name": "Composite_net",
-        "ann_return": df["ret_combo_net"].mean() * TRADING_DAYS,
-        "ann_vol": ann_vol(df["ret_combo_net"]),
-        "sharpe": sharpe(df["ret_combo_net"]),
-        "max_drawdown": max_drawdown(df["equity_net"]),
-        "hit_rate": hit_rate(df["ret_combo_net"]),
-        "turnover_ann": float(df["turnover"].sum() / (len(df) / TRADING_DAYS)),
-    }])
-    out_summary.parent.mkdir(parents=True, exist_ok=True)
-    summary.to_csv(out_summary, index=False)
+    print(summary)
 
-    print("[OK] Wrote:")
-    print(f" - {rich_path}")
-    print(f" - {legacy_path}")
-    print(f" - {out_summary}")
+    # ---- Save outputs
+    os.makedirs(os.path.dirname(out_csv), exist_ok=True)
+    data.to_csv(out_csv, index=False)
+    with open(out_summary, "w") as f:
+        f.write(summary)
+    with open(out_diag_txt, "w") as f:
+        f.write(diag_txt)
+    corr_df.to_csv(out_corr_csv, index=True)
+
 
 if __name__ == "__main__":
-    pd.set_option("display.width", 160)
-    pd.set_option("display.max_columns", 80)
-    try:
-        main()
-    except Exception as e:
-        print(f"[ERROR] {e}", file=sys.stderr)
-        sys.exit(1)
+    main()

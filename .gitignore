@@ -1,38 +1,237 @@
-# -----------------------------
-# 🧱 Metals Quant Model - .gitignore
-# -----------------------------
+# Git Commit Checklist - v2.0 Infrastructure
 
-# --- Virtual environments ---
-.venv/
-env/
-venv/
+## Pre-Commit Steps
 
-# --- Python cache and temp files ---
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.log
+### 1. Archive Old Files
+```bash
+# Create archive directory
+mkdir archive\2024_pre_standardization
 
-# --- Local databases and intermediate files ---
-*.db
-*.sqlite
+# Move old files (adjust as needed)
+move old_scripts\*.py archive\2024_pre_standardization\
+move experimental\*.py archive\2024_pre_standardization\
+```
 
-# --- Excel and CSV data (raw or temporary) ---
-*.xlsx
-*.xls
-*.csv
+### 2. Verify Working Sleeves
+Run each sleeve to confirm it works:
+```bash
+run_crashandrecover.bat
+run_hookcore.bat
+run_momentumtail.bat
+run_trendcore.bat
+run_[sleeve5].bat
+```
 
-# --- Images, bundles, and misc local files ---
-*.png
-*.bundle
+### 3. File Structure Check
+Ensure you have:
+```
+✅ src\core\contract.py
+✅ src\signals\crashandrecover.py
+✅ src\signals\hookcore.py
+✅ src\signals\momentumtail.py
+✅ src\signals\trendcore.py
+✅ src\cli\build_crashandrecover.py
+✅ src\cli\build_hookcore_v2.py
+✅ src\cli\build_momentumtail_v2.py
+✅ Config\Copper\crashandrecover.yaml
+✅ Config\Copper\hookcore.yaml
+✅ Config\Copper\momentumtail.yaml
+✅ tools\validate_outputs.py
+✅ run_*.bat files
+✅ .gitignore
+✅ README.md
+✅ INFRASTRUCTURE_STANDARDS.md
+✅ QUICK_REFERENCE.md
+```
 
-# --- Local-only directories (not versioned) ---
-Database/
-python/
-Copper/quant.db
-outputs/
-data/
-outputs/
-*.parquet
-*.tmp_*
+### 4. Update README.md
+Fill in:
+- [ ] All 5 sleeve names and descriptions
+- [ ] Performance metrics for each sleeve
+- [ ] Your contact information
+
+---
+
+## Git Workflow (Recommended: Branch Strategy)
+
+### Step 1: Create Branch
+```bash
+cd C:\Code\Metals
+
+# Make sure you're on main and up to date
+git checkout main
+git pull origin main
+
+# Create new branch
+git checkout -b v2.0-infrastructure
+```
+
+### Step 2: Stage Files
+```bash
+# Add new .gitignore
+git add .gitignore
+
+# Add source code
+git add src/
+
+# Add configs
+git add Config/
+
+# Add tools
+git add tools/
+
+# Add batch files
+git add run_*.bat
+
+# Add documentation
+git add README.md INFRASTRUCTURE_STANDARDS.md QUICK_REFERENCE.md
+
+# Check what you're committing
+git status
+```
+
+### Step 3: Commit
+```bash
+git commit -m "feat: v2.0 infrastructure with Layer A/B architecture
+
+- Implemented immutable Layer A execution contract
+- Created 5 operational sleeves: CrashAndRecover, HookCore, MomentumTail, TrendCore, [Sleeve5]
+- Standardized YAML configs and build scripts
+- Added automated validation framework
+- Comprehensive documentation (standards + quick reference)
+- T→T+1 PnL accrual across all sleeves
+- Vol targeting with leverage caps
+
+Breaking changes:
+- Complete refactor from previous architecture
+- All sleeves now share Layer A contract"
+```
+
+### Step 4: Push Branch
+```bash
+git push -u origin v2.0-infrastructure
+```
+
+### Step 5: Create Pull Request on GitHub
+1. Go to https://github.com/fontkie/metals-quant-model
+2. Click "Compare & pull request" (should appear after push)
+3. Review the changes in the diff
+4. Add PR description:
+   ```
+   ## v2.0 Infrastructure Release
+   
+   Major refactor to two-layer architecture.
+   
+   ### What Changed
+   - Layer A: Immutable execution contract (vol targeting, T→T+1 accrual)
+   - Layer B: 5 operational sleeves with unique signal logic
+   - Automated validation framework
+   - Comprehensive documentation
+   
+   ### Sleeves Implemented
+   - CrashAndRecover (Sharpe: -0.40)
+   - HookCore
+   - MomentumTail (Sharpe: -0.02)
+   - TrendCore
+   - [Sleeve 5]
+   
+   ### Testing
+   - [x] All sleeves run successfully
+   - [x] Outputs pass validation
+   - [x] Documentation complete
+   ```
+5. Click "Create pull request"
+
+### Step 6: Review & Merge
+1. Review the diff carefully on GitHub
+2. Check for any files that shouldn't be committed (data, outputs)
+3. If everything looks good: **Merge pull request** → **Confirm merge**
+4. Delete branch after merge (optional)
+
+### Step 7: Pull Main Locally
+```bash
+git checkout main
+git pull origin main
+```
+
+---
+
+## Alternative: Direct to Main (if confident)
+
+```bash
+cd C:\Code\Metals
+git checkout main
+git add .gitignore src/ Config/ tools/ run_*.bat README.md INFRASTRUCTURE_STANDARDS.md QUICK_REFERENCE.md
+git commit -m "feat: v2.0 infrastructure with Layer A/B architecture"
+git push origin main
+```
+
+---
+
+## What NOT to Commit
+
+❌ **Do not commit:**
+- `Data/` folder (CSV files are too large)
+- `outputs/` folder (generated files)
+- `archive/` folder (old code)
+- `__pycache__/` folders
+- `.vscode/` or `.idea/` (IDE configs)
+- Any `.csv`, `.json` output files
+
+✅ **Do commit:**
+- All `.py` source code
+- All `.yaml` configs
+- All `.bat` build scripts
+- All `.md` documentation
+- `.gitignore` file
+
+---
+
+## Post-Commit Checklist
+
+After pushing to GitHub:
+
+- [ ] Verify all files appear on GitHub
+- [ ] Check that Data/ and outputs/ are NOT in the repo
+- [ ] Clone the repo in a new location to test it works fresh
+- [ ] Update project documentation with GitHub URL
+- [ ] Tag the release: `git tag v2.0.0 && git push origin v2.0.0`
+
+---
+
+## Rolling Back (if needed)
+
+If something goes wrong:
+
+```bash
+# Undo last commit (keeps changes)
+git reset --soft HEAD~1
+
+# Undo last commit (discards changes)
+git reset --hard HEAD~1
+
+# Revert a pushed commit
+git revert <commit-hash>
+git push origin main
+```
+
+---
+
+## Next Development Cycle
+
+After this commit, future changes should be:
+
+1. **Small, focused commits** (one feature per commit)
+2. **Descriptive messages** ("fix: correct ATR calculation in CrashAndRecover")
+3. **Test before committing** (always run the sleeve first)
+4. **Branch for experiments** (don't break main)
+
+Example workflow:
+```bash
+git checkout -b feature/optimize-hookcore-params
+# Make changes...
+git add src/signals/hookcore.py Config/Copper/hookcore.yaml
+git commit -m "feat: optimize HookCore Bollinger parameters (5→7 day window)"
+git push origin feature/optimize-hookcore-params
+# Create PR, review, merge
+```

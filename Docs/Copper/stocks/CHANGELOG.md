@@ -13,3 +13,31 @@
 
 ## v0.1.0 — 2025-10-07
 - Initial release (rate-of-change sleeve): z of Δ total stocks with {5,20} components @ thr=0.75, daily exec, T+1.
+
+# Copper — StocksCore — CHANGELOG
+
+## v0.1.1 — 2025-10-20
+- **Stable version freeze** for Copper StocksCore (inventory-driven sleeve).
+- Rebuilt using Excel pricing input (`pricing_values.xlsx`) instead of SQLite.
+- Code: `src/build_stockscore_v011.py`  
+  Config: `Docs/Copper/stocks/stockscore_config.yaml`
+- Generated outputs in `outputs/copper/stocks/stockscore_v0_1_1/`:
+  - `daily_series.csv`
+  - `equity_curves.csv`
+  - `annual_returns.csv`
+  - `summary_metrics.csv`
+- Parameters:
+  - Signal = z20(Δ LME total stocks), threshold ±1.0 → {+1, 0, –1}
+  - Execution = daily, **T+1**
+  - Vol target = 10 % annual (21 d lookback, cap 2.5×)
+  - Cost = 1.5 bps per one-way turnover
+- In-sample (2008-2017) and out-of-sample (2018-present) periods as per global baseline.
+- HookCore + StocksCore composite (v0.1.0) delivers OOS Sharpe ≈ 0.60 (see `Docs/Copper/combined`).
+
+### Notes
+- Signal uses **only LME total stocks** data — no price information in the signal itself.  
+- Price is used solely for volatility targeting and PnL conversion.  
+- Next revision (v0.2.x) may:
+  - Add multi-region stocks (LME + SHFE + Bonded)
+  - Explore level-based sentiment or rate-of-change blending
+  - Add optional smoothing and quiet-market filters

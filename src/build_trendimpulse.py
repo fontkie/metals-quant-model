@@ -1,3 +1,57 @@
+# --- Policy header (paste near the top of each build_*.py) ---
+from utils.policy import load_execution_policy, policy_banner, warn_if_mismatch
+import yaml
+
+# >>> EDIT ME per sleeve <<<
+SLEEVE_NAME = (
+    "TrendImpulse"  # e.g., "TrendCore", "TrendImpulse", "HookCore", "StocksScore"
+)
+CONFIG_PATH = "Docs/Copper/trendimpulse/config.yaml"  # path to THIS sleeve's YAML
+
+POLICY = load_execution_policy()
+print(policy_banner(POLICY, sleeve_name=SLEEVE_NAME))
+
+
+# Read this sleeve's actual execution setup from its YAML
+def _read_exec_days(path: str):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            y = yaml.safe_load(f) or {}
+        ex = y.get("execution") or {}
+        if ex.get("event_driven", False):
+            return None  # skip weekday check for event-driven sleeves
+        return tuple(ex.get("exec_weekdays", (0, 2, 4)))
+    except FileNotFoundError:
+        # If the sleeve has no YAML yet, fall back to project default
+        return (0, 2, 4)
+
+
+_exec_days = _read_exec_days(CONFIG_PATH)
+
+# Warn if this script’s assumptions diverge from project policy
+if _exec_days is None:
+    # event-driven: don't pass exec_weekdays
+    msgs = warn_if_mismatch(
+        POLICY,
+        fill_timing="close_T",
+        vol_info="T",
+        leverage_cap=2.5,
+        one_way_bps=1.5,
+    )
+else:
+    msgs = warn_if_mismatch(
+        POLICY,
+        exec_weekdays=_exec_days,
+        fill_timing="close_T",
+        vol_info="T",
+        leverage_cap=2.5,
+        one_way_bps=1.5,
+    )
+
+for _m in msgs:
+    print(_m)
+# --- end policy header ---
+
 # src/build_trendimpulse.py
 # TrendImpulse — fast-trend (2–4 day) continuation sleeve
 # - Cadences: monwed | tuethu | tuefri | daily
