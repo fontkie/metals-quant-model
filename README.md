@@ -1,146 +1,256 @@
-📄 README.md
-# Base Metals Quant Model
-
-# Metals Quant Model
-
-End-to-end workflow for uploading raw pricing data from Excel, storing in SQLite, building signals, and backtesting.
-
----
-
-## Folder structure
-
-```text
-Metals/
-  Copper/
-    pricing_values.xlsx   # Raw input Excel (sheet: Raw, col A: Date, other cols = price series)
-    quant.db              # Auto-created SQLite database
-  outputs/
-    Copper/               # Signals + backtest outputs
-  src/
-    load_data.py          # Load Excel → SQLite (prices table, clean-load replace mode)
-    build_hookcore.py      # Generate momentum, hook, carry signals → CSV
-    backtest_prices.py    # Simple backtester (reads prices_std + signals)
-    test_db.py            # Sanity checks (prices_long + signals)
-    fix_views.py          # Creates views: prices_long (long), prices_std (wide)
-    list_series.py        # Inspect DB tables, views, and distinct symbols
-    write_last_run.py     # Writes LAST_RUN.json snapshot
-  run_all.bat             # One-click pipeline
-  setup_once.bat          # One-time environment setup
-  requirements.txt        # Python package list
-  README.md
-  CHANGELOG.md
-
-Quickstart
-
-Clone repo and open Command Prompt (not PowerShell).
-
-Go to project folder:
-
-cd C:\Code\Metals
+\# Metals Quant Model - v2.0 Infrastructure
 
 
-One-time setup (creates .venv and installs packages):
 
-setup_once.bat
-
-
-Put your raw data in:
-
-Copper\pricing_values.xlsx
+Systematic base metals trading strategies using a two-layer architecture.
 
 
-Sheet: Raw
-Column A: Date
-Other columns: price series (e.g. copper_lme_3mo, copper_lme_cash_3mo, …)
 
-Run (clean load → views → quick check):
-
-python src\load_data.py --db Copper\quant.db --xlsx Copper\pricing_values.xlsx --mode replace
-python src\fix_views.py --db Copper\quant.db
-python src\list_series.py --db Copper\quant.db
+\## 🏗️ Architecture
 
 
-(Optional one-click full run)
 
-run_all.bat
+\### Layer A: Immutable Execution Contract
 
+\- Vol targeting, leverage caps
 
-Steps performed:
+\- T→T+1 PnL accrual
 
-Load Excel → SQLite prices(date, symbol, price)
+\- Cost model (bps on Δpos)
 
-Create DB views:
-
-prices_long(date, symbol, price) tidy view for checks
-
-prices_std(date, …series…) wide pivot for backtest
-
-Build signals (signals_export.csv)
-
-Run sanity checks
-
-Run backtest (saves curves, summary, charts in outputs\Copper)
-
-Check outputs:
-
-outputs\Copper\signals_export.csv
-
-outputs\Copper\backtest_summary_prices.csv
-
-outputs\Copper\equity_curves_prices.csv
-
-outputs\Copper\charts\...
-
-DB schema
-
-Canonical table: prices(date, symbol, price)
-
-Views / tables created by the pipeline:
-
-prices_long(date, symbol, price) – tidy view for checks
-
-prices_std(date, …series…) – wide pivot for signals/backtests
-
-Daily workflow
-
-Update Excel file
-
-Run run_all.bat
-
-Review new outputs in outputs\Copper
-
-Snapshot for new chats:
-After each run, write_last_run.py saves:
-
-outputs\LAST_RUN.json
+\- \*\*Shared by all sleeves\*\*
 
 
-Paste that JSON + repo link into a new chat and everything can be picked up immediately.
 
-Requirements
+\### Layer B: Sleeve-Specific Logic
 
-See requirements.txt. Installed automatically by setup_once.bat.
+\- Signal generation (returns pos\_raw ∈ {-1, 0, +1})
 
-pandas
+\- Strategy-specific parameters
 
-numpy
+\- Each sleeve implements unique hypothesis
 
-matplotlib
 
-sqlalchemy
 
-openpyxl
+\## 📊 Current Sleeves
 
-Utilities
 
-list_series.py – inspect DB tables, views, and distinct symbols.
-Usage:
 
-python src\list_series.py --db Copper\quant.db
+| Sleeve | Hypothesis | Status |
 
-Troubleshooting
+|--------|------------|--------|
 
-Old column names showing up?
-Re-run loader with clean mode:
+| \*\*CrashAndRecover\*\* | Swing structure + volume confirmation | ✅ Operational |
 
-python src\load_data.py --db Copper\quant.db --xlsx Copper\pricing_values.xlsx --mode replace
+| \*\*HookCore\*\* | Bollinger mean-reversion + regime filters | ✅ Operational |
+
+| \*\*MomentumTail\*\* | Trend + tail risk hedging | ✅ Operational |
+
+| \*\*TrendCore\*\* | \[Description] | ✅ Operational |
+
+| \*\*\[Sleeve 5]\*\* | \[Description] | ✅ Operational |
+
+
+
+\## 🚀 Quick Start
+
+
+
+\### Build a Sleeve
+
+```bash
+
+cd C:\\Code\\Metals
+
+run\_crashandrecover.bat
+
+```
+
+
+
+\### Output Structure
+
+```
+
+outputs\\
+
+└── Copper\\
+
+&nbsp;   └── CrashAndRecover\\
+
+&nbsp;       ├── daily\_series.csv
+
+&nbsp;       └── summary\_metrics.json
+
+```
+
+
+
+\## 📁 Directory Structure
+
+
+
+```
+
+C:\\Code\\Metals\\
+
+├── src\\
+
+│   ├── core\\
+
+│   │   └── contract.py          # Layer A (immutable)
+
+│   ├── signals\\
+
+│   │   ├── crashandrecover.py
+
+│   │   ├── hookcore.py
+
+│   │   └── momentumtail.py
+
+│   └── cli\\
+
+│       ├── build\_crashandrecover.py
+
+│       ├── build\_hookcore\_v2.py
+
+│       └── build\_momentumtail\_v2.py
+
+├── Config\\
+
+│   └── Copper\\
+
+│       ├── crashandrecover.yaml
+
+│       ├── hookcore.yaml
+
+│       └── momentumtail.yaml
+
+├── Data\\                        # Not in git (too large)
+
+├── outputs\\                     # Not in git (generated)
+
+├── tools\\
+
+│   └── validate\_outputs.py
+
+└── run\_\*.bat                    # Build scripts
+
+```
+
+
+
+\## 🔧 Development
+
+
+
+\### Creating a New Sleeve
+
+
+
+1\. \*\*Signal function:\*\* `src\\signals\\newsleeve.py`
+
+2\. \*\*Build script:\*\* `src\\cli\\build\_newsleeve.py`
+
+3\. \*\*Config:\*\* `Config\\Copper\\newsleeve.yaml`
+
+4\. \*\*Batch file:\*\* `run\_newsleeve.bat`
+
+5\. \*\*Test:\*\* Run and validate
+
+
+
+See \[INFRASTRUCTURE\_STANDARDS.md](./INFRASTRUCTURE\_STANDARDS.md) for full details.
+
+
+
+\### Validation
+
+
+
+All outputs are automatically validated against the Layer A contract:
+
+```bash
+
+python tools\\validate\_outputs.py --outdir outputs\\Copper\\CrashAndRecover
+
+```
+
+
+
+\## 📖 Documentation
+
+
+
+\- \[Infrastructure Standards](./INFRASTRUCTURE\_STANDARDS.md) - Complete technical specification
+
+\- \[Quick Reference](./QUICK\_REFERENCE.md) - Day-to-day cheat sheet
+
+
+
+\## 🎯 Design Principles
+
+
+
+1\. \*\*Immutable Layer A\*\* - All sleeves use identical execution contract
+
+2\. \*\*T→T+1 Accrual\*\* - Position at T-1 earns return at T
+
+3\. \*\*Vol Targeting\*\* - Each sleeve scaled to target volatility
+
+4\. \*\*Cost Awareness\*\* - Realistic transaction costs on all trades
+
+5\. \*\*Validation First\*\* - No results trusted until validated
+
+
+
+\## 📊 Performance Summary
+
+
+
+| Sleeve | Sharpe | Ann. Vol | Max DD | Observations |
+
+|--------|--------|----------|--------|--------------|
+
+| CrashAndRecover | -0.40 | 3.83% | -37.13% | 5,690 |
+
+| HookCore | \[TBD] | \[TBD] | \[TBD] | \[TBD] |
+
+| MomentumTail | -0.02 | 3.50% | -18.72% | 6,698 |
+
+
+
+\*Performance as of October 2025\*
+
+
+
+\## 🔬 Next Steps
+
+
+
+\- \[ ] Parameter optimization for existing sleeves
+
+\- \[ ] Regime analysis (contango/backwardation)
+
+\- \[ ] Expand to other metals (Aluminum, Zinc)
+
+\- \[ ] Portfolio construction across sleeves
+
+\- \[ ] Live trading integration
+
+
+
+\## ⚖️ License
+
+
+
+Proprietary - All rights reserved
+
+
+
+\## 📧 Contact
+
+
+
+PM: \[Your name]
+

@@ -1,339 +1,425 @@
-import os, json, argparse, math
-import pandas as pd
+# --- Policy header (paste near the top of each build_*.py) ---
+from __future__ import annotations
+from utils.policy import load_execution_policy, policy_banner, warn_if_mismatch
+import yaml
+
+# >>> EDIT ME per sleeve <<<
+SLEEVE_NAME = "HookCore"  # e.g., "TrendCore", "TrendImpulse", "HookCore", "StocksScore"
+CONFIG_PATH = "docs/copper/hookcore/config.yaml"  # path to THIS sleeve's YAML
+
+POLICY = load_execution_policy()
+print(policy_banner(POLICY, sleeve_name=SLEEVE_NAME))
+
+
+def _read_exec_days(path: str):
+    """Hookcore executes DAILY; keep interface parity with Trend builder."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            y = yaml.safe_load(f) or {}
+        # If someone later adds a cadence in YAML, respect it. Otherwise, daily.
+        run = y.get("run") or {}
+        cad = (run.get("cadence") or "").lower()
+        if cad == "monwed":
+            return (0, 2)
+        if cad == "tuefri":
+            return (1, 4)
+        return (0, 1, 2, 3, 4)  # default: daily weekdays
+    except FileNotFoundError:
+        return (0, 1, 2, 3, 4)
+
+
+_exec_days = _read_exec_days(CONFIG_PATH)
+
+# Hookcore uses rolling scale clamp [0.5, 1.5] rather than a leverage cap, but we pass 1.5 here for banner harmony.
+msgs = warn_if_mismatch(
+    POLICY,
+    exec_weekdays=_exec_days,
+    fill_timing="close_T",
+    vol_info="T-1",  # scale uses returns up to T-1
+    leverage_cap=1.5,  # analogous to scale clamp max
+    one_way_bps=1.5,
+)
+for _m in msgs:
+    print(_m)
+# --- end policy header ---
+
+
+#!/usr/bin/env python
+# HookCore v1.5 — Copper mean-reversion (T-close execution; PnL from T+1)
+# Bollinger(5, 1.5σ) with regime filters (non-trend, low-vol, neg autocorr)
+# Hold 3 trading days with overlaps; entry cost on T only; no exit cost
+# Rolling 63D vol target to 10% with clamp [0.5, 1.5] using info up to T-1
+
+import argparse, json
+from pathlib import Path
+
 import numpy as np
-
-# ---------------------- Defaults ----------------------
-DEFAULT_LOW = 35.0
-DEFAULT_HIGH = 65.0
-DEFAULT_VOLRATIO = 1.0  # 10d/60d realised vol must be < this
-DEFAULT_VOL_TARGET = 0.10
-DEFAULT_VOL_LB = 28
-DEFAULT_LEV_CAP = 2.5
-DEFAULT_COST_PER_ABS_DELTA = 0.000015  # 1.5 bps
-DEFAULT_HOLD = 2
-DEFAULT_EXEC = "T"  # "T" or "next"
-DEFAULT_CADENCE = "biweekly"  # "biweekly" (Tue/Fri), "weekly" (Fri), "event"
-IS_CUTOFF = pd.Timestamp("2018-01-01")
+import pandas as pd
 
 
-def rsi(series: pd.Series, window=3):
-    delta = series.diff()
-    up = delta.clip(lower=0).rolling(window).mean()
-    down = (-delta.clip(upper=0)).rolling(window).mean()
-    rs = up / down.replace(0, np.nan)
-    out = 100 - (100 / (1 + rs))
-    return out.fillna(50)
+# ---------- IO ----------
 
 
-def rolling_vol(returns: pd.Series, lb: int = DEFAULT_VOL_LB) -> pd.Series:
-    return returns.rolling(lb).std() * np.sqrt(252)
-
-
-def vol_target_weights(
-    raw_ret: pd.Series,
-    target_vol=DEFAULT_VOL_TARGET,
-    lb=DEFAULT_VOL_LB,
-    max_lev=DEFAULT_LEV_CAP,
-):
-    rv = rolling_vol(raw_ret, lb=lb).replace(0, np.nan)
-    w = target_vol / rv
-    return w.clip(upper=max_lev).fillna(0.0)
-
-
-def schedule_mask(idx: pd.DatetimeIndex, schedule: str) -> pd.Series:
-    if schedule == "biweekly":
-        return pd.Series(idx.weekday, index=idx).isin([1, 4])  # Tue, Fri
-    if schedule == "weekly":
-        return pd.Series(idx.weekday, index=idx) == 4  # Fri
-    return pd.Series(True, index=idx)  # event (always allowed)
-
-
-def pnl_with_costs(ret: pd.Series, pos: pd.Series, cost_per_abs_delta: float):
-    pos_filled = pos.fillna(0.0)
-    delta = pos_filled.diff().abs().fillna(pos_filled.abs())
-    costs = cost_per_abs_delta * delta
-    strat_ret = pos_filled * ret - costs
-    return strat_ret, costs
-
-
-def equity_curve(strat_ret: pd.Series):
-    return (1 + strat_ret.fillna(0.0)).cumprod()
-
-
-def max_drawdown(curve: pd.Series):
-    peak = curve.cummax()
-    dd = curve / peak - 1.0
-    return float(dd.min())
-
-
-def annualise_sharpe(ret: pd.Series):
-    m = ret.mean() * 252
-    s = ret.std() * math.sqrt(252)
-    return 0.0 if (s == 0 or np.isnan(s)) else float(m / s)
-
-
-def signal_rsi3_cross(price: pd.Series, low_th: float, high_th: float):
-    r = rsi(price, 3)
-    dr = r.diff()
-    cross_up = (r.shift(1) < low_th) & (r >= low_th) & (dr > 0)
-    cross_dn = (r.shift(1) > high_th) & (r <= high_th) & (dr < 0)
-    sig = pd.Series(0.0, index=price.index)
-    sig[cross_up] = 1.0
-    sig[cross_dn] = -1.0
-    return sig.rename("signal")
-
-
-def run_strategy(
-    df: pd.DataFrame,
-    low_th: float,
-    high_th: float,
-    volratio_cap: float,
-    cadence: str,
-    exec_mode: str,
-    hold_bars: int,
-    vol_target: float,
-    vol_lb: int,
-    lev_cap: float,
-    cost_per_abs_delta: float,
-):
-    idx = df.index
-    ret = df["ret"]
-    price = df["Price"]
-
-    # Signal
-    signal = signal_rsi3_cross(price, low_th, high_th)
-
-    # Vol gate (10d/60d realised)
-    vol10 = ret.rolling(10).std()
-    vol60 = ret.rolling(60).std()
-    quiet = (vol10 / vol60) < volratio_cap
-
-    allow = schedule_mask(idx, cadence).reindex(idx).fillna(False) & quiet
-
-    # Execution choice
-    sig_use = signal if exec_mode.upper() == "T" else signal.shift(1)
-    sig_use = sig_use.fillna(0.0)
-
-    # Sizing
-    w = vol_target_weights(ret, vol_target, vol_lb, lev_cap)
-
-    # Time-stop engine
-    pos = pd.Series(0.0, index=idx)
-    trades = []
-    holding = 0
-    current_dir = 0
-    entry_date = None
-
-    for i, d in enumerate(idx):
-        if holding > 0:
-            pos.iloc[i] = current_dir * w.iloc[i]
-            holding -= 1
-            if holding == 0:
-                trades.append((entry_date, d, current_dir))
-                current_dir = 0
-                entry_date = None
-        else:
-            if allow.iloc[i] and sig_use.iloc[i] != 0.0:
-                current_dir = int(np.sign(sig_use.iloc[i]))
-                holding = hold_bars
-                pos.iloc[i] = current_dir * w.iloc[i]
-                entry_date = d
-            else:
-                pos.iloc[i] = 0.0
-
-    strat_ret, costs = pnl_with_costs(ret, pos, cost_per_abs_delta)
-    curve = equity_curve(strat_ret)
-
-    def seg(mask: pd.Series):
-        r = strat_ret[mask]
-        if r.empty:
-            return dict(
-                sharpe=0.0,
-                dd=np.nan,
-                turnover=np.nan,
-                trades=0,
-                avg_hold=np.nan,
-                pct_days=np.nan,
-                hit=np.nan,
-                ann_return=np.nan,
+def load_prices_excel_source_dates(
+    path, sheet, date_col, price_col, symbol
+) -> pd.Series:
+    """
+    Use *only* source trading dates (no weekday reindex; no forward-fill across holidays).
+    """
+    df = pd.read_excel(path, sheet_name=sheet)
+    df.columns = [str(c).strip() for c in df.columns]
+    df = df.rename(columns={date_col: "dt", price_col: symbol})[["dt", symbol]]
+    # Date may be Excel serial; let pandas infer + fallback for numeric
+    try:
+        if np.issubdtype(df["dt"].dtype, np.number):
+            df["dt"] = pd.to_datetime("1899-12-30") + pd.to_timedelta(
+                df["dt"].astype(float), unit="D"
             )
-        ec = equity_curve(r)
-        dd = max_drawdown(ec)
-        sharpe = annualise_sharpe(r)
-        turnover = pos[mask].diff().abs().mean()
-        # trade stats in segment (approx hit via sign*sum(ret))
-        tlist = [t for t in trades if (t[0] in r.index)]
-        if tlist:
-            holds = [(t[1] - t[0]).days for t in tlist]
-            hits = []
-            for s, e, dr in tlist:
-                sub = df.loc[s:e, "ret"]
-                hits.append(1 if dr * sub.sum() > 0 else 0)
-            avg_hold = float(np.mean(holds)) if holds else np.nan
-            hitrate = 100.0 * float(np.mean(hits)) if hits else np.nan
-            tcount = len(tlist)
         else:
-            avg_hold, hitrate, tcount = np.nan, np.nan, 0
-        ann_ret = (1 + r).prod() ** (252 / len(r)) - 1 if len(r) > 0 else np.nan
-        pct_days = 100.0 * (pos[mask] != 0).mean()
-        return dict(
-            sharpe=sharpe,
-            dd=dd,
-            turnover=turnover,
-            trades=tcount,
-            avg_hold=avg_hold,
-            pct_days=pct_days,
-            hit=hitrate,
-            ann_return=ann_ret,
-        )
+            df["dt"] = pd.to_datetime(df["dt"])
+    except Exception:
+        df["dt"] = pd.to_datetime(df["dt"])
+    df = df.dropna().sort_values("dt").drop_duplicates("dt").set_index("dt")
+    return df[symbol].rename(symbol)
 
-    is_mask = idx < IS_CUTOFF
-    oos_mask = idx >= IS_CUTOFF
 
-    return {
-        "signal": signal,
-        "position": pos,
-        "strat_ret": strat_ret,
-        "equity": curve,
-        "costs": costs,
-        "IS": seg(is_mask),
-        "OOS": seg(oos_mask),
-        "ALL": seg(pd.Series(True, index=idx)),
-    }
+# ---------- Indicators ----------
+
+
+def rolling_mean_std(px: pd.Series, lb: int):
+    mu = px.rolling(lb, min_periods=lb).mean()
+    sd = px.rolling(lb, min_periods=lb).std(ddof=0)
+    return mu, sd
+
+
+def cumret_window(px: pd.Series, lb: int) -> pd.Series:
+    return (px / px.shift(lb)) - 1.0
+
+
+def rolling_std_ret(ret: pd.Series, lb: int) -> pd.Series:
+    return ret.rolling(lb, min_periods=lb).std(ddof=0)
+
+
+def rolling_autocorr_lag1(ret: pd.Series, lb: int) -> pd.Series:
+    return ret.rolling(lb, min_periods=lb).corr(ret.shift(1))
+
+
+# ---------- Signal (bands + filters) ----------
+
+
+def hookcore_signal(
+    px: pd.Series,
+    bb_lb: int = 5,
+    sigma: float = 1.5,
+    shift_bars: int = 1,  # 1 = use bands from T-1 (no look-ahead)
+    trend_lb: int = 10,
+    trend_thresh: float = 0.05,
+    vol_lb: int = 20,
+    vol_thresh: float = 0.02,
+    autoc_lb: int = 10,
+    autoc_thresh: float = -0.1,
+) -> pd.DataFrame:
+    ret = px.pct_change().fillna(0.0)
+
+    mu, sd = rolling_mean_std(px, bb_lb)
+    if shift_bars:
+        mu = mu.shift(shift_bars)
+        sd = sd.shift(shift_bars)
+
+    upper = mu + sigma * sd
+    lower = mu - sigma * sd
+
+    non_trending = cumret_window(px, trend_lb).abs() < trend_thresh
+    low_vol = rolling_std_ret(ret, vol_lb) < vol_thresh
+    reversion_hint = rolling_autocorr_lag1(ret, autoc_lb) < autoc_thresh
+
+    filters_ok = (non_trending & low_vol & reversion_hint).astype(bool)
+
+    long_sig = (px < lower) & filters_ok
+    short_sig = (px > upper) & filters_ok
+
+    signal_T = pd.Series(0.0, index=px.index, dtype=float)
+    signal_T[long_sig.fillna(False)] = 1.0
+    signal_T[short_sig.fillna(False)] = -1.0
+
+    return pd.DataFrame(
+        {
+            "price": px,
+            "ret": ret,
+            "upper": upper,
+            "lower": lower,
+            "filters_ok": filters_ok.astype(float),
+            "signal_T": signal_T,
+        }
+    )
+
+
+# ---------- Position + PnL mechanics ----------
+
+
+def build_exposure_and_returns(
+    sig_df: pd.DataFrame,
+    hold_days: int = 3,
+    entry_bps: float = 1.5,
+    tplus1_exec: bool = False,  # default False => T execution
+):
+    """
+    T execution: entry at T, PnL accrues T+1 and T+2 for a 3-day hold from entry (no same-day PnL).
+    T+1 execution: entry at T+1, PnL accrues T+2 and T+3 (latency realism variant).
+    """
+    idx = sig_df.index
+    signal_T = sig_df["signal_T"].astype(float)
+    ret = sig_df["ret"].astype(float)
+
+    if tplus1_exec:
+        entry_sig = signal_T.shift(1).fillna(0.0)
+    else:
+        entry_sig = signal_T.copy()
+
+    # Exposure for PnL is the sum of active entries after they start accruing.
+    # For 3 trading days from entry, PnL accrues on the 2 days AFTER entry:
+    exposure_for_pnl = entry_sig.shift(1).fillna(0.0) + entry_sig.shift(2).fillna(0.0)
+
+    # Costs: charged on entry day only, per |entry| (no exit cost)
+    costs = -(entry_bps * 1e-4) * entry_sig.abs()
+
+    raw_pnl = exposure_for_pnl * ret
+    ret_unscaled = raw_pnl + costs
+
+    out = pd.DataFrame(
+        {
+            "entry_signal": entry_sig,
+            "exposure_for_pnl": exposure_for_pnl,
+            "raw_pnl": raw_pnl,
+            "entry_cost": costs,
+            "ret_unscaled": ret_unscaled,
+        },
+        index=idx,
+    )
+    return out
+
+
+# ---------- Rolling vol targeting ----------
+
+
+def apply_vol_target(
+    ret_unscaled: pd.Series,
+    ann_target: float = 0.10,
+    roll_win_days: int = 63,
+    clamp_min: float = 0.5,
+    clamp_max: float = 1.5,
+):
+    # Use information up to T-1
+    rolling_std = (
+        ret_unscaled.shift(1)
+        .rolling(roll_win_days, min_periods=roll_win_days)
+        .std(ddof=0)
+    )
+    realized_vol_ann = rolling_std * np.sqrt(252.0)
+    scale_t = (ann_target / realized_vol_ann).clip(lower=clamp_min, upper=clamp_max)
+    scale_t = scale_t.fillna(1.0)
+    ret_scaled = ret_unscaled * scale_t
+    return scale_t, ret_scaled
+
+
+# ---------- Stats ----------
+
+
+def sharpe_252(s: pd.Series) -> float:
+    s = s.dropna()
+    sd = s.std(ddof=0)
+    return float("nan") if sd == 0 else float((s.mean() / sd) * np.sqrt(252.0))
+
+
+# ---------- Runner ----------
+
+
+def run_hookcore(
+    px: pd.Series,
+    # Bands & filters
+    bb_lb: int = 5,
+    sigma: float = 1.5,
+    shift_bars: int = 1,
+    trend_lb: int = 10,
+    trend_thresh: float = 0.05,
+    vol_lb: int = 20,
+    vol_thresh: float = 0.02,
+    autoc_lb: int = 10,
+    autoc_thresh: float = -0.1,
+    # Holds, costs, scaling
+    hold_days: int = 3,
+    entry_bps: float = 1.5,
+    tplus1_exec: bool = False,
+    ann_target: float = 0.10,
+    roll_win_days: int = 63,
+    clamp_min: float = 0.5,
+    clamp_max: float = 1.5,
+):
+    sig = hookcore_signal(
+        px=px,
+        bb_lb=bb_lb,
+        sigma=sigma,
+        shift_bars=shift_bars,
+        trend_lb=trend_lb,
+        trend_thresh=trend_thresh,
+        vol_lb=vol_lb,
+        vol_thresh=vol_thresh,
+        autoc_lb=autoc_lb,
+        autoc_thresh=autoc_thresh,
+    )
+    mech = build_exposure_and_returns(
+        sig_df=sig,
+        hold_days=hold_days,
+        entry_bps=entry_bps,
+        tplus1_exec=tplus1_exec,
+    )
+    scale_t, ret_scaled = apply_vol_target(
+        ret_unscaled=mech["ret_unscaled"],
+        ann_target=ann_target,
+        roll_win_days=roll_win_days,
+        clamp_min=clamp_min,
+        clamp_max=clamp_max,
+    )
+
+    signals = pd.concat(
+        [sig, mech[["entry_signal", "exposure_for_pnl"]], scale_t.rename("scale_t")],
+        axis=1,
+    )
+    pnl = pd.DataFrame(
+        {
+            "ret": sig["ret"],
+            "raw_pnl": mech["raw_pnl"],
+            "entry_cost": mech["entry_cost"],
+            "ret_unscaled": mech["ret_unscaled"],
+            "scale_t": scale_t,
+            "ret_scaled": ret_scaled,
+        }
+    )
+    return signals, pnl
 
 
 def main():
-    p = argparse.ArgumentParser(
-        description="HookCore signals builder (RSI3 cross + vol gate)"
+    ap = argparse.ArgumentParser(
+        description="Build HookCore v1.5 (Copper) — T execution; PnL from T+1; 63D rolling vol target."
     )
-    p.add_argument("--excel", required=True)
-    p.add_argument("--sheet", default="Raw")
-    p.add_argument("--date-col", default="Date")
-    p.add_argument("--price-col", default="copper_lme_3mo")
-    p.add_argument("--symbol", default="COPPER")
-    p.add_argument("--outdir", default=None)
+    # IO
+    ap.add_argument("--excel", required=True)
+    ap.add_argument("--sheet", default="Raw")
+    ap.add_argument("--date-col", default="Date")
+    ap.add_argument("--price-col", default="copper_lme_3mo")
+    ap.add_argument("--symbol", default="COPPER")
+    ap.add_argument("--outdir", required=True)
+    ap.add_argument("--oos-start", default="2018-01-01")
+    ap.add_argument("--schema-path", default="Config/schema.yaml")
 
-    # Strategy params
-    p.add_argument(
-        "--low", type=float, default=DEFAULT_LOW, help="RSI low threshold (default 35)"
+    # Bands & filters
+    ap.add_argument("--bb-lb", type=int, default=5)
+    ap.add_argument("--sigma", type=float, default=1.5)
+    ap.add_argument(
+        "--bands-shift", type=int, default=1
+    )  # 1 = shift bands by 1 bar (no look-ahead)
+    ap.add_argument("--trend-lb", type=int, default=10)
+    ap.add_argument("--trend-thresh", type=float, default=0.05)
+    ap.add_argument("--vol-lb", type=int, default=20)
+    ap.add_argument("--vol-thresh", type=float, default=0.02)
+    ap.add_argument("--autoc-lb", type=int, default=10)
+    ap.add_argument("--autoc-thresh", type=float, default=-0.1)
+
+    # Holds, costs, scaling, exec
+    ap.add_argument("--hold-days", type=int, default=3)
+    ap.add_argument("--bps", type=float, default=1.5)
+    ap.add_argument(
+        "--tplus1-exec",
+        action="store_true",
+        help="If set, execute at T+1 (latency realism variant).",
     )
-    p.add_argument(
-        "--high",
-        type=float,
-        default=DEFAULT_HIGH,
-        help="RSI high threshold (default 65)",
-    )
-    p.add_argument(
-        "--volratio",
-        type=float,
-        default=DEFAULT_VOLRATIO,
-        help="10d/60d vol must be < this (default 1.0)",
-    )
-    p.add_argument(
-        "--cadence", choices=["biweekly", "weekly", "event"], default=DEFAULT_CADENCE
-    )
-    p.add_argument("--exec", choices=["T", "next"], default=DEFAULT_EXEC)
-    p.add_argument("--hold", type=int, default=DEFAULT_HOLD)
+    ap.add_argument("--ann-target", type=float, default=0.10)
+    ap.add_argument("--roll-win", type=int, default=63)
+    ap.add_argument("--scale-min", type=float, default=0.5)
+    ap.add_argument("--scale-max", type=float, default=1.5)
 
-    # Risk & costs
-    p.add_argument("--vol-target", type=float, default=DEFAULT_VOL_TARGET)
-    p.add_argument("--vol-lb", type=int, default=DEFAULT_VOL_LB)
-    p.add_argument("--lev-cap", type=float, default=DEFAULT_LEV_CAP)
-    p.add_argument(
-        "--cost-bps",
-        type=float,
-        default=1.5,
-        help="Per |Δposition|, in bps (default 1.5)",
+    args = ap.parse_args()
+
+    policy = load_execution_policy(args.schema_path)
+    print(policy_banner(policy, sleeve_name="HookCore-Cu-v1.5-Tclose"))
+    for w in warn_if_mismatch(
+        policy,
+        exec_weekdays=(0, 1, 2, 3, 4),
+        fill_timing="close_T",
+        vol_info="T-1",
+        leverage_cap=args.scale_max,
+        one_way_bps=args.bps,
+    ):
+        print(w)
+
+    px = load_prices_excel_source_dates(
+        args.excel, args.sheet, args.date_col, args.price_col, args.symbol
     )
 
-    args = p.parse_args()
-
-    # Load data
-    df_raw = pd.read_excel(args.excel, sheet_name=args.sheet)
-    if args.date_col not in df_raw.columns or args.price_col not in df_raw.columns:
-        # fallback: pick first two columns
-        df_raw = df_raw.rename(
-            columns={df_raw.columns[0]: "Date", df_raw.columns[1]: "Price"}
-        )
-        date_col, price_col = "Date", "Price"
-    else:
-        date_col, price_col = args.date_col, args.price_col
-
-    df = df_raw[[date_col, price_col]].copy()
-    df.columns = ["Date", "Price"]
-    df["Date"] = pd.to_datetime(df["Date"])
-    df = df.sort_values("Date").dropna(subset=["Price"]).set_index("Date")
-    df["ret"] = df["Price"].pct_change().fillna(0.0)
-
-    cost_per_abs_delta = args.cost_bps / 10000.0
-
-    # Run
-    res = run_strategy(
-        df,
-        low_th=args.low,
-        high_th=args.high,
-        volratio_cap=args.volratio,
-        cadence=args.cadence,
-        exec_mode=args.exec,
-        hold_bars=args.hold,
-        vol_target=args.vol_target,
+    signals, pnl = run_hookcore(
+        px=px,
+        bb_lb=args.bb_lb,
+        sigma=args.sigma,
+        shift_bars=args.bands_shift,
+        trend_lb=args.trend_lb,
+        trend_thresh=args.trend_thresh,
         vol_lb=args.vol_lb,
-        lev_cap=args.lev_cap,
-        cost_per_abs_delta=cost_per_abs_delta,
+        vol_thresh=args.vol_thresh,
+        autoc_lb=args.autoc_lb,
+        autoc_thresh=args.autoc_thresh,
+        hold_days=args.hold_days,
+        entry_bps=args.bps,
+        tplus1_exec=args.tplus1_exec,
+        ann_target=args.ann_target,
+        roll_win_days=args.roll_win,
+        clamp_min=args.scale_min,
+        clamp_max=args.scale_max,
     )
 
-    # Output paths
-    outdir = args.outdir or os.path.join(
-        "outputs",
-        "hookcore",
-        args.symbol,
-        f"RSI3_{int(args.low)}_{int(args.high)}_vr{args.volratio}_{args.cadence}_{args.exec}_hold{args.hold}",
-    )
-    os.makedirs(outdir, exist_ok=True)
+    # --- Outputs ---
+    out_root = Path(args.outdir) / "copper" / "pricing" / "hookcore_v15_Tclose"
+    out_root.mkdir(parents=True, exist_ok=True)
+    signals.to_csv(out_root / "signals.csv", index_label="dt")
+    pnl.to_csv(out_root / "pnl_daily.csv", index_label="dt")
 
-    daily = pd.DataFrame(
-        {
-            "Price": df["Price"],
-            "ret": df["ret"],
-            "signal": res["signal"],
-            "position": res["position"],
-            "strat_ret": res["strat_ret"],
-            "equity": res["equity"],
-            "costs": res["costs"],
-        },
-        index=df.index,
-    )
-    daily.index.name = "Date"
-    daily.to_csv(os.path.join(outdir, "daily_series.csv"))
-
-    pd.DataFrame({"equity": res["equity"]}, index=df.index).to_csv(
-        os.path.join(outdir, "equity_curves.csv")
-    )
+    # IS/OOS split
+    oos_start = pd.Timestamp(args.oos_start)
+    is_ret = pnl.loc[pnl.index < oos_start, "ret_scaled"].dropna()
+    oos_ret = pnl.loc[pnl.index >= oos_start, "ret_scaled"].dropna()
 
     summary = {
-        "sleeve": "HookCore",
-        "version": "v1.1",
-        "config": {
-            "rsi_window": 3,
-            "rsi_thresholds": [args.low, args.high],
-            "volratio_cap": args.volratio,
-            "cadence": args.cadence,
-            "exec": args.exec,
-            "hold_bars": args.hold,
-            "vol_target": args.vol_target,
-            "vol_lookback": args.vol_lb,
-            "leverage_cap": args.lev_cap,
-            "cost_bps": args.cost_bps,
-            "is_cutoff": str(IS_CUTOFF.date()),
+        "params": {
+            "bb_lb": args.bb_lb,
+            "sigma": args.sigma,
+            "bands_shift": args.bands_shift,
+            "trend_lb": args.trend_lb,
+            "trend_thresh": args.trend_thresh,
+            "vol_lb": args.vol_lb,
+            "vol_thresh": args.vol_thresh,
+            "autoc_lb": args.autoc_lb,
+            "autoc_thresh": args.autoc_thresh,
+            "hold_days": args.hold_days,
+            "bps": args.bps,
+            "ann_target": args.ann_target,
+            "roll_win": args.roll_win,
+            "scale_min": args.scale_min,
+            "scale_max": args.scale_max,
+            "execution": (
+                "Daily T close; PnL from T+1"
+                if not args.tplus1_exec
+                else "Daily T+1 execution; PnL from T+2"
+            ),
         },
-        "IS": res["IS"],
-        "OOS": res["OOS"],
-        "ALL": res["ALL"],
+        "ALL": {
+            "sharpe_252": sharpe_252(pnl["ret_scaled"]),
+            "n": int(pnl["ret_scaled"].size),
+        },
+        "IS": {"sharpe_252": sharpe_252(is_ret), "n": int(is_ret.size)},
+        "OOS": {"sharpe_252": sharpe_252(oos_ret), "n": int(oos_ret.size)},
     }
-    with open(os.path.join(outdir, "summary_metrics.json"), "w") as f:
+    with open(out_root / "summary.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
-
-    print(json.dumps({"outdir": outdir, "IS": res["IS"], "OOS": res["OOS"]}, indent=2))
+    print(f"[hookcore] wrote → {out_root}")
 
 
 if __name__ == "__main__":

@@ -1,24 +1,44 @@
-execution:
-  calendar:
-    exec_weekdays: [0, 2, 4]      # Mon, Wed, Fri (project default)
-    origin_for_exec:
-      "0": "-3B"                  # Monday uses Friday data
-      "2": "-1B"                  # Wednesday uses Tuesday data
-      "4": "-1B"                  # Friday uses Thursday data
-    fill_default: close_T         # signals formed on T close
-    pnl_starts_next_day: true     # positions effective next day (T+1)
+# schema.yaml  (standards-aligned)
+required_keys: [sleeve, calendar, policy, signal, pnl]
 
+sleeve:
+  type: str
+  allowed: [TrendCore, TrendImpulse, HookCore, VolCore, StockScore, CrashAndRecover]
+
+calendar:
+  exec_weekdays: {type: list[int], required: true}
+  origin_for_exec: {type: dict, required: true}      # e.g. {"0":"-1B","2":"-1B","4":"-1B"}
+
+policy:
   sizing:
-    ann_target: 0.10
-    vol_lookback_days_default: 21
-    vol_estimator: simple_returns_std
-    vol_info_timing_default: T
-    leverage_cap_default: 2.5
-    hold_between_rebalances: true
-
+    ann_target: {type: float, required: true}         # e.g. 0.10
+    vol_lookback_days_default: {type: int, required: true}
+    leverage_cap_default: {type: float, required: true}
   costs:
-    one_way_bps_default: 1.5
-    apply_on_position_change_only: true
+    one_way_bps_default: {type: float, required: true}
 
-  pnl:
-    formula: pos_lag_times_simple_return
+signal:
+  # Sleeve-specific parameters; validated per sleeve via a sub-schema map
+  # (fill per sleeve; examples below)
+  by_sleeve:
+    TrendCore:
+      fast_window: {type: int, min: 2}
+      slow_window: {type: int, min: 10}
+      atr_window: {type: int, min: 5}
+      zscore_window: {type: int, min: 10}
+    HookCore:
+      bb_window: {type: int, min: 5}
+      bb_std: {type: float, min: 0.5}
+      vol_gate_window: {type: int, min: 5}
+      max_hold_days: {type: int, min: 1}
+    CrashAndRecover:
+      sma_window: {type: int, min: 50}
+      structure_window: {type: int, min: 10}
+      volume_lookback: {type: int, min: 5}
+      volume_threshold_multiple: {type: float, min: 0.5}
+      exit_timeout_days: {type: int, min: 1}
+
+pnl:
+  formula:
+    type: str
+    allowed: [pos_lag_times_simple_return]            # T+1 convention, non-negotiable
