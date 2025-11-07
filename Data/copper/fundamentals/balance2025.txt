@@ -1,0 +1,9 @@
+Q4 2022,Dec 2022,2022,21630,25300,25180,120,Final 2022 small surplus
+Q4 2022,Dec 2022,2023,22525,25676,25743,-67,Forecast 2023 small deficit
+Q4 2022,Dec 2022,2024,23622,26883,26514,369,Forecast 2024 surplus
+Q1 2025,May 2025,2024,22607,26070,26434,-364,Updated deficit (corrected from 2024 projections)
+Q1 2025,May 2025,2025,22714,26434,26583,-149,Forecast 2025 deficit per May 2025 report
+Q1 2025,May 2025,2026,23431,27078,27059,19,Forecast 2026 near balance / marginal surplus
+Q2 2025,Oct 2025,2024,22607,26070,26434,-364,Confirmed 2024 deficit
+Q2 2025,Oct 2025,2025,22714,26434,26583,-149,Updated 2025 deficit (~150 kt)
+Q2 2025,Oct 2025,2026,23431,27078,27059,19,Forecast 2026 near balance

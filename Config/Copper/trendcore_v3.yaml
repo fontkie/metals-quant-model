@@ -1,0 +1,43 @@
+# Config/Copper/trendcore.yaml (v3.0)
+
+io:
+  commodity: Copper
+  sleeve: TrendCore_v3
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10                    # Target 10% sleeve vol
+    vol_lookback_days_default: 63       # 3-month rolling vol
+    leverage_cap_default: 2.5           # Max 2.5x leverage
+
+  costs:
+    one_way_bps_default: 1.5            # 1.5 bps per trade
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true                # REQUIRED: T→T+1 accrual
+
+# TrendCore v3 signal parameters
+signal:
+  moving_average:
+    # Dual MA system (v3 enhancement)
+    fast_lookback_days: 30              # Fast MA (was 50 single MA in v2)
+    slow_lookback_days: 100             # Slow MA (new in v3)
+    
+    # Rangebound detection (v3 enhancement)
+    range_threshold: 0.10               # Reduce position if 100d range < 10%
+    
+    # These are built into the v3 signal generator
+    # (documented here for reference)
+    # - Trend quality filtering: Scales position by directional consistency
+    # - Vol regime awareness: Reduces position in top 25% volatility

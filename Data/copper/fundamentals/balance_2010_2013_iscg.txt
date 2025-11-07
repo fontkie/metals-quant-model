@@ -1,0 +1,32 @@
+report_date | publication_date | balance_year | mine_production_kt | refined_production_kt | refined_usage_kt | balance_kt | balance_type | notes
+Apr-2010 | 20-Apr-2010 | 2009 | 15444 | 18480 | 18238 | 242 | Final | ICSG Copper Market Forecast Apr-2010
+Apr-2010 | 20-Apr-2010 | 2010 | 16090 | 18790 | 18874 | -84 | Forecast | ICSG Copper Market Forecast Apr-2010
+Apr-2010 | 20-Apr-2010 | 2011 | 16620 | 19440 | 19410 | 30 | Forecast | ICSG Copper Market Forecast Apr-2010
+
+Sep-2010 | 28-Sep-2010 | 2009 | 15470 | 18500 | 18250 | 250 | Final | ICSG Copper Market Forecast Sep-2010
+Sep-2010 | 28-Sep-2010 | 2010 | 15990 | 18820 | 18920 | -100 | Forecast | ICSG Copper Market Forecast Sep-2010
+Sep-2010 | 28-Sep-2010 | 2011 | 16610 | 19430 | 19550 | -120 | Forecast | ICSG Copper Market Forecast Sep-2010
+
+Apr-2011 | 12-Apr-2011 | 2010 | 16030 | 18930 | 19020 | -90 | Final | ICSG Copper Market Forecast Apr-2011
+Apr-2011 | 12-Apr-2011 | 2011 | 16490 | 19560 | 19500 | 60 | Forecast | ICSG Copper Market Forecast Apr-2011
+Apr-2011 | 12-Apr-2011 | 2012 | 17200 | 20140 | 20020 | 120 | Forecast | ICSG Copper Market Forecast Apr-2011
+
+Sep-2011 | 22-Sep-2011 | 2010 | 16080 | 18980 | 19040 | -60 | Final | ICSG Copper Market Forecast Sep-2011
+Sep-2011 | 22-Sep-2011 | 2011 | 16800 | 19650 | 19570 | 80 | Forecast | ICSG Copper Market Forecast Sep-2011
+Sep-2011 | 22-Sep-2011 | 2012 | 17530 | 20240 | 20170 | 70 | Forecast | ICSG Copper Market Forecast Sep-2011
+
+Apr-2012 | 17-Apr-2012 | 2011 | 16019 | 19551 | 19848 | -297 | Final | ICSG Copper Market Forecast Apr-2012
+Apr-2012 | 17-Apr-2012 | 2012 | 16519 | 19944 | 20082 | -138 | Forecast | ICSG Copper Market Forecast Apr-2012
+Apr-2012 | 17-Apr-2012 | 2013 | 17048 | 20601 | 20574 | 27 | Forecast | ICSG Copper Market Forecast Apr-2012
+
+Oct-2012 | 10-Oct-2012 | 2011 | 16019 | 19651 | 19865 | -214 | Final | ICSG Copper Market Forecast Oct-2012
+Oct-2012 | 10-Oct-2012 | 2012 | 16479 | 19950 | 20376 | -426 | Forecast | ICSG Copper Market Forecast Oct-2012
+Oct-2012 | 10-Oct-2012 | 2013 | 17533 | 21140 | 20682 | 458 | Forecast | ICSG Copper Market Forecast Oct-2012
+
+Apr-2013 | 26-Apr-2013 | 2012 | 16687 | 20983 | 21376 | -393 | Final | ICSG Copper Market Forecast Apr-2013
+Apr-2013 | 26-Apr-2013 | 2013 | 17561 | 21983 | 21566 | 417 | Forecast | ICSG Copper Market Forecast Apr-2013
+Apr-2013 | 26-Apr-2013 | 2014 | 18541 | 22046 | 21365 | 681 | Forecast | ICSG Copper Market Forecast Apr-2013
+
+Oct-2013 | 03-Oct-2013 | 2012 | 16687 | 20983 | 21376 | -393 | Final | ICSG Copper Market Forecast Oct-2013
+Oct-2013 | 03-Oct-2013 | 2013 | 17561 | 21983 | 21566 | 417 | Forecast | ICSG Copper Market Forecast Oct-2013
+Oct-2013 | 03-Oct-2013 | 2014 | 18541 | 22046 | 21365 | 681 | Forecast | ICSG Copper Market Forecast Oct-2013

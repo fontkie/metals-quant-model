@@ -1,0 +1,13 @@
+report_date,publication_date,balance_year,mine_production_kt,refined_production_kt,refined_demand_kt,balance_kt,notes
+Q1 2022,Mar 2022,2021,21122,24618,24740,-121,Final 2021 deficit per Q1 2022 report
+Q1 2022,Mar 2022,2022,21879,25115,25219,-104,Forecast 2022 deficit (post Russia-Ukraine onset)
+Q1 2022,Mar 2022,2023,23113,26054,25725,329,Forecast 2023 surplus from mine ramp-ups
+Q2 2022,Jun 2022,2021,21122,24618,24740,-121,2021 confirmed deficit
+Q2 2022,Jun 2022,2022,21879,25115,25219,-104,Deficit revised steady from Q1
+Q2 2022,Jun 2022,2023,23113,26054,25725,329,Forecast large 2023 surplus
+Q3 2022,Sep 2022,2021,21310,24724,24884,-160,Final 2021 deficit confirmed
+Q3 2022,Sep 2022,2022,22053,25040,25085,-45,2022 near balance
+Q3 2022,Sep 2022,2023,23236,26009,25690,318,2023 forecast surplus
+Q4 2022,Mar 2023,2022,21630,25300,25180,123,Final 2022 small surplus per Q4 report
+Q4 2022,Mar 2023,2023,22525,25676,25743,-67,Forecast small 2023 deficit
+Q4 2022,Mar 2023,2024,23622,26883,26514,369,Forecast 2024 surplus

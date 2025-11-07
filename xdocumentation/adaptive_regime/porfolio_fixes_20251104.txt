@@ -1,0 +1,70 @@
+replace:
+def _get_regime_weights(self, regime: str) -> Dict[str, float]:
+    """
+    Look up target weights for given regime.
+    """
+    regime_weights_cfg = self.config.get('regime_weights', {})
+    
+    # Get weights for this specific regime
+    if regime in regime_weights_cfg:
+        weights = regime_weights_cfg[regime].copy()
+        
+        # Extract risk overlay if present
+        risk_overlay = weights.pop('risk_overlay', None)
+        
+        # Remove non-weight keys (rationale, expected_sharpe, etc.)
+        weights = {
+            k: v for k, v in weights.items()
+            if k in self.sleeves or k == 'Cash'
+        }
+        
+        # Add risk overlay back for cash manager
+        if risk_overlay:
+            weights['risk_overlay'] = risk_overlay
+        
+        return weights
+
+with this:
+def _get_regime_weights(self, regime: str) -> Dict[str, float]:
+    """
+    Look up target weights for given regime.
+    """
+    regime_weights_cfg = self.config.get('regime_weights', {})
+    
+    # Get weights for this specific regime
+    if regime in regime_weights_cfg:
+        regime_cfg = regime_weights_cfg[regime].copy()
+        
+        # Extract risk overlay if present (don't include in weights dict)
+        risk_overlay = regime_cfg.pop('risk_overlay', None)
+        
+        # Remove non-weight keys (rationale, expected_sharpe, etc.)
+        weights = {}
+        for k, v in regime_cfg.items():
+            if k in ['rationale', 'expected_sharpe']:
+                continue
+            if k in self.sleeves or k == 'Cash':
+                weights[k] = v
+        
+        return weights
+
+
+And replace this:
+# Apply cash policy (if death zone)
+final_weights, stop_mult = self.cash_manager.apply_cash_policy(
+    smoothed_weights,
+    regime,
+    risk_overlay=target_weights.get('risk_overlay')
+)
+
+with this:
+# Get risk overlay separately
+regime_cfg = self.config.get('regime_weights', {}).get(regime, {})
+risk_overlay = regime_cfg.get('risk_overlay', None)
+
+# Apply cash policy (if death zone)
+final_weights, stop_mult = self.cash_manager.apply_cash_policy(
+    smoothed_weights,
+    regime,
+    risk_overlay=risk_overlay
+)

@@ -1,0 +1,51 @@
+# Config/Copper/trendimpulse_v4.yaml (v4.0)
+
+io:
+  commodity: Copper
+  sleeve: TrendImpulse_v4
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10                    # Target 10% sleeve vol
+    vol_lookback_days_default: 63       # 3-month rolling vol
+    leverage_cap_default: 2.0           # Max 2x leverage
+
+  costs:
+    one_way_bps_default: 3.0            # 3 bps per trade (conservative, test at 5bps)
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true                # REQUIRED: T→T+1 accrual
+
+# TrendImpulse v4 signal parameters
+signal:
+  # Core momentum
+  momentum_window: 20                   # 20-day momentum lookback
+  
+  # Asymmetric entry/exit (v4 key improvement)
+  entry_threshold: 0.010                # 1.0% - need conviction to enter
+  exit_threshold: 0.003                 # 0.3% - patient exit
+  
+  # Turnover reduction
+  weekly_vol_updates: true              # Update vol/regime weekly (not daily)
+  update_frequency: 5                   # Update every 5 trading days
+  
+  # Regime scaling (aggressive - overweight low vol edge)
+  use_regime_scaling: true
+  vol_window: 63                        # Vol calculation window
+  vol_percentile_window: 252            # Percentile ranking window
+  low_vol_threshold: 0.40               # Bottom 40% = low vol
+  medium_vol_threshold: 0.75            # 40-75% = medium vol
+  low_vol_scale: 1.5                    # 1.5x in low vol (Sharpe 0.658)
+  medium_vol_scale: 0.4                 # 0.4x in medium vol (Sharpe 0.062)
+  high_vol_scale: 0.7                   # 0.7x in high vol (Sharpe 0.079)
