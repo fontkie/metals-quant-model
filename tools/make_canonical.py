@@ -21,6 +21,8 @@ def make_canonical_from_raw(df, date_col, series_col, out_csv, max_drop_frac=0.0
         value_col = "iv"
     elif "volume" in series_lower:
         value_col = "volume"
+    elif "stocks" in series_lower:
+        value_col = "stocks"
     else:
         value_col = "price"
 
@@ -73,6 +75,8 @@ if __name__ == "__main__":
             "copper_lme_3mo_volume",
             "copper_lme_1mo_impliedvol",
             "copper_lme_3mo_impliedvol",
+            "copper_lme_total_stocks",
+            "copper_lme_cancelled_stocks",
         ],
         out_dir=r"Data\copper\pricing\canonical",
     )

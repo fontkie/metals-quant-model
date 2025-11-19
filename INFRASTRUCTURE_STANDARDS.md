@@ -15,7 +15,6 @@
 8. [Build Process](#build-process)
 9. [Validation Protocol](#validation-protocol)
 10. [Naming Conventions](#naming-conventions)
-
 ---
 
 ## ARCHITECTURE OVERVIEW

@@ -1,0 +1,13 @@
+report_date,publication_date,balance_year,mine_production_kt,refined_production_kt,refined_demand_kt,balance_kt,notes
+Q1 2021,Apr 2021,2020,20624,23376,23415,-39,Final 2020 small deficit per Q1 report
+Q1 2021,Apr 2021,2021,21031,24068,24212,-145,Forecast deficit amid post-pandemic recovery
+Q1 2021,Apr 2021,2022,22018,25186,25140,46,Forecast small 2022 surplus
+Q2 2021,Jul 2021,2020,20660,23348,23393,-45,Final 2020 deficit ~45 kt
+Q2 2021,Jul 2021,2021,20898,23813,23966,-153,Forecast 2021 deficit 153 kt
+Q2 2021,Jul 2021,2022,21831,24874,24684,190,Forecast 2022 surplus 190 kt
+Q3 2021,Oct 2021,2020,20660,23348,23393,-45,Confirmed 2020 deficit
+Q3 2021,Oct 2021,2021,20900,23800,23950,-150,2021 deficit revised slightly
+Q3 2021,Oct 2021,2022,21800,24860,24670,190,2022 surplus unchanged
+Q4 2021,Dec 2021,2021,20920,23840,23970,-130,2021 small deficit per Dec update
+Q4 2021,Dec 2021,2022,21850,24900,24700,200,2022 surplus 0.8% of demand
+Q4 2021,Dec 2021,2023,22400,25400,25200,200,2023 early forecast surplus

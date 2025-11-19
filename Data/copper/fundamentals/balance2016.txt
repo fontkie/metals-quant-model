@@ -1,0 +1,13 @@
+report_date,publication_date,balance_year,mine_production_kt,refined_production_kt,refined_demand_kt,balance_kt,notes
+Q1 2016,Apr 2016,2015,18950,23100,22950,150,Final 2015 surplus per April 2016 report
+Q1 2016,Apr 2016,2016,19750,23650,23510,140,Forecast surplus revised down from January
+Q1 2016,Apr 2016,2017,20500,24450,24360,90,Forecast small surplus next year
+Q2 2016,Jul 2016,2015,18900,23050,22900,150,2015 stable surplus baseline
+Q2 2016,Jul 2016,2016,19900,23850,23675,175,Slightly higher surplus vs Q1 estimate
+Q2 2016,Jul 2016,2017,20500,24550,24400,150,Surplus maintained
+Q3 2016,Oct 2016,2015,18880,23050,22900,150,Confirmed 2015 balance
+Q3 2016,Oct 2016,2016,19900,23850,23722,128,Revised lower surplus vs June
+Q3 2016,Oct 2016,2017,20500,24550,24436,114,Surplus moderating further
+Q4 2016,Jan 2017,2015,18880,23050,22900,150,Final 2015 surplus unchanged
+Q4 2016,Jan 2017,2016,19900,23850,23710,140,2016 market near balanced
+Q4 2016,Jan 2017,2017,20500,24550,24430,120,Outlook steady surplus under 0.5% of demand

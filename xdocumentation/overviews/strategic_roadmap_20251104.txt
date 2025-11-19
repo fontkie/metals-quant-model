@@ -1,0 +1,1403 @@
+# STRATEGIC ROADMAP - World-Class Metals Quant System
+## From Adaptive Blending to Full Fundamental Integration
+### November 4, 2025
+
+---
+
+## 🎯 EXECUTIVE SUMMARY
+
+**Vision**: Build the best base metals quantitative model by combining Renaissance-style systematic rigor with deep fundamental market knowledge.
+
+**Target**: Production-ready copper model with Sharpe 1.00-1.20+ (world-class performance)
+
+**Approach**: Layered architecture - start with adaptive regime blending, progressively add fundamental overlays
+
+**Timeline**: 16 weeks (4 months) to complete system
+
+**Current Status**: Week 1 - Building adaptive portfolio manager
+
+---
+
+## 📊 THE THREE-TIER ALPHA STACK
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  TIER 3: FUNDAMENTAL ALPHA (Your Unique Edge)               │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│  • Tightness Index                                           │
+│    - Physical market balance (stocks, spreads, disruptions) │
+│    - Bonded warehouse intelligence                           │
+│    - Supply news sentiment                                   │
+│                                                              │
+│  • ML Driver Attribution                                     │
+│    - Quantify: "China 48%, USD 22%, Risk 18%..."           │
+│    - Rolling regression (6 factors × daily betas)           │
+│    - Regime detection (dominant driver identification)      │
+│                                                              │
+│  • Macro Chop Detection                                      │
+│    - Cross-asset correlation entropy                         │
+│    - CSI300 volatility (China uncertainty)                  │
+│    - CNY onshore/offshore spreads (FX stress)               │
+│    - Treasury curve (growth fears)                           │
+│    - EM FX basket (capital flight)                          │
+│    - Adaptive weighting by macro regime type                │
+│                                                              │
+│  → These are YOUR unique insights as fundamentals PM        │
+│  → This is where you beat Renaissance                       │
+│  → Target contribution: +0.25 to +0.45 Sharpe               │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│  TIER 2: ADAPTIVE REGIME BLENDING (Building This Week)      │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│  • Vol regime detection (LOW/MED/HIGH)                      │
+│  • Trend regime detection (TRENDING/TRANSITIONAL/RANGING)   │
+│  • Weight sleeves by regime                                  │
+│    - Low vol trending: TI 60% (exploits Sharpe 5.06)       │
+│    - Medium vol trans: HC 70% (exploits Sharpe 1.07)       │
+│  • Go defensive in death zones                               │
+│    - High vol transitional: 50% cash (avoids Sharpe -1.28) │
+│  • 5-day EMA transition smoothing                            │
+│                                                              │
+│  → Table stakes for any quant shop                          │
+│  → Gets you from Sharpe 0.59 → 0.75-0.80                   │
+│  → Foundation for all overlays above                         │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│  TIER 1: CORE SLEEVES (Foundation)                          │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│  • TrendCore v3 (Sharpe 0.51) ✅                            │
+│    - 30/100d dual MA trend follower                          │
+│    - Range, quality, vol filters                            │
+│                                                              │
+│  • TrendImpulse v4 (Sharpe 0.42) ✅                         │
+│    - 20d momentum with asymmetric entry/exit                │
+│    - Aggressive regime scaling                               │
+│                                                              │
+│  • HookCore v5 (Sharpe 0.50 target) 🔜                     │
+│    - Mean reversion + volume confirmation                    │
+│    - Needs: Add shorts, regime filter                       │
+│                                                              │
+│  • ChopCore v1 (Sharpe 0.60-0.80 target) 🔜                │
+│    - Range-bound specialist (Bollinger bands)               │
+│    - Volume confirmation, chop regime filter                │
+│                                                              │
+│  → Standard momentum/mean-reversion strategies              │
+│  → Current 3-sleeve blend: Sharpe 0.59                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🗓️ DETAILED 16-WEEK ROADMAP
+
+### **MONTH 1: FOUNDATION (Weeks 1-4)**
+
+#### **Week 1: Adaptive Regime Blending** ⭐ CURRENT WEEK
+**Status**: IN PROGRESS
+
+**Goal**: Build portfolio manager that weights sleeves by vol/trend regime
+
+**Deliverables**:
+- [x] portfolio.yaml configuration (COMPLETE)
+- [ ] src/core/regime.py (regime detection)
+- [ ] src/core/transitions.py (EMA smoothing)
+- [ ] src/core/cash.py (cash allocation)
+- [ ] src/core/portfolio.py (main orchestrator)
+- [ ] src/cli/build_adaptive_portfolio.py (CLI)
+- [ ] Full backtest (2000-2025)
+
+**Inputs Required**:
+- TrendCore v3 daily_series.csv ✅
+- TrendImpulse v4 daily_series.csv ✅
+- HookCore v4 daily_series.csv (optional, can disable)
+
+**Expected Output**:
+- Portfolio Sharpe: 0.75-0.80 (vs 0.59 static)
+- Max drawdown: <-12%
+- Validation: Regime distribution ~33% each vol level
+
+**Success Criteria**:
+- [ ] All regime weight rules validated
+- [ ] Transition smoothing working (no >30% jumps)
+- [ ] Death zone has ~50% cash
+- [ ] Sharpe improvement >0.15 vs static
+
+---
+
+#### **Week 2: ChopCore Sleeve**
+**Status**: PLANNED
+
+**Goal**: Build range-bound specialist sleeve
+
+**Design**:
+```python
+# Signal logic
+bb_upper = sma_20d + 2 × std_20d
+bb_lower = sma_20d - 2 × std_20d
+
+if price < bb_lower AND volume > 1.2 × avg_volume:
+    position = +1  # LONG (oversold + volume)
+elif price > bb_upper AND volume > 1.2 × avg_volume:
+    position = -1  # SHORT (overbought + volume)
+else:
+    position = 0   # FLAT
+
+# Regime filter: Only trade in ranging markets
+if range_width < 15th_percentile:  # Tight range
+    position = 0  # FLAT (too tight)
+```
+
+**Deliverables**:
+- [ ] src/signals/chopcore_v1.py
+- [ ] Config/Copper/chopcore_v1.yaml
+- [ ] src/cli/build_chopcore_v1.py
+- [ ] Backtest + validation
+
+**Expected Performance**:
+- Overall Sharpe: 0.40-0.60
+- Ranging regime Sharpe: 0.60-0.80+
+- Frequency: Active ~5-10% of time
+
+**Success Criteria**:
+- [ ] Positive Sharpe in ranging regimes
+- [ ] Uncorrelated with TC/TI (momentum sleeves)
+- [ ] Low turnover (<300x/year)
+
+---
+
+#### **Week 3: 4-Sleeve Portfolio Integration**
+**Status**: PLANNED
+
+**Goal**: Integrate ChopCore into adaptive portfolio
+
+**Tasks**:
+- [ ] Update portfolio.yaml (add ChopCore weights)
+- [ ] Test 4-sleeve blending
+- [ ] Validate regime coverage (all 9 regimes addressed)
+- [ ] Optimize transition smoothing with 4 sleeves
+
+**Expected Performance**:
+- Portfolio Sharpe: 0.75-0.80
+- Better ranging regime performance (+0.02 to +0.05)
+- Complete regime coverage (no gaps)
+
+**Success Criteria**:
+- [ ] ChopCore activates in ranging regimes
+- [ ] Portfolio Sharpe maintains or improves
+- [ ] All sleeves contributing positively
+
+---
+
+#### **Week 4: HookCore v5 Upgrade**
+**Status**: PLANNED (can defer if needed)
+
+**Goal**: Fix HookCore (current Sharpe 0.26 → target 0.50+)
+
+**Changes Needed**:
+1. Add symmetric shorts (currently long-only)
+2. Add regime filter (only trade in uptrends OR medium vol)
+3. Tighten entry thresholds (reduce false signals)
+
+**Expected Performance**:
+- Sharpe: 0.50+ (vs 0.26 current)
+- Better medium vol transitional performance
+- Lower turnover
+
+**Success Criteria**:
+- [ ] Sharpe >0.50
+- [ ] Positive in medium vol transitional regime
+- [ ] Integrated into portfolio successfully
+
+**MONTH 1 TARGET: Portfolio Sharpe 0.75-0.80**
+
+---
+
+### **MONTH 2: MACRO CHOP DETECTION OVERLAY (Weeks 5-8)**
+
+#### **Week 5: Data Acquisition**
+**Status**: PLANNED
+
+**Goal**: Acquire all macro data needed for chop detection
+
+**Data Sources**:
+```
+REQUIRED DATA:
+├── CSI 300 Index (China equity vol)
+│   - Daily close, realized vol (30d)
+│   - Source: Bloomberg/Reuters
+│
+├── CNY Onshore/Offshore Spreads
+│   - USDCNY onshore vs offshore daily
+│   - Spread = measure of FX management stress
+│   - Source: Bloomberg
+│
+├── EM FX Basket
+│   - BRL, ZAR, MXN, TRY, IDR daily
+│   - Equal-weight or GDP-weight composite
+│   - Source: Bloomberg/FRED
+│
+├── US Treasury Curve
+│   - 2Y yield, 10Y yield daily
+│   - 2s10s spread (growth proxy)
+│   - Source: FRED (free)
+│
+├── European Credit Spreads (optional)
+│   - Italy-Germany 10Y spread
+│   - Corporate HY spreads
+│   - Source: Bloomberg
+│
+└── Cross-Asset Correlation Matrix
+    - SPX, UST10Y, DXY, CRB, CSI300, EM FX
+    - Calculate rolling 60d correlation entropy
+```
+
+**Deliverables**:
+- [ ] Data pipeline (automated daily updates)
+- [ ] Quality checks (missing data, outliers)
+- [ ] Backfill to 2000 (25 years)
+
+---
+
+#### **Week 6: Cross-Asset Chop Detector**
+**Status**: PLANNED
+
+**Goal**: Build macro-based chop probability calculator
+
+**Implementation** (from historical_chop_analysis.md):
+```python
+def calculate_chop_probability(date):
+    """
+    Adaptive chop detection - weights shift by macro regime
+    """
+    # PILLAR 1: Correlation entropy (asset correlation breakdown)
+    corr_matrix = calculate_correlation_matrix(date, window=60)
+    corr_entropy = -sum(p * log(p) for each correlation pair)
+    
+    # PILLAR 2: Volatility dispersion (uneven stress)
+    vol_dispersion = std(vol_zscores across assets)
+    
+    # PILLAR 3: CSI 300 volatility (China uncertainty)
+    csi300_vol = realized_vol(CSI300, window=30)
+    csi300_vol_zscore = (csi300_vol - mean) / std
+    
+    # PILLAR 4: CNY management stress
+    cny_spread = abs(USDCNY_onshore - USDCNY_offshore)
+    cny_stress = percentile_rank(cny_spread)
+    
+    # PILLAR 5: EM FX basket (capital flight)
+    em_fx_index = geometric_mean(BRL, ZAR, MXN, TRY)
+    em_stress = -1 * returns(em_fx_index, 30d)
+    
+    # PILLAR 6: Treasury curve (growth fears)
+    curve_2s10s = UST10Y - UST2Y
+    curve_stress = 1 - percentile_rank(curve_2s10s)  # Flat = stress
+    
+    # ADAPTIVE WEIGHTING (key innovation!)
+    regime_type = detect_macro_regime(date)
+    
+    if regime_type == "DM_FINANCIAL_CRISIS":  # 2011-12 Euro
+        weights = {
+            'curve': 0.30,      # UP (most important)
+            'em_fx': 0.25,      # Keep high
+            'corr_entropy': 0.20,
+            'csi_vol': 0.10,    # DOWN (less relevant)
+            'cny': 0.05,        # DOWN (not relevant)
+            'vol_disp': 0.10
+        }
+    elif regime_type == "CHINA_SLOWDOWN":  # 2015-16
+        weights = {
+            'csi_vol': 0.35,    # UP (most important)
+            'cny': 0.25,        # UP (key signal)
+            'em_fx': 0.20,
+            'corr_entropy': 0.10,
+            'curve': 0.05,      # DOWN (less relevant)
+            'vol_disp': 0.05
+        }
+    elif regime_type == "TRADE_WAR":  # 2018-19
+        weights = {
+            'csi_vol': 0.25,
+            'cny': 0.25,
+            'em_fx': 0.20,
+            'curve': 0.15,
+            'corr_entropy': 0.10,
+            'vol_disp': 0.05
+        }
+    else:  # DEFAULT
+        weights = {
+            'csi_vol': 0.25,
+            'cny': 0.20,
+            'em_fx': 0.20,
+            'corr_entropy': 0.15,
+            'curve': 0.10,
+            'vol_disp': 0.10
+        }
+    
+    # Weighted chop score
+    chop_score = (
+        corr_entropy * weights['corr_entropy'] +
+        vol_dispersion * weights['vol_disp'] +
+        csi300_vol_zscore * weights['csi_vol'] +
+        cny_stress * weights['cny'] +
+        em_stress * weights['em_fx'] +
+        curve_stress * weights['curve']
+    )
+    
+    # Normalize to probability [0, 1]
+    chop_probability = logistic(chop_score)
+    
+    return chop_probability, regime_type
+```
+
+**Deliverables**:
+- [ ] src/overlays/chop_detection.py
+- [ ] Backtest on 2011-12, 2015-16, 2018-19 (validation)
+- [ ] Performance report by period
+
+**Success Criteria**:
+- [ ] 2011-12: Correctly weights Treasury curve high
+- [ ] 2015-16: Correctly weights CSI300/CNY high
+- [ ] 2018-19: Works with base weights
+- [ ] False positive rate <20%
+
+---
+
+#### **Week 7: Historical Validation**
+**Status**: PLANNED
+
+**Goal**: Validate chop detector on known periods
+
+**Test Cases**:
+1. **2011-12 Eurozone Crisis** (Oct 2011 - Aug 2012)
+   - Expected: High chop probability (curve stress)
+   - Validate: Avoided false copper breakouts at $3.80
+
+2. **2015-16 China Hard Landing** (Aug 2015 - Dec 2016)
+   - Expected: Very high chop probability (CSI300 + CNY)
+   - Validate: Avoided false rallies $2.20-$2.40
+
+3. **2018-19 Trade War** (Mar 2018 - Dec 2019)
+   - Expected: High chop probability (all signals)
+   - Validate: Avoided $6,000-$6,500 whipsaw
+
+4. **2012-13 Liquidity Regime** (KNOWN FAILURE)
+   - Expected: Low chop probability (false negative)
+   - Validate: Need inventory divergence signal
+
+**Deliverables**:
+- [ ] Validation report with charts
+- [ ] False positive/negative analysis
+- [ ] Recommended threshold tuning
+
+---
+
+#### **Week 8: Chop Integration into Portfolio**
+**Status**: PLANNED
+
+**Goal**: Use chop probability to adjust sleeve weights
+
+**Integration Logic**:
+```python
+def apply_chop_adjustment(base_weights, chop_probability):
+    """
+    Reduce momentum, increase mean-reversion in chop zones
+    """
+    if chop_probability > 0.65:  # HIGH CHOP
+        # Reduce momentum sleeves (TC, TI)
+        base_weights['TrendCore'] *= 0.30
+        base_weights['TrendImpulse'] *= 0.20
+        
+        # Increase mean-reversion (HC, ChopCore)
+        base_weights['HookCore'] *= 1.50
+        base_weights['ChopCore'] *= 2.00
+        
+        # Or go defensive
+        if chop_probability > 0.80:  # EXTREME CHOP
+            # Go 50% cash
+            for sleeve in base_weights:
+                base_weights[sleeve] *= 0.50
+            base_weights['Cash'] = 0.50
+    
+    elif chop_probability < 0.35:  # LOW CHOP (trending)
+        # Increase momentum sleeves
+        base_weights['TrendCore'] *= 1.20
+        base_weights['TrendImpulse'] *= 1.30
+        
+        # Reduce mean-reversion
+        base_weights['HookCore'] *= 0.70
+        base_weights['ChopCore'] *= 0.50
+    
+    # Renormalize
+    total = sum(base_weights.values())
+    return {k: v/total for k, v in base_weights.items()}
+```
+
+**Deliverables**:
+- [ ] Update src/core/portfolio.py (add chop adjustment)
+- [ ] Backtest with chop overlay
+- [ ] Performance comparison (with vs without)
+
+**Expected Impact**:
+- Portfolio Sharpe: +0.05 to +0.10 (chop avoidance)
+- Target: Sharpe 0.80-0.90
+
+**MONTH 2 TARGET: Portfolio Sharpe 0.80-0.90**
+
+---
+
+### **MONTH 3: ML DRIVER ATTRIBUTION (Weeks 9-12)**
+
+#### **Week 9: Factor Universe Construction**
+**Status**: PLANNED
+
+**Goal**: Build 6-factor model of copper price drivers
+
+**Factors** (from ml_and_tightness_index_summary.md):
+
+```python
+# FACTOR 1: China Demand (40-60% of variance)
+china_indicators = {
+    'china_pmi': ...,           # Caixin Manufacturing PMI
+    'credit_impulse': ...,      # 12m change in credit growth
+    'csi_300': ...,             # China equity market
+    'property_starts': ...,     # New housing starts
+    'steel_output': ...,        # Crude steel production
+}
+china_factor = PCA(china_indicators, n_components=1)
+
+# FACTOR 2: USD Strength (15-30%)
+usd_indicators = {
+    'dxy': ...,                 # Dollar index
+    'em_fx_basket': ...,        # Inverted (strong EM = weak USD)
+}
+usd_factor = (dxy.pct_change() - em_fx.pct_change()) / 2
+
+# FACTOR 3: Supply Disruptions (10-25%)
+supply_indicators = {
+    'mine_disruption_index': ...,  # Custom index
+    'tc_rc_spread': ...,            # Treatment charges
+    'energy_prices': ...,           # Natural gas, oil
+}
+supply_factor = PCA(supply_indicators, n_components=1)
+
+# FACTOR 4: Risk Sentiment (15-30%)
+risk_indicators = {
+    'spx': ...,                 # S&P 500
+    'vix': ...,                 # Inverted
+    'hy_spreads': ...,          # High yield credit spreads
+}
+risk_factor = (spx.pct_change() - vix.pct_change() - hy_spreads.pct_change()) / 3
+
+# FACTOR 5: Positioning (5-15%)
+positioning_indicators = {
+    'cftc_net_spec': ...,       # CFTC net speculative position
+    'etf_flows': ...,           # Copper ETF AUM changes
+}
+positioning_factor = (cftc_net_spec.pct_change() + etf_flows) / 2
+
+# FACTOR 6: Real Rates (5-15%)
+rates_indicators = {
+    'ust10y_real': ...,         # 10Y real yield (inverted)
+    'breakevens': ...,          # Inflation expectations
+}
+rates_factor = -ust10y_real.pct_change() + breakevens.pct_change()
+```
+
+**Deliverables**:
+- [ ] Data acquisition (20+ series)
+- [ ] Factor construction code
+- [ ] Validation (factors explain >70% of copper variance)
+
+---
+
+#### **Week 10: Rolling Regression Engine**
+**Status**: PLANNED
+
+**Goal**: Estimate time-varying factor loadings
+
+**Implementation**:
+```python
+def rolling_regression(copper_returns, factors, window=60):
+    """
+    60-day rolling OLS regression
+    
+    copper_ret[t] = β1*china[t] + β2*usd[t] + β3*supply[t] + 
+                    β4*risk[t] + β5*positioning[t] + β6*rates[t] + ε[t]
+    """
+    betas = {}
+    r_squared = {}
+    residuals = {}
+    
+    for date in copper_returns.index[window:]:
+        # Get 60-day window
+        y = copper_returns.loc[date-window:date]
+        X = factors.loc[date-window:date]
+        
+        # OLS regression
+        model = LinearRegression()
+        model.fit(X, y)
+        
+        # Store results
+        betas[date] = model.coef_
+        r_squared[date] = model.score(X, y)
+        residuals[date] = y[-1] - model.predict(X)[-1]
+    
+    return pd.DataFrame(betas), pd.Series(r_squared), pd.Series(residuals)
+```
+
+**Deliverables**:
+- [ ] src/overlays/ml_attribution.py
+- [ ] Rolling regression engine
+- [ ] Time series of betas (daily)
+
+---
+
+#### **Week 11: Regime Detection & Attribution**
+**Status**: PLANNED
+
+**Goal**: Identify dominant drivers and regime shifts
+
+**Implementation**:
+```python
+def detect_driver_regime(betas, date):
+    """
+    Classify current regime by dominant factor
+    """
+    betas_today = betas.loc[date]
+    dominant_factor = betas_today.abs().idxmax()
+    dominant_weight = abs(betas_today[dominant_factor])
+    
+    if dominant_weight > 0.60:
+        # Clear dominant driver
+        return f"{dominant_factor}_DOMINANT"
+    elif dominant_weight > 0.40:
+        # Moderate influence
+        return f"{dominant_factor}_MIXED"
+    else:
+        # No clear driver
+        return "FRAGMENTED"
+
+def calculate_attribution(returns, betas, factors, date, window=5):
+    """
+    Decompose recent returns into factor contributions
+    """
+    # Get window of returns and factors
+    ret = returns.loc[date-window:date]
+    beta = betas.loc[date]
+    fac = factors.loc[date-window:date]
+    
+    # Attribution
+    attribution = {}
+    for factor in ['china', 'usd', 'supply', 'risk', 'positioning', 'rates']:
+        factor_contribution = beta[factor] * fac[factor].sum()
+        attribution[factor] = factor_contribution / ret.sum()
+    
+    # Residual (unexplained)
+    attribution['residual'] = 1 - sum(attribution.values())
+    
+    return attribution
+
+def detect_regime_change(betas, date, lookback=20):
+    """
+    Changepoint detection - flag regime shifts
+    """
+    import ruptures as rpt
+    
+    # Get recent beta history
+    signal = betas.loc[date-lookback:date]['china'].values
+    
+    # Changepoint detection
+    algo = rpt.Pelt(model="rbf").fit(signal)
+    changepoints = algo.predict(pen=3)
+    
+    # Check if recent changepoint
+    if changepoints[-2] > len(signal) - 5:  # Last 5 days
+        return True, "REGIME_SHIFT"
+    else:
+        return False, "STABLE"
+```
+
+**Deliverables**:
+- [ ] Regime classification logic
+- [ ] Attribution calculator
+- [ ] Changepoint detection
+
+---
+
+#### **Week 12: Trading Signals from Attribution**
+**Status**: PLANNED
+
+**Goal**: Generate sizing adjustments from ML attribution
+
+**Trading Rules** (from ml_and_tightness_index_summary.md):
+
+```python
+def ml_attribution_signal(date):
+    """
+    Unified trading decision from ML attribution
+    """
+    # Get current state
+    betas = get_betas(date)
+    attribution = calculate_attribution(date, window=5)
+    r2 = get_r_squared(date)
+    regime_duration = measure_regime_stability(date)
+    chop_probability = get_chop_probability(date)  # From Month 2
+    
+    dominant_factor = betas.abs().idxmax()
+    dominant_weight = abs(betas[dominant_factor])
+    attribution_clarity = max([abs(v) for k, v in attribution.items() if k != 'residual'])
+    
+    # SCENARIO A: Clear attribution + low chop = TREND FRIENDLY
+    if attribution_clarity > 0.60 and chop_probability < 0.35 and r2 > 0.5:
+        trend_sizing = 1.0
+        strategy = "directional"
+        confidence = "VERY_HIGH" if regime_duration > 30 else "HIGH"
+        
+        recommendation = f"""
+        ✅ TREND-FRIENDLY ENVIRONMENT
+        
+        Driver: {dominant_factor.upper()} ({dominant_weight*100:.0f}% of variance)
+        Duration: {regime_duration} days
+        R²: {r2:.1%}
+        
+        → Full position sizing
+        → Trade {dominant_factor} narrative aggressively
+        """
+    
+    # SCENARIO B: Unclear attribution + high chop = CHOP ZONE
+    elif attribution_clarity < 0.40 and chop_probability > 0.65:
+        trend_sizing = 0.20  # Very defensive
+        strategy = "mean_reversion"
+        confidence = "LOW"
+        
+        recommendation = f"""
+        ⚠️ CHOP ZONE (DOUBLE CONFIRMED)
+        
+        Attribution unclear: Top driver only {attribution_clarity*100:.0f}%
+        Chop probability: {chop_probability*100:.0f}%
+        R²: {r2:.1%}
+        
+        → Reduce trend sizing to 20%
+        → Focus on mean-reversion (HC, ChopCore)
+        → Avoid directional bets
+        """
+    
+    # SCENARIO C: Low R² override (positioning dominant)
+    elif r2 < 0.40:
+        trend_sizing = 0.30
+        strategy = "defensive"
+        confidence = "LOW"
+        
+        recommendation = f"""
+        🚨 LOW R² WARNING
+        
+        R²: {r2:.1%} (fundamentals not explaining price)
+        Likely driver: Positioning / Technical / Unknown
+        
+        → Reduce size to 30%
+        → Widen stops
+        → Avoid fundamental narratives (not working)
+        → Watch for regime change
+        """
+    
+    # SCENARIO D: Dominant driver + data release upcoming
+    elif dominant_weight > 0.60 and upcoming_data_release(dominant_factor):
+        trend_sizing = 1.2  # Size up for catalyst
+        strategy = "directional"
+        confidence = "HIGH"
+        
+        recommendation = f"""
+        🎯 CATALYST SETUP
+        
+        Driver: {dominant_factor.upper()} ({dominant_weight*100:.0f}%)
+        Upcoming: {get_next_release(dominant_factor)}
+        
+        → Size up to 120% ahead of release
+        → Clear narrative, catalyst imminent
+        → High conviction trade
+        """
+    
+    else:
+        # Default: Moderate
+        trend_sizing = 0.50
+        strategy = "balanced"
+        confidence = "MEDIUM"
+    
+    return {
+        'sizing_multiplier': trend_sizing,
+        'strategy': strategy,
+        'confidence': confidence,
+        'dominant_factor': dominant_factor,
+        'recommendation': recommendation
+    }
+```
+
+**Deliverables**:
+- [ ] Trading signal generator
+- [ ] Integration with portfolio manager
+- [ ] Backtest with ML overlay
+- [ ] Performance comparison
+
+**Expected Impact**:
+- Portfolio Sharpe: +0.10 to +0.15 (fundamental alpha)
+- Target: Sharpe 0.90-1.00
+
+**MONTH 3 TARGET: Portfolio Sharpe 0.90-1.00**
+
+---
+
+### **MONTH 4: PHYSICAL TIGHTNESS INDEX (Weeks 13-16)**
+
+#### **Week 13: Data Acquisition**
+**Status**: PLANNED
+
+**Goal**: Acquire physical market data
+
+**Data Sources**:
+```
+REQUIRED DATA:
+├── LME Exchange Stocks
+│   - Daily total stocks (tonnes)
+│   - By location if possible
+│   - Source: LME.com (free)
+│
+├── LME Cancelled Warrants
+│   - Daily cancelled stocks (%)
+│   - Measure of withdrawal intent
+│   - Source: LME.com (free)
+│
+├── Treatment Charges / Refining Charges (TC/RCs)
+│   - Quarterly benchmark ($/tonne)
+│   - Weekly spot estimates
+│   - Source: Fastmarkets, Bloomberg
+│
+├── LME Cash/3mo Spread
+│   - Daily backwardation / contango
+│   - Measure of physical tightness
+│   - Source: Bloomberg
+│
+├── Shanghai Bonded Warehouse Stocks
+│   - Weekly/monthly estimates
+│   - Shadow inventory in China
+│   - Source: Industry contacts, SHFE
+│
+├── Mine Disruption News
+│   - Strike news, force majeure events
+│   - Qualitative → quantitative scoring
+│   - Source: Bloomberg, industry newsletters
+│
+└── Global Manufacturing PMI
+    - Forward demand indicator
+    - Source: IHS Markit
+```
+
+**Deliverables**:
+- [ ] Data pipeline (automated where possible)
+- [ ] Manual data entry process (bonded warehouses, disruptions)
+- [ ] Quality checks
+- [ ] Backfill to 2000
+
+---
+
+#### **Week 14: Tightness Index Construction**
+**Status**: PLANNED
+
+**Goal**: Build proprietary tightness index
+
+**Implementation**:
+```python
+def calculate_tightness_index(date):
+    """
+    Proprietary physical market tightness index
+    """
+    # COMPONENT 1: Exchange stocks (inverted z-score)
+    stocks = get_lme_stocks(date)
+    stocks_zscore = (stocks - stocks.rolling(252).mean()) / stocks.rolling(252).std()
+    stocks_component = -1 * stocks_zscore  # Low stocks = tight
+    
+    # COMPONENT 2: Cancelled warrants ratio
+    cancelled_pct = get_cancelled_warrants(date) / stocks
+    cancelled_percentile = percentile_rank(cancelled_pct, window=252)
+    cancelled_component = cancelled_percentile  # High cancellations = tight
+    
+    # COMPONENT 3: TC/RC spread
+    tc_rc = get_tc_rc_spread(date)
+    tc_rc_percentile = percentile_rank(tc_rc, window=252)
+    tc_rc_component = tc_rc_percentile  # Wide spread = tight
+    
+    # COMPONENT 4: Cash/3mo backwardation
+    cash_3mo = get_cash_3mo_spread(date)
+    backwardation = max(0, cash_3mo)  # Positive = backwardation
+    backwardation_percentile = percentile_rank(backwardation, window=252)
+    backwardation_component = backwardation_percentile  # Backwardation = tight
+    
+    # COMPONENT 5: Bonded warehouse stocks (shadow inventory)
+    bonded_stocks = get_bonded_warehouse_stocks(date)
+    bonded_zscore = (bonded_stocks - bonded_stocks.rolling(252).mean()) / bonded_stocks.rolling(252).std()
+    bonded_component = -1 * bonded_zscore  # Low bonded = tight
+    
+    # COMPONENT 6: Mine disruption score
+    disruption_score = calculate_mine_disruption_score(date)
+    disruption_component = disruption_score  # High disruptions = tight
+    
+    # Weighted composite
+    tightness_index = (
+        stocks_component * 0.30 +
+        cancelled_component * 0.20 +
+        tc_rc_component * 0.20 +
+        backwardation_component * 0.15 +
+        bonded_component * 0.10 +
+        disruption_component * 0.05
+    )
+    
+    # Normalize to percentile [0, 100]
+    tightness_percentile = percentile_rank(tightness_index, window=252*5)  # 5 years
+    
+    return tightness_percentile
+
+def calculate_mine_disruption_score(date):
+    """
+    Quantify supply disruption news
+    """
+    # Get recent news (last 30 days)
+    news = get_disruption_news(date, lookback=30)
+    
+    score = 0
+    for event in news:
+        if event['type'] == 'strike':
+            # Weight by mine size and duration
+            impact = event['mine_capacity_pct'] * event['duration_days'] / 30
+            score += impact
+        elif event['type'] == 'force_majeure':
+            # Major disruption
+            score += event['mine_capacity_pct'] * 2
+        elif event['type'] == 'export_restriction':
+            # Policy disruption
+            score += event['affected_volume_pct']
+    
+    return min(score, 100)  # Cap at 100
+```
+
+**Deliverables**:
+- [ ] src/overlays/tightness_index.py
+- [ ] Mine disruption scoring system
+- [ ] Backtest on historical squeezes
+
+**Key Historical Periods to Validate**:
+1. 2006 Hedge Fund Squeeze (tightness >90th percentile expected)
+2. 2010-11 Supply Deficit (tightness >80th percentile)
+3. 2013-15 Supply Glut (tightness <20th percentile)
+4. 2021 Post-COVID Squeeze (tightness >85th percentile)
+
+---
+
+#### **Week 15: Historical Validation**
+**Status**: PLANNED
+
+**Goal**: Validate tightness index on known periods
+
+**Test Cases**:
+1. **2006 Hedge Fund Squeeze** (May-Oct 2006)
+   - Cancelled warrants hit 70%+
+   - Cash/3mo backwardation >$100/tonne
+   - Expected: Tightness >90th percentile
+   - Outcome: Copper rallied $2,800 → $8,800 (+214%)
+
+2. **2010-11 Supply Deficit** (Q4 2010 - Q2 2011)
+   - LME stocks fell <400k tonnes (low)
+   - TC/RCs collapsed to $40/tonne (tight)
+   - Expected: Tightness >80th percentile
+   - Outcome: Copper hit $4.50/lb (record high)
+
+3. **2013-15 Supply Glut** (2013-2015)
+   - LME stocks >650k tonnes (elevated)
+   - Bonded warehouse stocks >600k tonnes (shadow inventory)
+   - TC/RCs rose to $100+ (surplus)
+   - Expected: Tightness <20th percentile
+   - Outcome: Copper ranged, then fell
+
+4. **2021 Post-COVID Squeeze** (Q2-Q3 2021)
+   - Cancelled warrants >50%
+   - Cash/3mo backwardation persistent
+   - Expected: Tightness >85th percentile
+   - Outcome: Copper rallied to $4.90/lb
+
+**Deliverables**:
+- [ ] Validation report with charts
+- [ ] False signal analysis
+- [ ] Threshold recommendations
+
+**Success Criteria**:
+- [ ] Correctly identifies all 4 major squeezes
+- [ ] Lead time >2 weeks before price moves
+- [ ] False positive rate <15%
+
+---
+
+#### **Week 16: Tightness Integration**
+**Status**: PLANNED
+
+**Goal**: Use tightness index to adjust portfolio sizing
+
+**Integration Logic**:
+```python
+def apply_tightness_overlay(base_weights, tightness_percentile, ml_attribution):
+    """
+    Adjust sizing based on physical market tightness
+    """
+    # SCENARIO 1: EXTREME TIGHTNESS (squeeze risk)
+    if tightness_percentile > 80:
+        # Physical squeeze - bias LONG aggressively
+        sizing_multiplier = 1.5
+        
+        # Favor momentum sleeves (catch squeeze)
+        base_weights['TrendCore'] *= 1.3
+        base_weights['TrendImpulse'] *= 1.4
+        
+        # Reduce mean-reversion (trend will persist)
+        base_weights['HookCore'] *= 0.7
+        base_weights['ChopCore'] *= 0.5
+        
+        # Wider stops (volatility in squeezes)
+        stop_multiplier = 1.3
+        
+        rationale = f"""
+        🔥 PHYSICAL SQUEEZE RISK
+        
+        Tightness: {tightness_percentile:.0f}th percentile (EXTREME)
+        
+        → Bias long, size up 1.5x
+        → Favor momentum strategies
+        → Widen stops (volatility expected)
+        → Monitor cancelled warrants daily
+        """
+    
+    # SCENARIO 2: MODERATE TIGHTNESS (supportive)
+    elif tightness_percentile > 60:
+        # Moderately supportive - slight long bias
+        sizing_multiplier = 1.1
+        
+        # Balanced
+        stop_multiplier = 1.0
+        
+        rationale = f"""
+        ✅ SUPPORTIVE PHYSICAL ENVIRONMENT
+        
+        Tightness: {tightness_percentile:.0f}th percentile (MODERATE)
+        
+        → Slight long bias (1.1x)
+        → Normal strategy mix
+        → Physical market not a concern
+        """
+    
+    # SCENARIO 3: NEUTRAL (40-60th percentile)
+    elif tightness_percentile > 40:
+        # Neutral - no adjustment
+        sizing_multiplier = 1.0
+        stop_multiplier = 1.0
+        
+        rationale = "Physical market neutral - no adjustment"
+    
+    # SCENARIO 4: SURPLUS (loose market)
+    elif tightness_percentile > 20:
+        # Surplus environment - reduce long bias
+        sizing_multiplier = 0.9
+        
+        # Favor mean-reversion (choppy in surplus)
+        base_weights['TrendCore'] *= 0.8
+        base_weights['TrendImpulse'] *= 0.7
+        base_weights['HookCore'] *= 1.2
+        base_weights['ChopCore'] *= 1.3
+        
+        stop_multiplier = 1.0
+        
+        rationale = f"""
+        ⚠️ SURPLUS ENVIRONMENT
+        
+        Tightness: {tightness_percentile:.0f}th percentile (LOOSE)
+        
+        → Reduce long bias (0.9x)
+        → Favor mean-reversion
+        → Physical market weighing on price
+        """
+    
+    # SCENARIO 5: EXTREME SURPLUS (glut)
+    else:
+        # Supply glut - bearish bias
+        sizing_multiplier = 0.7
+        
+        # Heavy mean-reversion
+        base_weights['TrendCore'] *= 0.5
+        base_weights['TrendImpulse'] *= 0.4
+        base_weights['HookCore'] *= 1.5
+        base_weights['ChopCore'] *= 1.6
+        
+        # Consider shorts if ML attribution supports
+        if ml_attribution['dominant_factor'] == 'supply' and ml_attribution['dominant_weight'] > 0.50:
+            # Supply dominant + glut = bearish setup
+            sizing_multiplier = 0.5  # Very defensive
+            
+        stop_multiplier = 0.9  # Tighter stops (bearish)
+        
+        rationale = f"""
+        🚨 SUPPLY GLUT
+        
+        Tightness: {tightness_percentile:.0f}th percentile (EXTREME SURPLUS)
+        
+        → Reduce size to 70% (or 50% if supply-driven)
+        → Heavy mean-reversion
+        → Avoid long-term longs
+        → Monitor for capitulation signals
+        """
+    
+    # Apply sizing multiplier
+    for sleeve in base_weights:
+        if sleeve != 'Cash':
+            base_weights[sleeve] *= sizing_multiplier
+    
+    # Renormalize
+    total = sum(base_weights.values())
+    base_weights = {k: v/total for k, v in base_weights.items()}
+    
+    return base_weights, stop_multiplier, rationale
+```
+
+**Deliverables**:
+- [ ] Update src/core/portfolio.py (add tightness overlay)
+- [ ] Backtest with tightness adjustment
+- [ ] Performance comparison
+
+**Expected Impact**:
+- Portfolio Sharpe: +0.10 to +0.20 (physical market alpha)
+- Target: Sharpe 1.00-1.20+
+
+**MONTH 4 TARGET: Portfolio Sharpe 1.00-1.20 (WORLD-CLASS)**
+
+---
+
+## 🎯 FINAL INTEGRATED SYSTEM
+
+### **Complete Signal Flow**
+
+```
+DAY T DECISION PROCESS:
+
+1. REGIME CLASSIFICATION (Tier 2)
+   └→ Vol: MEDIUM, Trend: TRANSITIONAL
+   └→ Base allocation: HC 70%, TC 20%, TI 10%
+
+2. MACRO CHOP DETECTION (Tier 3a)
+   └→ Correlation entropy: 72nd pct
+   └→ CSI300 vol: Elevated
+   └→ Chop probability: 55% (MODERATE)
+   └→ Adjustment: Reduce momentum 30%
+
+3. ML DRIVER ATTRIBUTION (Tier 3b)
+   └→ China: 38% variance
+   └→ USD: 28%
+   └→ R²: 0.52 (moderate)
+   └→ Regime: MIXED (no dominant driver)
+   └→ Adjustment: Reduce size to 70%
+
+4. PHYSICAL TIGHTNESS (Tier 3c)
+   └→ Exchange stocks: -1.2σ (TIGHT)
+   └→ Cancelled warrants: 42% (HIGH)
+   └→ Tightness: 78th percentile
+   └→ Adjustment: BULLISH BIAS +30%
+
+5. FINAL SYNTHESIS
+   Base:        HC 70%, TC 20%, TI 10%
+   × Chop:      0.70
+   × ML:        0.70  
+   × Tightness: 1.30
+   = Final:     HC 44%, TC 13%, TI 6%, Cash 37%
+
+6. RECOMMENDATION
+   ✅ CAUTIOUS LONG
+   - Physical tight (supportive)
+   - But macro uncertain (defensive sizing)
+   - Enter 40% position, tight stops
+   - Add on clarity
+```
+
+---
+
+## 📊 EXPECTED PERFORMANCE PROGRESSION
+
+```
+SHARPE EVOLUTION:
+
+Month 0 (Current):
+├─ Static blend: 0.59
+└─ Individual sleeves: TC 0.51, TI 0.42, HC 0.26
+
+Month 1 (Adaptive Blending):
+├─ Portfolio: 0.75-0.80
+└─ Improvement: +27% to +36%
+
+Month 2 (+ Chop Detection):
+├─ Portfolio: 0.80-0.90
+└─ Improvement: +36% to +53%
+
+Month 3 (+ ML Attribution):
+├─ Portfolio: 0.90-1.00
+└─ Improvement: +53% to +69%
+
+Month 4 (+ Tightness Index):
+├─ Portfolio: 1.00-1.20
+└─ Improvement: +69% to +103%
+
+TARGET: Sharpe 1.00-1.20 (world-class)
+```
+
+---
+
+## 🔑 YOUR UNIQUE ADVANTAGES
+
+**What Renaissance CAN'T Replicate:**
+
+1. **Physical Market Intelligence**
+   - ❌ No bonded warehouse contacts
+   - ❌ No mine disruption early warning
+   - ❌ No physical trader relationships
+   - ✅ YOU have industry connections
+
+2. **Fundamental Narrative Understanding**
+   - ❌ Can't interpret "why China is driving 48%"
+   - ❌ Can't contextualize policy shifts
+   - ❌ Can't distinguish types of chop (Euro vs China)
+   - ✅ YOU understand macro regimes
+
+3. **Cross-Asset Macro Intuition**
+   - ❌ Generic correlation models
+   - ❌ Don't know Italy-Germany spread matters for copper
+   - ❌ Don't adapt chop detection by regime type
+   - ✅ YOU know historical analogues
+
+4. **Domain Expertise**
+   - ❌ Copper treated like generic commodity
+   - ❌ Miss copper-specific dynamics (bonded warehouses)
+   - ❌ Don't understand TC/RC signaling
+   - ✅ YOU know copper microstructure
+
+**Renaissance Strengths + Your Edge = Unbeatable**
+
+---
+
+## ⚠️ RISKS & MITIGATION
+
+### **Risk 1: Over-Optimization**
+**Concern**: Regime rules fitted to 2000-2025, may not generalize
+
+**Mitigation**:
+- Walk-forward validation (retrain quarterly)
+- Out-of-sample testing (hold out 2020-2025 initially)
+- Conservative parameter choices
+- Monitor live performance vs backtest
+
+### **Risk 2: Data Quality**
+**Concern**: Macro data (CSI300, bonded warehouses) may be unreliable
+
+**Mitigation**:
+- Multiple data sources where possible
+- Quality checks and outlier detection
+- Manual validation on key events
+- Graceful degradation if data missing
+
+### **Risk 3: Complexity Creep**
+**Concern**: 4-tier system may be too complex to debug
+
+**Mitigation**:
+- Build iteratively (validate each layer)
+- Each tier can be disabled independently
+- Extensive logging and monitoring
+- Ablation studies (test with/without each layer)
+
+### **Risk 4: Regime Change**
+**Concern**: Future market structure may differ from history
+
+**Mitigation**:
+- Adaptive recalibration (quarterly)
+- Human-in-loop for regime classification
+- Conservative position sizing
+- Stop losses on all strategies
+
+### **Risk 5: Execution Slippage**
+**Concern**: High-frequency rebalancing may incur costs
+
+**Mitigation**:
+- 5-day EMA smoothing (reduces turnover)
+- Target <200% annual turnover
+- Conservative cost assumptions (3 bps)
+- Trade at fixings (lower market impact)
+
+---
+
+## 🎓 LESSONS FROM RENAISSANCE
+
+**Principles Applied:**
+
+1. **"Build general strategies, specialize via portfolio construction"**
+   - ✅ 3-4 general sleeves (TC, TI, HC, ChopCore)
+   - ✅ Regime-dependent weights create specialization
+   - ✅ Simpler than 27 separate strategies
+
+2. **"Measure twice, trade once"**
+   - ✅ 150 pages of specs before coding
+   - ✅ Every parameter justified
+   - ✅ Walk-forward validation required
+
+3. **"Single source of truth"**
+   - ✅ portfolio.yaml = complete strategy
+   - ✅ Code implements config, no business logic in Python
+   - ✅ Auditable and defensible
+
+4. **"Iterative development"**
+   - ✅ Ship MVP (adaptive blending) first
+   - ✅ Add complexity incrementally
+   - ✅ Validate each layer independently
+
+5. **"Regime adaptation > strategy proliferation"**
+   - ✅ 3 sleeves × 9 regimes = 27 effective strategies
+   - ✅ Much simpler to maintain
+
+6. **"Data quality is alpha"**
+   - ✅ Proprietary tightness index (moat)
+   - ✅ Industry contacts (edge)
+   - ✅ Cross-asset macro insights
+
+---
+
+## 📞 CHECKPOINTS & MILESTONES
+
+### **Month 1 Checkpoint (End of Week 4)**
+**Review Meeting Topics:**
+- [ ] Adaptive blending Sharpe achieved (target: 0.75-0.80)
+- [ ] Regime detection validated (distribution ~33% each)
+- [ ] Death zone management working (50% cash)
+- [ ] ChopCore built and integrated
+- [ ] Decision: Proceed to Month 2?
+
+### **Month 2 Checkpoint (End of Week 8)**
+**Review Meeting Topics:**
+- [ ] Chop detection validated on 2011-12, 2015-16, 2018-19
+- [ ] Macro data pipeline operational
+- [ ] Sharpe with chop overlay (target: 0.80-0.90)
+- [ ] Adaptive weighting by regime type working
+- [ ] Decision: Proceed to Month 3?
+
+### **Month 3 Checkpoint (End of Week 12)**
+**Review Meeting Topics:**
+- [ ] ML attribution explaining >70% of variance
+- [ ] Driver regime detection reliable
+- [ ] Trading signals from attribution tested
+- [ ] Sharpe with ML overlay (target: 0.90-1.00)
+- [ ] Decision: Proceed to Month 4?
+
+### **Month 4 Checkpoint (End of Week 16)**
+**Review Meeting Topics:**
+- [ ] Tightness index validated on historical squeezes
+- [ ] Physical market overlay integrated
+- [ ] Final system Sharpe (target: 1.00-1.20)
+- [ ] Decision: Move to production?
+
+---
+
+## 🚀 PRODUCTION DEPLOYMENT (Post-Month 4)
+
+### **Phase 1: Paper Trading (Weeks 17-20)**
+- Run system live but don't execute
+- Track hypothetical vs actual performance
+- Identify any live trading issues
+- Tune parameters if needed
+
+### **Phase 2: Pilot Capital (Weeks 21-28)**
+- Start with 10% of target capital
+- Execute real trades
+- Monitor slippage, costs, execution quality
+- Scale up gradually if performance meets targets
+
+### **Phase 3: Full Deployment (Week 29+)**
+- Scale to full capital allocation
+- Ongoing monitoring and optimization
+- Quarterly retraining of ML models
+- Annual strategy review
+
+---
+
+## 📚 DOCUMENTATION STANDARDS
+
+**Every component must have:**
+1. ✅ Specification document (WHAT and WHY)
+2. ✅ Implementation code (HOW)
+3. ✅ Backtest results (VALIDATION)
+4. ✅ Configuration file (PARAMETERS)
+5. ✅ Unit tests (CORRECTNESS)
+6. ✅ Performance monitoring (LIVE TRACKING)
+
+**Documentation already complete:**
+- [x] Adaptive Blending Framework (150 pages)
+- [x] Volatility Regime Detection
+- [x] Transition Smoothing
+- [x] Cash Allocation
+- [x] Strategic Roadmap (this document)
+
+**Documentation to create:**
+- [ ] Chop Detection Specification
+- [ ] ML Attribution Specification
+- [ ] Tightness Index Specification
+- [ ] Production Deployment Guide
+- [ ] Risk Management Manual
+
+---
+
+## 🎯 SUCCESS CRITERIA
+
+### **Technical Metrics**
+- [ ] Portfolio Sharpe >1.00
+- [ ] Max drawdown <-15%
+- [ ] Annual turnover <200%
+- [ ] Out-of-sample Sharpe >0.80
+- [ ] Walk-forward validation stable
+
+### **Operational Metrics**
+- [ ] Daily P&L reconciliation working
+- [ ] Regime detection automated
+- [ ] Data pipeline 99.5%+ uptime
+- [ ] Execution slippage <2 bps
+- [ ] All components documented
+
+### **Business Metrics**
+- [ ] Risk committee approval
+- [ ] Compliance sign-off
+- [ ] PM confidence in system
+- [ ] Scalable to other metals
+- [ ] Defendable to investors
+
+---
+
+## 💬 FINAL THOUGHTS
+
+**This is a marathon, not a sprint.**
+
+- ✅ Month 1 gives you immediate value (Sharpe 0.75-0.80)
+- ✅ Months 2-4 build your competitive moat
+- ✅ Each layer independently valuable
+- ✅ Can pause after any milestone if needed
+
+**Your edge is the combination:**
+- Renaissance rigor (systematic, backtested, auditable)
+- Fundamental insights (tightness, attribution, chop detection)
+- Domain expertise (copper-specific knowledge)
+
+**No one else has all three.**
+
+---
+
+**Ready to start Week 1: Adaptive Portfolio Blending?**
+
+*Status: Strategic roadmap complete*  
+*Next: Implement src/core/regime.py*  
+*Version: 1.0*  
+*Date: November 4, 2025*

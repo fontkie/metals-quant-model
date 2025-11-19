@@ -2,8 +2,10 @@
 """
 Layer A: Immutable Execution Contract
 --------------------------------------
-T→T+1 accrual, costs on Δpos, vol targeting, leverage cap.
+Tâ†’T+1 accrual, costs on Î”pos, vol targeting, leverage cap.
 ALL sleeves use this. No exceptions.
+
+CORRECTED: Vol targeting now uses strategy PnL vol, not underlying return vol
 """
 
 import numpy as np
@@ -16,6 +18,7 @@ def build_core(df: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, dict]:
 
     Input:
         df: canonical CSV with columns ['date', 'price'] (lowercase)
+            AND 'pos_raw' column from signal generator
         cfg: YAML config dict
 
     Output:
@@ -47,31 +50,43 @@ def build_core(df: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, dict]:
     # ========== 3. CALCULATE RETURNS ==========
     df["ret"] = df["price"].pct_change().fillna(0.0)
 
-    # ========== 4. GENERATE RAW SIGNAL (HOOK FOR SLEEVES) ==========
-    # HookCore will inject 'pos_raw' here via signal function
-    # For now, placeholder (Layer B provides this)
+    # ========== 4. VALIDATE RAW SIGNAL ==========
     if "pos_raw" not in df.columns:
-        df["pos_raw"] = 0.0  # placeholder
+        raise ValueError("pos_raw column must be provided by signal generator")
 
-    # ========== 5. VOL TARGETING ==========
-    # Realized vol (use returns up to T-1)
-    rolling_std = (
-        df["ret"].shift(1).rolling(vol_lookback, min_periods=vol_lookback).std(ddof=0)
+    # ========== 5. VOL TARGETING (PROPERLY FIXED) ==========
+    # CORRECT APPROACH: Calculate vol of UNDERLYING RETURNS
+    # For sparse strategies, we size each trade based on underlying vol,
+    # NOT on the diluted PnL series (which includes inactive periods).
+    # This gives proper per-trade risk sizing.
+
+    # Step 1: Calculate rolling vol of underlying returns
+    rolling_std = df["ret"].rolling(vol_lookback, min_periods=vol_lookback).std(ddof=0)
+    underlying_vol = rolling_std * np.sqrt(252)
+
+    # Step 2: Calculate target leverage based on underlying vol
+    # This sizes positions so that when active, each trade targets ann_target vol
+    target_lev = np.where(
+        underlying_vol > 0.001,  # Avoid division by near-zero
+        ann_target / underlying_vol,
+        1.0,
     )
-    realized_vol = rolling_std * np.sqrt(252)
 
-    # Target leverage
-    target_lev = (ann_target / realized_vol).clip(upper=leverage_cap).fillna(1.0)
+    # Step 3: Apply leverage cap
+    target_lev = np.minimum(target_lev, leverage_cap)
 
-    # Scaled position
+    # Convert to series and handle NaNs
+    target_lev = pd.Series(target_lev, index=df.index).fillna(1.0)
+
+    # Step 4: Apply leverage to raw signal
     df["pos"] = (df["pos_raw"] * target_lev).clip(
         lower=-leverage_cap, upper=leverage_cap
     )
 
-    # ========== 6. T→T+1 ACCRUAL ==========
+    # ========== 6. Tâ†’T+1 ACCRUAL ==========
     df["pos_for_ret_t"] = df["pos"].shift(1).fillna(0.0)
 
-    # ========== 7. COSTS (ON Δpos ONLY) ==========
+    # ========== 7. COSTS (ON Î”pos ONLY) ==========
     df["trade"] = df["pos"].diff().fillna(0.0)
     df["cost"] = -df["trade"].abs() * (one_way_bps / 10_000)
 

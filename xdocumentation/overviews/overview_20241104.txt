@@ -1,0 +1,30 @@
+We want to build the best base metal quant model out there combining your experience with my market knowledge. It should be advanced and adaptive but auditable and understandable.
+
+We have 3 pricing sleeves so far: trendcore_v3, trendimpulse_v4, hookcore_v5.
+Hookcore because it fires infrequently has tiny sleeve vol as base on underlyer.
+We want to blend the sleeves. Know they work better in different vol regimes.
+Should sleeves have adaptable parameters (like sleeves within sleeves) for the different vol regime.
+Is vol potentially its own sleeve or is it an overlay as doesn't give price direction.
+We have looked at market states and identified this 'chopcore' where prices stay within what can be quite a wide range with low/med vol.
+We have a plan to look at various marco indicators across em, dm, china to identify when the market is in this state. We have discussed how adaptive ML could be used eventually.
+New concept of a tightness index. Results have been ok and show some potential lift in sharpe but they will work differently in different market states.  The initial thoughts are that market balances should have factor multipliers depending on their term ie short, med, long term and their surplus/deficit ie 1x for +/-100kt, 2x for +/-200kt etc.
+we have yet to look at the impact weekly positioning data for lme and CME can have on prices ie funds adding, longs liquidating etc.
+It is either part of the tightness index or sits alongside, but a disruptions index, which looks at the impact of large supply disruptions historically and how that affected price 1 week, 1 month etc. Again, it will have a different impact on prices depending on the market state.
+We are building this in python, you are giving me the code. I am constructing in VS code.  Need a sustainable repo structure.
+
+Next is, let's develop a plan. There are lots of ideas and I want a solid mvp. How do we layer these overlays on top.  I believe the first step is we need to see how the sleeves are together, and perhaps optimise this around vol states.
+
+I want you to thoroughly read through:
+
+Next session brief - a recap of where we got to with sleeves and combining them
+historical chop analysis - looking at how we handle these repeatable rangebound markets
+standalone ML summary - more forward looking, adapative strategies on how we capture this all
+quick reference - as an overview
+Other files show examples of the trendimpulse logic, expected standard etc and pricing, implied vol, volumes csv's
+
+questions: 
+Do we look at hookcore_v5 again or revisit when we know more?
+Do we get the model structure in place and a solid mvp before looking at other base metals in the basket?
+If im working 8 hours a day with you, whats out 1 week, 2 week and 1 month okr's?
+How do we grow the repo so that it's manageable and logical
+We will likely need to update sleeves and the overlays as we learn more, it feels like a 2 steps forward 1 step back approach. I struggle to understand the process of how to be the most impactful whilst being efficient. how do you think about this process

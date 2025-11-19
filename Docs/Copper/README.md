@@ -261,3 +261,6 @@ OOS correlation between Hook and Stocks ≈ 0.25, confirming diversification.
 ✅ *Frozen (v0.1.0)*  
 Serves as the first composite benchmark for Copper sleeves.  
 Next: extend to **TrendCore** and **PositioningCore** before full sleeve portfolio integration.
+
+
+> **Execution Policy:** See [Docs/standards/real_world_rules.md](../../standards/real_world_rules.md).
