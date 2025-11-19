@@ -1,0 +1,302 @@
+# 9-REGIME PERFORMANCE ANALYSIS
+## Sleeve-by-Sleeve Breakdown Across All Market Conditions
+
+**Date:** November 12, 2025  
+**Question:** Are all sleeves performing positively across the 9 regimes?
+
+---
+
+## 🎯 EXECUTIVE SUMMARY
+
+**Overall Scorecard:**
+- **TrendMedium:** 8/9 regimes positive (88.9%) ✅
+- **TrendImpulse v4:** 6/9 regimes positive (66.7%) ⚠️
+- **MomentumCore v1:** 7/9 regimes positive (77.8%) ✅
+
+**Portfolio Impact:**
+- **7/9 regimes** are net positive contributors (80.9% of trading days)
+- **2/9 regimes** are net negative contributors (19.1% of trading days)
+- One negative regime is improving OOS, one is worsening
+
+---
+
+## 📊 COMPLETE PERFORMANCE MATRIX
+
+### Individual Sleeve Performance by Regime
+
+| Regime | Days | % Time | TM Sharpe | TI Sharpe | MC Sharpe |
+|--------|------|--------|-----------|-----------|-----------|
+| **low_vol_ranging** | 470 | 7.0% | **0.5694** ✅ | **0.0758** ✅ | **0.5815** ✅ |
+| **low_vol_transitional** | 1,322 | 19.7% | **0.1840** ✅ | **0.6099** ✅ | **0.4849** ✅ |
+| **low_vol_trending** | 837 | 12.5% | **1.1869** ✅ | **1.2130** ✅ | **0.8022** ✅ |
+| **medium_vol_ranging** | 322 | 4.8% | **0.5807** ✅ | **-1.2705** ❌ | **0.3199** ✅ |
+| **medium_vol_transitional** | 928 | 13.8% | **0.8904** ✅ | **0.3781** ✅ | **0.7850** ✅ |
+| **medium_vol_trending** | 756 | 11.3% | **0.0210** ✅ | **0.5123** ✅ | **0.8768** ✅ |
+| **high_vol_ranging** | 370 | 5.5% | **0.3659** ✅ | **-1.7852** ❌ | **-0.1243** ❌ |
+| **high_vol_transitional** | 911 | 13.6% | **-0.0545** ❌ | **-0.7638** ❌ | **-0.5605** ❌ |
+| **high_vol_trending** | 802 | 11.9% | **1.5604** ✅ | **0.8883** ✅ | **1.5521** ✅ |
+
+---
+
+## 🔍 PROBLEM IDENTIFICATION
+
+### Problem Regime #1: high_vol_transitional (13.6% of time)
+
+**Status: ALL THREE SLEEVES NEGATIVE** ⚠️⚠️⚠️
+
+| Sleeve | Sharpe | Weight | Contribution |
+|--------|--------|--------|--------------|
+| TrendMedium | -0.0545 | 0.70 | -0.0381 |
+| TrendImpulse | -0.7638 | 0.01 | -0.0076 |
+| MomentumCore | -0.5605 | 0.29 | -0.1626 |
+| **TOTAL** | - | - | **-0.2083** ❌ |
+
+**IS/OOS Trend:**
+- IS (2000-2019): -0.0071 portfolio contribution
+- OOS (2020-2025): -0.7070 portfolio contribution
+- **WORSENING** ⚠️
+
+**This is the ONLY regime getting worse out-of-sample.**
+
+---
+
+### Problem Regime #2: high_vol_ranging (5.5% of time)
+
+**Status: 2/3 SLEEVES NEGATIVE**
+
+| Sleeve | Sharpe | Weight | Contribution |
+|--------|--------|--------|--------------|
+| TrendMedium | 0.3659 | 0.33 | +0.1208 |
+| TrendImpulse | **-1.7852** | 0.33 | -0.5891 |
+| MomentumCore | -0.1243 | 0.33 | -0.0410 |
+| **TOTAL** | - | - | **-0.5094** ❌ |
+
+**IS/OOS Trend:**
+- IS: -0.5486 portfolio contribution
+- OOS: -0.4459 portfolio contribution
+- **IMPROVING** ✅ (less negative)
+
+**TrendImpulse is the primary drag** (-1.79 Sharpe with 33% weight).
+
+---
+
+### Not Actually a Problem: medium_vol_ranging (4.8% of time)
+
+**Status: 1/3 NEGATIVE BUT ZERO WEIGHT**
+
+| Sleeve | Sharpe | Weight | Contribution |
+|--------|--------|--------|--------------|
+| TrendMedium | 0.5807 | 0.58 | +0.3368 |
+| TrendImpulse | -1.2705 | **0.00** | -0.0000 |
+| MomentumCore | 0.3199 | 0.42 | +0.1344 |
+| **TOTAL** | - | - | **+0.4712** ✅ |
+
+**TrendImpulse has ZERO weight** in this regime, so its negative performance doesn't hurt. Portfolio contribution is actually strongly positive.
+
+**IS/OOS Trend:**
+- IS: +0.2883 portfolio contribution
+- OOS: +1.2744 portfolio contribution  
+- **STRONGLY IMPROVING** ✅✅
+
+---
+
+## 📈 WEIGHTED PORTFOLIO CONTRIBUTION (Ranked)
+
+| Rank | Regime | Days | % Time | Contribution | Status |
+|------|--------|------|--------|--------------|--------|
+| 1 | **high_vol_trending** | 802 | 11.9% | **+1.3695** | ✅✅✅ |
+| 2 | **low_vol_trending** | 837 | 12.5% | **+1.1275** | ✅✅ |
+| 3 | **medium_vol_trending** | 756 | 11.3% | **+0.7443** | ✅ |
+| 4 | **medium_vol_transitional** | 928 | 13.8% | **+0.7260** | ✅ |
+| 5 | **low_vol_transitional** | 1,322 | 19.7% | **+0.5531** | ✅ |
+| 6 | **low_vol_ranging** | 470 | 7.0% | **+0.4859** | ⚠️ |
+| 7 | **medium_vol_ranging** | 322 | 4.8% | **+0.4712** | ⚠️ |
+| 8 | **high_vol_transitional** | 911 | 13.6% | **-0.2083** | ❌ |
+| 9 | **high_vol_ranging** | 370 | 5.5% | **-0.5094** | ❌ |
+
+**Net Positive Regimes:** 7/9 (covering 80.9% of trading days)  
+**Net Negative Regimes:** 2/9 (covering 19.1% of trading days)
+
+---
+
+## 💡 KEY INSIGHTS
+
+### 1. The System is Fundamentally Sound
+
+- **80.9% of trading days** occur in positive-contributing regimes
+- Only **19.1% of days** are problematic
+- TrendMedium performs exceptionally well (88.9% positive)
+- Portfolio diversification protects against individual sleeve weaknesses
+
+### 2. TrendImpulse Has the Most Negatives
+
+**TrendImpulse negative in 3 regimes:**
+- high_vol_transitional: -0.7638 Sharpe (1% weight - minimal impact)
+- high_vol_ranging: **-1.7852 Sharpe** (33% weight - major drag)
+- medium_vol_ranging: -1.2705 Sharpe (0% weight - no impact)
+
+**The weight structure cleverly minimizes TI's weaknesses:**
+- Zero weight where TI is worst at ranging markets
+- Low weight (1%) in high-vol transitional
+- But 33% weight in high_vol_ranging still causes problems
+
+### 3. High Volatility Transitional Markets Are the Achilles' Heel
+
+**high_vol_transitional (13.6% of time):**
+- ALL THREE sleeves negative
+- Worsening in OOS period
+- This is where overlays should focus
+
+**Characteristics:**
+- High volatility + directional uncertainty
+- Typical during: crisis transition periods, policy uncertainty, macro shocks
+- None of the trend/momentum signals work well here
+
+### 4. Positive OOS Trends Dominate
+
+**Regimes improving OOS:**
+- medium_vol_ranging: +342% improvement
+- high_vol_ranging: +19% improvement (less negative)
+
+**Only one regime worsening:**
+- high_vol_transitional: getting more negative
+
+---
+
+## 🎯 RECOMMENDATIONS
+
+### PRIORITY 1: Address high_vol_transitional (CRITICAL)
+
+**Problem:**
+- 13.6% of trading days
+- All sleeves negative
+- Worsening OOS (-0.7070 contribution)
+- Largest negative impact
+
+**Solutions:**
+1. **ChopCore Overlay** - Reduce exposure during directionless high-vol periods
+2. **StressCore Overlay** - Detect crisis transitions early and reduce risk
+3. **Consider cash allocation** - May need to go partially to cash in this regime
+4. **Re-optimize weights** - Current 70/1/29 may not be optimal
+
+**Expected Impact:** Could recover 0.10-0.15 Sharpe if addressed effectively
+
+---
+
+### PRIORITY 2: Fix TrendImpulse in high_vol_ranging (MEDIUM)
+
+**Problem:**
+- 5.5% of trading days
+- TrendImpulse -1.79 Sharpe with 33% weight
+- Major portfolio drag (-0.5891 contribution from TI alone)
+
+**Solutions:**
+1. **Reduce TI weight** in high_vol_ranging (33% → 10-15%)
+2. **Increase TM/MC weights** (both positive in this regime)
+3. **ChopCore Overlay** - Detect ranging markets and reduce TI exposure
+4. **TrendImpulse v5** - Could this strategy be improved for ranging markets?
+
+**Expected Impact:** Could recover 0.05-0.08 Sharpe
+
+**Note:** This regime is already improving OOS, so may self-correct
+
+---
+
+### PRIORITY 3: Maintain Current Performance (LOW)
+
+**Status:**
+- 7/9 regimes performing well
+- Strong positive contributions from trending regimes
+- TrendMedium exceptionally robust (88.9% success rate)
+
+**Action:**
+- **No changes needed** to positive-performing regimes
+- **Preserve** current weight structure for well-performing regimes
+- **Focus overlay development** on the 2 problem regimes only
+
+---
+
+## 📊 OVERLAY SYSTEM TARGETING
+
+Based on this analysis, here's how overlays should target the problems:
+
+### ChopCore (Macro Confusion Detector)
+
+**Primary Targets:**
+1. high_vol_transitional (reduce exposure by 30-50%)
+2. high_vol_ranging (reduce TrendImpulse specifically)
+3. All ranging regimes (reduce whipsaw-prone strategies)
+
+**Expected Sharpe Improvement:** +0.08-0.12
+
+---
+
+### StressCore (Credit Stress Reducer)
+
+**Primary Targets:**
+1. high_vol_transitional (early detection of crisis transitions)
+2. Any regime during credit stress events
+
+**Expected Sharpe Improvement:** +0.03-0.05
+
+---
+
+### TightnessCore (Directional Guidance)
+
+**Primary Targets:**
+1. Amplify in strong trending regimes (already positive)
+2. Provide directionality signals in transitional periods
+
+**Expected Sharpe Improvement:** +0.05-0.08
+
+---
+
+## 🎯 EXPECTED OUTCOMES
+
+### With Current System (No Changes)
+- Current Sharpe: 0.75
+- 2/9 regimes problematic
+- Strong OOS trend (+22% vs TrendCore)
+
+### With Weight Re-optimization (Optional)
+- Reduce TI in high_vol_ranging: 33% → 15%
+- Adjust high_vol_transitional: test 50/10/40 or 40/5/55
+- Expected improvement: +0.03-0.05 Sharpe
+- Risk: overfitting to historical data
+
+### With 3-Layer Overlay System (Recommended)
+- ChopCore + StressCore + TightnessCore
+- Target the 2 problem regimes specifically
+- Expected improvement: +0.10-0.15 Sharpe
+- **Total Expected: 0.85-0.90 Sharpe**
+
+---
+
+## ✅ BOTTOM LINE
+
+**Q: Are all sleeves performing positively?**
+
+**A: No, but it's not a problem:**
+
+1. **TrendMedium:** 8/9 positive (88.9%) - Excellent ✅
+2. **TrendImpulse:** 6/9 positive (66.7%) - Acceptable ⚠️
+3. **MomentumCore:** 7/9 positive (77.8%) - Good ✅
+
+**Portfolio Impact:**
+- Only **2/9 regimes** are net negative (19.1% of days)
+- **7/9 regimes** contribute positively (80.9% of days)
+- Weight structure already minimizes damage from weak regimes
+
+**The system is fundamentally sound.** The negative regimes are:
+1. **high_vol_transitional** - All three sleeves struggle (priority target for overlays)
+2. **high_vol_ranging** - TrendImpulse drags, but improving OOS
+
+**Next Steps:**
+- Focus ChopCore overlay on high_vol_transitional
+- Consider reducing TI weight in high_vol_ranging
+- Maintain strong performance in 7 positive regimes
+- Target 0.85-0.90 Sharpe with full overlay system
+
+---
+
+**The negatives are concentrated in specific, addressable regimes. This is exactly what overlays are designed to fix.**

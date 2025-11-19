@@ -1,0 +1,50 @@
+# Config/Copper/trendmedium.yaml
+
+io:
+  commodity: Copper
+  sleeve: TrendMedium
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10                    # Target 10% sleeve vol
+    vol_lookback_days_default: 63       # 3-month rolling vol
+    leverage_cap_default: 2.5           # Max 2.5x leverage
+
+  costs:
+    one_way_bps_default: 1.5            # 1.5 bps per trade
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true                # REQUIRED: T→T+1 accrual
+
+# TrendMedium signal parameters
+signal:
+  moving_average:
+    # Dual MA system (25/70) - faster than TrendCore's 30/100
+    fast_lookback_days: 25              # Fast MA (vs TrendCore's 30)
+    slow_lookback_days: 70              # Slow MA (vs TrendCore's 100)
+    
+    # Rangebound detection (aligned with medium-term focus)
+    range_threshold: 0.10               # Reduce position if 70d range < 10%
+    
+    # Built-in features:
+    # - Trend quality filtering: 15-day lookback (vs TrendCore's 20)
+    # - Vol regime awareness: Reduces position in top 25% volatility
+    # - Rangebound detection: Uses 70d lookback (vs TrendCore's 100d)
+    
+# Notes:
+# - TrendMedium (25/70) is faster than TrendCore (30/100)
+# - Targets medium-term trends lasting 2-4 months
+# - More responsive to regime changes
+# - Expected Sharpe: 0.45-0.55 unconditional
+# - Lower correlation with TrendCore due to different MA speeds

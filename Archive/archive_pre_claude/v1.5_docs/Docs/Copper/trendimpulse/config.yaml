@@ -1,0 +1,50 @@
+# =============================================================================
+# TrendImpulse Configuration (Copper)
+# Version: 1.1
+# Schema: Metals Quant Model Sleeve Config
+# =============================================================================
+schema_version: 1
+sleeve: TrendImpulse
+version: "1.1"
+symbol: COPPER
+description: >
+  Fast impulse-trend sleeve for LME copper 3-month price.
+  Executes on T (same-day close) with PnL beginning from T+1.
+  Designed to capture short, sharp directional bursts using rolling return z-scores.
+
+# -----------------------------------------------------------------------------
+# Input Data
+# -----------------------------------------------------------------------------
+inputs:
+  excel: "../../data/copper/pricing/pricing_values.xlsx"
+  sheet: "Raw"
+  date_col: "Date"
+  price_col: "copper_lme_3mo"
+
+# -----------------------------------------------------------------------------
+# Signal & Execution Parameters
+# -----------------------------------------------------------------------------
+run:
+  cadence: "tuefri"             # trade on Tuesdays and Fridays
+  fill_timing: "close_T"        # position filled on same-day close
+  pnl_start: "Tplus1"           # PnL begins from next day's return
+  z_th: 1.0                     # signal activation threshold
+  hold: 3                       # minimum holding period (trading days)
+  rebalance_threshold: 0.10     # rebalance only if exposure shift >=10%
+  cooldown: 0                   # no cooldown beyond hold rule
+  target_vol: 0.10              # 10% annualised vol target
+  vol_lookback: 28              # rolling vol window (trading days)
+  lev_cap: 2.5                  # max leverage multiple
+  bps: 1.5                      # transaction cost (bps per turnover)
+  oos_start: "2018-01-01"       # OOS split for backtesting
+
+# -----------------------------------------------------------------------------
+# Notes
+# -----------------------------------------------------------------------------
+notes: |
+  - Uses 3-day rolling mean return divided by its stdev to form z-impulse.
+  - Signal: +1 if z >= 1.0, -1 if z <= -1.0, else carry previous signal.
+  - Must hold a position for at least 3 days before flipping.
+  - Rebalance only if exposure change ≥10%.
+  - Trade executed at close of T; PnL starts from T+1.
+  - Costs applied only on trade days when exposure changes.

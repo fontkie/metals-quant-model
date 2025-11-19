@@ -1,0 +1,38 @@
+﻿ Event                                      , Phase  , Date              , Disruption kt , Brief Description 
+" Escondida Strike (Chile, BHP) - 2006      ", Start  ," August 7, 2006   ",100," Workers halted work at 8am local time over pay demands, blocking the world's largest copper mine. "
+                                            , Update ," August 18, 2006  ",100," 12 days in, production at 40% and talks stalled, extending expected loss; strike ongoing with clashes. "
+                                            , End    ," September 1, 2006",-100," Workers voted to end 25-day strike, return to work September 2 after bonus deal; full ramp-up expected post-end. "
+" Grasberg Strike (Indonesia, Freeport) - 2011 ", Start  ," September 6, 2011",150," Workers set strike date September 15 for higher pay, blocking roads. "
+                                            , Update ," November 9, 2011 ",50," 2 months in, longest in mining; prolonged due to demands, police involvement. "
+                                            , End    , December 2011    ,-200," Workers end strike after pay agreement, ops restart; ramp-up post-deal. "
+" Escondida Strike (Chile, BHP) - 2017      ", Start  ," February 9, 2017 ",150," Initial 2,500 workers walk off over wages, full halt; talks fail, world's No.1 mine stops. "
+                                            , Update ," February 15, 2017",50," 6 days in, no end in sight; longest potential in Chile, prices up on fears. "
+                                            , Update ," March 6, 2017    ",14," Overtakes 2006's 25 days, 2,500 still out; union holds firm, output zero. "
+                                            , End    ," March 23, 2017   ",-214," Workers opt for old contract after 43 days, ops restart; full ramp-up post. "
+" Grasberg Transition/Issues (Indonesia, Freeport) - 2017-2019 ", Start  , February 2017    ,200," Shift to underground, export ban starts; government blocks exports over ownership, ops cut. "
+                                            , Update , September 2017   ,50," Strikes/blockades add to transition; labor disputes halt parts, violence reported. "
+                                            , Update , Mid-2019         ,300," Delays in underground ramp-up; ongoing issues with permits, production down 20%. "
+                                            , End    , Late 2019        ,-550," Ownership deal resolves, production ramps; full underground ops by 2020. "
+" Las Bambas Blockade (Peru, MMG) - 2019    ", Start  ," February 2, 2019 ",50, Initial road block by Fuerabamba community over land; protests halt transport. 
+                                            , Update ," March 22, 2019   ",50," Leaders arrested, blockade ongoing; 50 days in, ops partial. "
+                                            , End    ," April 10, 2019   ",-100," Blockade ends after talks, 68 days total, ops restart; transport resumes. "
+ COVID Global Disruptions (Multiple) - 2020-2021 , Start  , March 2020       ,500," Global lockdowns hit mid-Mar; initial cuts in Chile/Peru ops due to quarantines, supply chain breaks. "
+                                            , Update , June 2020        ,100," Ramp-ups slow, labor shortages; ongoing waves, mines down 10-15% global. "
+                                            , Update , Mid-2021         ,100," Second waves, delays; Chile output hit hardest. "
+                                            , End    , Late 2021        ,-700," Vaccines/resolutions allow restart, full ops by 2022; lingering impacts. "
+" Las Bambas Blockades (Peru, MMG) - 2022   ", Start  ," April 20, 2022   ",100," Community protests halt ops, road blocks; MMG suspends over safety. "
+                                            , Update , May 2022         ,50," Over 30 days, full stop; talks fail, production zero. "
+                                            , End    , June 2022        ,-150," Agreement ends blockade after 51 days, ramp-up starts; ops resume. "
+" Cobre Panama Shutdown (Panama, First Quantum) - 2023 ", Start  ," October 20, 2023 ",100," Protests start, ops partial by Nov 13; port blocks cut processing. "
+                                            , Update ," November 28, 2023",100," Supreme Court rules unconstitutional, full closure; protests lead to shutdown. "
+                                            , Update ," November 29, 2023",100, Government orders closure. 
+" El Teniente Accident (Chile, Codelco) - 2025 ", Start  ," July 31, 2025    ",100," Initial accident kills 6, halts ops in Andesita tunnel; rock burst/collapse. "
+                                            , Update ," August 10, 2025  ",100," Ops halted 10 days, ramp-up slow; investigation ongoing. "
+                                            , End    , Late 2025 (estimated) ,-200," Partial ops by Aug, full ramp-up expected by end-2025; ongoing. "
+" Grasberg Mud Flow (Indonesia, Freeport) - 2025 ", Start  ," September 8, 2025",300," Initial mudslide kills 2, suspends ops; flooding blocks access. "
+                                            , Update ," September 24, 2025",250," Force majeure, loss to 2026; mining halted for search. "
+                                            , Update ," September 29, 2025",50, Supply chain fragility noted. 
+" Kamoa-Kakula Issues (DRC, Ivanhoe) - 2025 ", Start  ," May 18, 2025     ",100, Seismic activity shuts mine; geotechnical review starts. 
+                                            , Update ," June 7, 2025     ",50," Western side restarts, but ramp slow; cuts 2025 guidance 28%. "
+                                            , Update ," June 11, 2025    ",50, Withdraws 2026 forecast; full mine restart. 
+                                            , End    ," August 25, 2025  ",-200," Stage 2 dewatering starts, full ramp by Sep; ops normalized, smelter heat-up Sep. "

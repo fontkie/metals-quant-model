@@ -1,0 +1,680 @@
+"""
+build_stimulus_core.py
+
+Production StimulusCore Overlay Calculator
+Builds daily Chinese stimulus index from financial market signals
+
+Components (kept separate for transparency):
+  A. LIQUIDITY (40%): Repo, yields, curve
+  B. EQUITY (40%): Infrastructure, real estate, EV sectors  
+  C. CURRENCY (20%): CNY weakness
+
+Output:
+  - Daily stimulus score (0-100)
+  - Stimulus regime classification
+  - Component A, B, C scores separately
+  - Position amplification scalar (1.0-1.5x)
+
+Usage:
+  python build_stimulus_core.py
+"""
+
+import pandas as pd
+import numpy as np
+from pathlib import Path
+from datetime import datetime
+import warnings
+warnings.filterwarnings('ignore')
+
+# ============================================================================
+# Configuration
+# ============================================================================
+
+# Input data files (canonical format)
+DATA_DIR = Path("Data/Macro/pricing/canonical")
+
+INPUT_FILES = {
+    # Component A: Liquidity
+    'repo_7d': DATA_DIR / 'china_repo_7d_rate_canonical.csv',
+    'yield_10y': DATA_DIR / 'china_10y_rate_canonical.csv',
+    'yield_2y': DATA_DIR / 'china_2yr_rate_canonical.csv',
+    
+    # Component B: Equity
+    'csi300': DATA_DIR / 'csi300_index_canonical.csv',          # Fallback for infrastructure
+    'infra_etf': DATA_DIR / 'csi_infra_etf_canonical.csv',      # From 2022-07 onwards
+    'realestate_etf': DATA_DIR / 'csi_realestate_etf_canonical.csv',
+    'ev_etf': DATA_DIR / 'csi_ev_etf_canonical.csv',
+    
+    # Component C: Currency
+    'usdcny': DATA_DIR / 'cny_fx_canonical.csv',
+}
+
+OUTPUT_FILE = Path("Data/Macro/stimulus_core_output.csv")
+STATS_FILE = Path("Data/Macro/stimulus_core_stats.txt")
+
+# Model parameters
+Z_SCORE_WINDOW = 90        # 90-day rolling window for z-scores
+SMOOTHING_SPAN = 10        # 10-day EMA for final output
+
+# Regime thresholds
+STIMULUS_ACTIVE_THRESHOLD = 65     # >65 = Active stimulus
+STIMULUS_MILD_THRESHOLD = 50       # 50-65 = Mild stimulus
+STIMULUS_NEUTRAL_THRESHOLD = 35    # 35-50 = Neutral
+
+# Amplification thresholds (for overlay integration)
+AMPLIFY_STRONG_THRESHOLD = 65      # Stimulus >65 + Tight >60 → 1.5x positions
+AMPLIFY_MILD_THRESHOLD = 55        # Stimulus >55 + Tight >65 → 1.3x positions
+
+# ============================================================================
+# Data Loading
+# ============================================================================
+
+def load_canonical_csv(file_path, value_col=None):
+    """
+    Load canonical CSV file
+    
+    Returns DataFrame with ['date', <value_col>] where value_col is 
+    'rate', 'price', 'spread', etc.
+    """
+    if not file_path.exists():
+        print(f"  ⚠️  File not found: {file_path}")
+        return None
+    
+    try:
+        df = pd.read_csv(file_path, parse_dates=['date'])
+        
+        # Auto-detect value column if not specified
+        if value_col is None:
+            value_col = [c for c in df.columns if c != 'date'][0]
+        
+        df = df[['date', value_col]].copy()
+        df = df.dropna()
+        df = df.sort_values('date')
+        
+        print(f"  ✓ Loaded {len(df):,} rows from {file_path.name}")
+        return df
+        
+    except Exception as e:
+        print(f"  ✗ Error loading {file_path.name}: {e}")
+        return None
+
+
+def load_all_data():
+    """Load all input data files"""
+    
+    print("\n" + "="*80)
+    print("LOADING DATA FILES")
+    print("="*80)
+    
+    data = {}
+    
+    for name, file_path in INPUT_FILES.items():
+        df = load_canonical_csv(file_path)
+        if df is not None:
+            # Rename value column to name
+            value_col = [c for c in df.columns if c != 'date'][0]
+            df = df.rename(columns={value_col: name})
+            data[name] = df
+    
+    if len(data) == 0:
+        raise ValueError("No data files loaded successfully!")
+    
+    print(f"\n✓ Loaded {len(data)} data series")
+    
+    return data
+
+
+# ============================================================================
+# Data Preparation
+# ============================================================================
+
+def merge_all_series(data):
+    """Merge all series on date"""
+    
+    print("\n" + "="*80)
+    print("MERGING DATA SERIES")
+    print("="*80)
+    
+    # Start with first series
+    base_df = None
+    for name, df in data.items():
+        if base_df is None:
+            base_df = df.copy()
+            print(f"  Base: {name} ({len(base_df)} days)")
+        else:
+            base_df = pd.merge(base_df, df, on='date', how='outer')
+            print(f"  Merged: {name}")
+    
+    # Sort and forward-fill (max 5 days)
+    base_df = base_df.sort_values('date')
+    base_df = base_df.fillna(method='ffill', limit=5)
+    
+    print(f"\n  Total merged: {len(base_df):,} days")
+    print(f"  Date range: {base_df['date'].min().date()} to {base_df['date'].max().date()}")
+    
+    return base_df
+
+
+def calculate_2s10s_spread(df):
+    """Calculate China 2s10s yield curve spread"""
+    
+    if 'yield_10y' in df.columns and 'yield_2y' in df.columns:
+        df['spread_2s10s'] = df['yield_10y'] - df['yield_2y']
+        print("  ✓ Calculated 2s10s spread")
+    else:
+        print("  ⚠️  Cannot calculate spread - missing yield data")
+        df['spread_2s10s'] = np.nan
+    
+    return df
+
+
+def merge_infrastructure_with_fallback(df):
+    """
+    Use CSI300 as fallback for infrastructure before 2022-07-12
+    Blend infrastructure ETF after 2022-07-12
+    """
+    
+    if 'infra_etf' not in df.columns or 'csi300' not in df.columns:
+        print("  ⚠️  Missing infrastructure or CSI300 data")
+        df['infrastructure'] = np.nan
+        return df
+    
+    # Find where infrastructure ETF starts
+    infra_start = df[df['infra_etf'].notna()]['date'].min()
+    
+    # Create blended infrastructure series
+    df['infrastructure'] = np.where(
+        df['date'] < infra_start,
+        df['csi300'],           # Use CSI300 before 2022-07
+        df['infra_etf']         # Use infrastructure ETF after
+    )
+    
+    csi300_days = len(df[(df['date'] < infra_start) & df['infrastructure'].notna()])
+    infra_days = len(df[(df['date'] >= infra_start) & df['infrastructure'].notna()])
+    
+    print(f"  ✓ Created infrastructure series:")
+    print(f"    CSI300 fallback: {csi300_days:,} days (pre-{infra_start.date()})")
+    print(f"    Infrastructure ETF: {infra_days:,} days (post-{infra_start.date()})")
+    
+    return df
+
+
+# ============================================================================
+# Component Calculations
+# ============================================================================
+
+def calculate_z_score(series, window=90):
+    """Calculate rolling z-score"""
+    rolling_mean = series.rolling(window=window, min_periods=int(window/2)).mean()
+    rolling_std = series.rolling(window=window, min_periods=int(window/2)).std()
+    z_score = (series - rolling_mean) / rolling_std
+    return z_score
+
+
+def normalize_to_0_100(z_score_series):
+    """
+    Normalize z-scores to 0-100 scale
+    Clip at ±3 standard deviations
+    """
+    clipped = z_score_series.clip(-3, 3)
+    normalized = 50 + (clipped / 6) * 50  # -3σ → 0, 0σ → 50, +3σ → 100
+    return normalized
+
+
+def calculate_component_a_liquidity(df):
+    """
+    Component A: Monetary Liquidity (40% of stimulus index)
+    
+    Signals:
+    - 7-day repo (40%): Lower = easier liquidity = BULLISH → invert
+    - 10Y yield (40%): Lower = easier policy = BULLISH → invert  
+    - 2s10s spread (20%): Steeper = growth optimism = BULLISH
+    """
+    
+    print("\n" + "="*80)
+    print("CALCULATING COMPONENT A: LIQUIDITY")
+    print("="*80)
+    
+    # Repo rate (inverted - lower is bullish)
+    if 'repo_7d' in df.columns:
+        df['repo_z'] = calculate_z_score(df['repo_7d'], Z_SCORE_WINDOW)
+        df['repo_score'] = normalize_to_0_100(-df['repo_z'])  # INVERTED
+        print("  ✓ Repo rate (inverted)")
+    else:
+        df['repo_score'] = 50  # Neutral if missing
+        print("  ⚠️  Repo rate missing, using neutral 50")
+    
+    # 10Y yield (inverted - lower is bullish)
+    if 'yield_10y' in df.columns:
+        df['yield_z'] = calculate_z_score(df['yield_10y'], Z_SCORE_WINDOW)
+        df['yield_score'] = normalize_to_0_100(-df['yield_z'])  # INVERTED
+        print("  ✓ 10Y yield (inverted)")
+    else:
+        df['yield_score'] = 50
+        print("  ⚠️  10Y yield missing, using neutral 50")
+    
+    # 2s10s spread (steeper = bullish)
+    if 'spread_2s10s' in df.columns:
+        df['spread_z'] = calculate_z_score(df['spread_2s10s'], Z_SCORE_WINDOW)
+        df['spread_score'] = normalize_to_0_100(df['spread_z'])  # NOT inverted
+        print("  ✓ 2s10s spread")
+    else:
+        df['spread_score'] = 50
+        print("  ⚠️  2s10s spread missing, using neutral 50")
+    
+    # Combine liquidity component
+    df['component_a_liquidity'] = (
+        0.40 * df['repo_score'] +
+        0.40 * df['yield_score'] +
+        0.20 * df['spread_score']
+    )
+    
+    print(f"\n  Component A mean: {df['component_a_liquidity'].mean():.1f}")
+    print(f"  Component A range: {df['component_a_liquidity'].min():.1f} - {df['component_a_liquidity'].max():.1f}")
+    
+    return df
+
+
+def calculate_component_b_equity(df):
+    """
+    Component B: Equity Sentiment (40% of stimulus index)
+    
+    Signals:
+    - Infrastructure (40%): Higher = demand expectations = BULLISH
+    - Real estate (30%): Higher = property optimism = BULLISH
+    - EV/New energy (30%): Higher = green transition = BULLISH
+    
+    ADAPTIVE WEIGHTS: If EV data missing (pre-2018), reallocate to infra/RE
+    """
+    
+    print("\n" + "="*80)
+    print("CALCULATING COMPONENT B: EQUITY")
+    print("="*80)
+    
+    # Infrastructure (CSI300 fallback pre-2022, infra ETF post-2022)
+    if 'infrastructure' in df.columns:
+        df['infra_z'] = calculate_z_score(df['infrastructure'], Z_SCORE_WINDOW)
+        df['infra_score'] = normalize_to_0_100(df['infra_z'])
+        print("  ✓ Infrastructure (with CSI300 fallback)")
+    else:
+        df['infra_score'] = np.nan
+        print("  ⚠️  Infrastructure missing")
+    
+    # Real estate
+    if 'realestate_etf' in df.columns:
+        df['re_z'] = calculate_z_score(df['realestate_etf'], Z_SCORE_WINDOW)
+        df['re_score'] = normalize_to_0_100(df['re_z'])
+        print("  ✓ Real estate")
+    else:
+        df['re_score'] = np.nan
+        print("  ⚠️  Real estate missing")
+    
+    # EV/New energy
+    if 'ev_etf' in df.columns:
+        df['ev_z'] = calculate_z_score(df['ev_etf'], Z_SCORE_WINDOW)
+        df['ev_score'] = normalize_to_0_100(df['ev_z'])
+        print("  ✓ EV/New energy")
+    else:
+        df['ev_score'] = np.nan
+        print("  ⚠️  EV missing")
+    
+    # ADAPTIVE WEIGHTING: Handle missing EV data (pre-2018)
+    # When EV is missing, redistribute weight to infra (57%) and RE (43%)
+    
+    def calc_equity_component(row):
+        """Calculate equity component with adaptive weights"""
+        has_infra = pd.notna(row['infra_score'])
+        has_re = pd.notna(row['re_score'])
+        has_ev = pd.notna(row['ev_score'])
+        
+        # All three available (post-2018)
+        if has_infra and has_re and has_ev:
+            return (0.40 * row['infra_score'] + 
+                    0.30 * row['re_score'] + 
+                    0.30 * row['ev_score'])
+        
+        # Only infra + RE (pre-2018, EV missing)
+        elif has_infra and has_re and not has_ev:
+            return (0.57 * row['infra_score'] + 
+                    0.43 * row['re_score'])  # Redistribute EV 30% weight
+        
+        # Only infra
+        elif has_infra and not has_re and not has_ev:
+            return row['infra_score']
+        
+        # Only RE
+        elif not has_infra and has_re and not has_ev:
+            return row['re_score']
+        
+        # Insufficient data
+        else:
+            return np.nan
+    
+    df['component_b_equity'] = df.apply(calc_equity_component, axis=1)
+    
+    # Count adaptive periods
+    post_2018 = len(df[(df['date'] >= '2018-01-01') & df['component_b_equity'].notna()])
+    pre_2018 = len(df[(df['date'] < '2018-01-01') & df['component_b_equity'].notna()])
+    
+    print(f"\n  Adaptive weighting:")
+    print(f"    Pre-2018 (infra 57% + RE 43%): {pre_2018:,} days")
+    print(f"    Post-2018 (infra 40% + RE 30% + EV 30%): {post_2018:,} days")
+    
+    print(f"\n  Component B mean: {df['component_b_equity'].mean():.1f}")
+    print(f"  Component B range: {df['component_b_equity'].min():.1f} - {df['component_b_equity'].max():.1f}")
+    
+    return df
+
+
+def calculate_component_c_currency(df):
+    """
+    Component C: Currency (20% of stimulus index)
+    
+    Signal:
+    - USD/CNY: Higher (weaker CNY) = easier policy = BULLISH
+    """
+    
+    print("\n" + "="*80)
+    print("CALCULATING COMPONENT C: CURRENCY")
+    print("="*80)
+    
+    if 'usdcny' in df.columns:
+        df['cny_z'] = calculate_z_score(df['usdcny'], Z_SCORE_WINDOW)
+        df['cny_score'] = normalize_to_0_100(df['cny_z'])  # Higher USD/CNY = bullish
+        print("  ✓ USD/CNY")
+    else:
+        df['cny_score'] = 50
+        print("  ⚠️  USD/CNY missing, using neutral 50")
+    
+    df['component_c_currency'] = df['cny_score']
+    
+    print(f"\n  Component C mean: {df['component_c_currency'].mean():.1f}")
+    print(f"  Component C range: {df['component_c_currency'].min():.1f} - {df['component_c_currency'].max():.1f}")
+    
+    return df
+
+
+def combine_stimulus_index(df):
+    """
+    Combine A, B, C into final stimulus index
+    
+    Weights: A (40%) + B (40%) + C (20%)
+    """
+    
+    print("\n" + "="*80)
+    print("COMBINING STIMULUS INDEX")
+    print("="*80)
+    
+    df['stimulus_index'] = (
+        0.40 * df['component_a_liquidity'] +
+        0.40 * df['component_b_equity'] +
+        0.20 * df['component_c_currency']
+    )
+    
+    # Smooth with EMA
+    df['stimulus_index_smooth'] = df['stimulus_index'].ewm(
+        span=SMOOTHING_SPAN, adjust=False
+    ).mean()
+    
+    print(f"  Raw stimulus index mean: {df['stimulus_index'].mean():.1f}")
+    print(f"  Smoothed stimulus index mean: {df['stimulus_index_smooth'].mean():.1f}")
+    
+    return df
+
+
+def classify_stimulus_regime(df):
+    """Classify stimulus regime based on smoothed index"""
+    
+    def classify(score):
+        if pd.isna(score):
+            return 'INSUFFICIENT_DATA'
+        elif score > STIMULUS_ACTIVE_THRESHOLD:
+            return 'STIMULUS_ACTIVE'
+        elif score > STIMULUS_MILD_THRESHOLD:
+            return 'STIMULUS_MILD'
+        elif score > STIMULUS_NEUTRAL_THRESHOLD:
+            return 'NEUTRAL'
+        else:
+            return 'TIGHTENING'
+    
+    df['stimulus_regime'] = df['stimulus_index_smooth'].apply(classify)
+    
+    return df
+
+
+def calculate_amplification_scalar(df):
+    """
+    Calculate position amplification scalar for overlay integration
+    
+    This will be used with TightnessIndex to determine position sizing:
+    - stimulus_index >65 + tightness >60 → 1.5x positions
+    - stimulus_index >55 + tightness >65 → 1.3x positions
+    - Otherwise → 1.0x (no amplification)
+    
+    Note: Actual amplification logic happens in portfolio integration,
+    this just provides the stimulus component
+    """
+    
+    # For reference only - actual amplification decided in portfolio layer
+    df['amplify_ready'] = (df['stimulus_index_smooth'] > AMPLIFY_STRONG_THRESHOLD).astype(int)
+    
+    return df
+
+
+# ============================================================================
+# Output & Statistics
+# ============================================================================
+
+def save_output(df, output_file):
+    """Save stimulus index to CSV"""
+    
+    print("\n" + "="*80)
+    print("SAVING OUTPUT")
+    print("="*80)
+    
+    # Select output columns
+    output_cols = [
+        'date',
+        'component_a_liquidity',
+        'component_b_equity',
+        'component_c_currency',
+        'stimulus_index',
+        'stimulus_index_smooth',
+        'stimulus_regime',
+        'amplify_ready',
+    ]
+    
+    output_df = df[output_cols].copy()
+    output_df = output_df.dropna(subset=['stimulus_index'])
+    
+    # Ensure directory exists
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    output_df.to_csv(output_file, index=False)
+    
+    print(f"  ✓ Saved {len(output_df):,} rows to: {output_file}")
+    
+    return output_df
+
+
+def generate_statistics(df, stats_file):
+    """Generate comprehensive statistics report"""
+    
+    stats_lines = []
+    
+    stats_lines.append("="*80)
+    stats_lines.append("STIMULUSCORE OVERLAY - COMPREHENSIVE STATISTICS")
+    stats_lines.append("="*80)
+    stats_lines.append(f"\nGenerated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # Date range
+    valid_data = df[df['stimulus_index'].notna()]
+    stats_lines.append(f"\nDate range: {valid_data['date'].min().date()} to {valid_data['date'].max().date()}")
+    stats_lines.append(f"Total observations: {len(valid_data):,} days")
+    
+    # Component statistics
+    stats_lines.append("\n" + "-"*80)
+    stats_lines.append("COMPONENT SCORES (Mean ± Std)")
+    stats_lines.append("-"*80)
+    
+    for comp, name in [
+        ('component_a_liquidity', 'Component A (Liquidity 40%)'),
+        ('component_b_equity', 'Component B (Equity 40%)'),
+        ('component_c_currency', 'Component C (Currency 20%)'),
+        ('stimulus_index', 'Stimulus Index (Raw)'),
+        ('stimulus_index_smooth', 'Stimulus Index (Smoothed)')
+    ]:
+        if comp in df.columns:
+            mean = df[comp].mean()
+            std = df[comp].std()
+            stats_lines.append(f"{name:40s}: {mean:5.1f} ± {std:4.1f}")
+    
+    # Regime distribution
+    stats_lines.append("\n" + "-"*80)
+    stats_lines.append("STIMULUS REGIME DISTRIBUTION")
+    stats_lines.append("-"*80)
+    
+    regime_counts = df['stimulus_regime'].value_counts()
+    for regime in ['STIMULUS_ACTIVE', 'STIMULUS_MILD', 'NEUTRAL', 'TIGHTENING', 'INSUFFICIENT_DATA']:
+        count = regime_counts.get(regime, 0)
+        pct = 100 * count / len(df)
+        stats_lines.append(f"{regime:25s}: {count:6,} days ({pct:5.1f}%)")
+    
+    # Amplification readiness
+    stats_lines.append("\n" + "-"*80)
+    stats_lines.append("AMPLIFICATION TRIGGER READINESS")
+    stats_lines.append("-"*80)
+    
+    amplify_days = df['amplify_ready'].sum()
+    amplify_pct = 100 * amplify_days / len(df)
+    stats_lines.append(f"Days with stimulus >65 (amplify-ready): {amplify_days:,} ({amplify_pct:.1f}%)")
+    stats_lines.append("\nNote: Actual amplification requires BOTH:")
+    stats_lines.append("  1. Stimulus index >65 (from this module)")
+    stats_lines.append("  2. TightnessIndex >60 (from supply/demand fundamentals)")
+    
+    # Historical validation periods
+    stats_lines.append("\n" + "-"*80)
+    stats_lines.append("HISTORICAL VALIDATION - KEY STIMULUS PERIODS")
+    stats_lines.append("-"*80)
+    
+    validation_periods = [
+        ("2008-2009 Stimulus (RMB 4T)", "2008-11-01", "2009-12-31"),
+        ("2016 Infrastructure Push", "2016-01-01", "2016-12-31"),
+        ("2020-2021 COVID Stimulus", "2020-03-01", "2021-12-31"),
+        ("2023 Policy Support", "2023-03-01", "2023-12-31"),
+        ("2024-2025 Recent", "2024-01-01", "2025-11-06"),
+    ]
+    
+    for period_name, start, end in validation_periods:
+        period_data = df[(df['date'] >= start) & (df['date'] <= end)]
+        
+        if len(period_data) > 0:
+            avg_stimulus = period_data['stimulus_index_smooth'].mean()
+            regime_dist = period_data['stimulus_regime'].value_counts()
+            dominant_regime = regime_dist.index[0] if len(regime_dist) > 0 else 'N/A'
+            
+            stats_lines.append(f"\n{period_name} ({start} to {end}):")
+            stats_lines.append(f"  Avg stimulus: {avg_stimulus:.1f}")
+            stats_lines.append(f"  Dominant regime: {dominant_regime}")
+            stats_lines.append(f"  Days in period: {len(period_data):,}")
+    
+    # Recent observations
+    stats_lines.append("\n" + "-"*80)
+    stats_lines.append("RECENT OBSERVATIONS (Last 20 Days)")
+    stats_lines.append("-"*80)
+    stats_lines.append(f"{'Date':<12s} {'A (Liq)':>8s} {'B (Eq)':>8s} {'C (FX)':>8s} {'Stimulus':>10s} {'Regime':<20s}")
+    stats_lines.append("-"*80)
+    
+    recent = df[df['stimulus_index'].notna()].tail(20)
+    for _, row in recent.iterrows():
+        stats_lines.append(
+            f"{row['date'].strftime('%Y-%m-%d'):<12s} "
+            f"{row['component_a_liquidity']:>8.1f} "
+            f"{row['component_b_equity']:>8.1f} "
+            f"{row['component_c_currency']:>8.1f} "
+            f"{row['stimulus_index_smooth']:>10.1f} "
+            f"{row['stimulus_regime']:<20s}"
+        )
+    
+    stats_lines.append("\n" + "="*80)
+    stats_lines.append("END OF REPORT")
+    stats_lines.append("="*80)
+    
+    # Save to file
+    stats_text = "\n".join(stats_lines)
+    
+    stats_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(stats_file, 'w') as f:
+        f.write(stats_text)
+    
+    print(f"  ✓ Statistics saved to: {stats_file}")
+    
+    # Also print to console
+    print("\n" + stats_text)
+    
+    return stats_text
+
+
+# ============================================================================
+# Main Execution
+# ============================================================================
+
+def main():
+    """Main execution function"""
+    
+    print("\n" + "="*80)
+    print("STIMULUSCORE OVERLAY - PRODUCTION BUILD")
+    print("="*80)
+    print(f"\nConfiguration:")
+    print(f"  Z-score window: {Z_SCORE_WINDOW} days")
+    print(f"  Smoothing: {SMOOTHING_SPAN}-day EMA")
+    print(f"  Weights: A (40%) + B (40%) + C (20%)")
+    
+    # Load data
+    data = load_all_data()
+    
+    # Merge all series
+    df = merge_all_series(data)
+    
+    # Calculate derived series
+    df = calculate_2s10s_spread(df)
+    df = merge_infrastructure_with_fallback(df)
+    
+    # Calculate components (kept separate)
+    df = calculate_component_a_liquidity(df)
+    df = calculate_component_b_equity(df)
+    df = calculate_component_c_currency(df)
+    
+    # Combine into stimulus index
+    df = combine_stimulus_index(df)
+    
+    # Classify regime
+    df = classify_stimulus_regime(df)
+    
+    # Calculate amplification readiness
+    df = calculate_amplification_scalar(df)
+    
+    # Save output
+    output_df = save_output(df, OUTPUT_FILE)
+    
+    # Generate statistics
+    generate_statistics(df, STATS_FILE)
+    
+    print("\n" + "="*80)
+    print("✓ STIMULUSCORE BUILD COMPLETE")
+    print("="*80)
+    
+    print("\nOutput files:")
+    print(f"  1. {OUTPUT_FILE}")
+    print(f"  2. {STATS_FILE}")
+    
+    print("\nNext steps:")
+    print("  1. Review statistics report for validation")
+    print("  2. Check stimulus regime classification on known periods")
+    print("  3. Integrate with TightnessIndex for amplification overlay")
+    print("  4. Test amplification logic: stimulus >65 + tight >60 → 1.5x")
+    print()
+
+
+if __name__ == "__main__":
+    main()

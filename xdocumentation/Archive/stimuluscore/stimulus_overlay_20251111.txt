@@ -1,0 +1,514 @@
+# Complete Data Requirements: StimulusCore Overlay + Demand Nowcast
+## Bloomberg Tickers and Alternative Sources
+
+---
+
+## PART 1: STIMULUSCORE OVERLAY (Position Amplifier)
+
+**Purpose:** Detect when Chinese stimulus is active to amplify positions
+**Frequency:** Daily
+**Output:** Stimulus regime (ACTIVE/MILD/NEUTRAL/TIGHTENING) → Position multiplier (1.0x - 1.5x)
+
+---
+
+### A. MONETARY LIQUIDITY SIGNALS (40% of Stimulus Index)
+
+| Component | Description | Bloomberg Ticker | Update Freq | Weight |
+|-----------|-------------|------------------|-------------|--------|
+| **7-day repo rate** | PBoC policy stance, interbank liquidity | `CNREPO7D Index` | Daily | 40% |
+| **10Y CGB yield** | Long-term growth expectations | `CNGGB10YR Index` | Daily | 40% |
+| **2Y CGB yield** | Short-term policy expectations | `CNGGB2YR Index` | Daily | - |
+| **2s10s spread** | Yield curve (10Y - 2Y) = growth optimism | Calculated from above | Daily | 20% |
+
+**Directionality:**
+- ↓ Repo rate = Easing = BULLISH (invert z-score)
+- ↓ 10Y yield = Easing = BULLISH (invert z-score)
+- ↑ 2s10s spread = Steepening = Growth optimism = BULLISH (use z-score)
+
+**Bloomberg Formula Examples:**
+```
+=BDH("CNREPO7D Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+=BDH("CNGGB10YR Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+=BDH("CNGGB2YR Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+```
+
+**Alternative if Bloomberg unavailable:**
+- Wind Terminal: M0041482, M0041483
+- CEIC Database: China repo rates, CGB yields
+- PBoC website: pbc.gov.cn (manual collection)
+
+---
+
+### B. EQUITY SENTIMENT SIGNALS (40% of Stimulus Index)
+
+| Component | Description | Bloomberg Ticker | Update Freq | Weight |
+|-----------|-------------|------------------|-------------|--------|
+| **CSI Infrastructure** | Infrastructure & construction stocks | `CSIINFR Index` | Daily | 40% |
+| **CSI Real Estate** | Property developer stocks | `CSIREALE Index` | Daily | 30% |
+| **CSI New Energy** | EV/solar/battery stocks | `CSINERGY Index` | Daily | 30% |
+
+**Fallback if sector indices unavailable:**
+| Component | Bloomberg Ticker | Note |
+|-----------|------------------|------|
+| CSI 300 (broad market) | `SHSZ300 Index` | Use if sector indices missing |
+| Shanghai Composite | `SHCOMP Index` | Backup |
+
+**Bloomberg Formula:**
+```
+=BDH("CSIINFR Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+=BDH("CSIREALE Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+=BDH("CSINERGY Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+```
+
+**Alternative:**
+- Wind Terminal: 881138.WI (Infrastructure), 881151.WI (Real Estate)
+- CSI Index Company website
+- Yahoo Finance: Limited China sector data
+
+---
+
+### C. CURRENCY SIGNAL (20% of Stimulus Index)
+
+| Component | Description | Bloomberg Ticker | Update Freq | Weight |
+|-----------|-------------|------------------|-------------|--------|
+| **USD/CNY spot** | CNY weakness = policy easing | `USDCNY Curncy` | Daily | 100% |
+
+**Directionality:**
+- ↑ USD/CNY (weaker CNY) = Easing = BULLISH (use z-score)
+
+**Bloomberg Formula:**
+```
+=BDH("USDCNY Curncy","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+```
+
+**Alternative:**
+- Free: Investing.com, TradingView
+- USD/CNH (offshore): `USDCNH Curncy` (less controlled than CNY)
+
+---
+
+### D. OPTIONAL ENHANCEMENTS (If Available)
+
+| Component | Description | Bloomberg Ticker | Use |
+|-----------|-------------|------------------|-----|
+| 3M SHIBOR | Interbank funding stress | `CHSHIBOR3M Index` | Liquidity confirmation |
+| China HY spread | Corporate credit conditions | `JPMACCC Index` | Risk appetite |
+| CNH-CNY basis | Offshore vs onshore liquidity | USDCNH - USDCNY | Capital flow pressure |
+| PBoC OMO net injection | Weekly liquidity ops | `CNOMONET Index` | Policy intent (weekly) |
+
+**These are nice-to-have, not critical. Start with core signals above.**
+
+---
+
+### STIMULUSCORE DATA SUMMARY
+
+**REQUIRED (Core 7 Series):**
+1. CNREPO7D Index (7-day repo)
+2. CNGGB10YR Index (10Y yield)
+3. CNGGB2YR Index (2Y yield)
+4. CSIINFR Index (Infrastructure equity)
+5. CSIREALE Index (Real estate equity)
+6. CSINERGY Index (New energy equity)
+7. USDCNY Curncy (CNY spot)
+
+**FALLBACK (If sector indices missing):**
+- SHSZ300 Index (CSI 300 broad market)
+
+**Total:** 7-8 daily series from Bloomberg
+
+---
+
+## PART 2: DEMAND NOWCAST (TightnessIndex Demand Layer)
+
+**Purpose:** Real-time/forward-looking Chinese copper demand indicator
+**Frequency:** Daily (Tier 1), Weekly (Tier 2), Monthly (Tier 3)
+**Output:** Demand score (0-100) → Feeds TightnessIndex as 30% weight
+
+---
+
+### TIER 1: FINANCIAL SIGNALS (50% of Demand Nowcast)
+
+**Same as StimulusCore above - double duty!**
+
+The stimulus financial signals (repo, yields, CNY, equities) also indicate demand expectations. This is efficient - one dataset serves two purposes:
+- In StimulusCore: Triggers amplification overlay
+- In Demand Nowcast: Indicates forward-looking demand strength
+
+**Data:** Use the 7 core series from StimulusCore section above.
+
+---
+
+### TIER 2: ACTIVITY PROXIES (30% of Demand Nowcast)
+
+#### Construction Activity
+
+| Component | Description | Bloomberg Ticker | Frequency | Weight |
+|-----------|-------------|------------------|-----------|--------|
+| **Rebar futures (Shanghai)** | Construction steel = copper proxy | `MMRBF00 Index` | Daily | 30% |
+| **Rebar inventory** | SHFE warehouse stocks | `CNRBINV Index` | Weekly | 10% |
+| **Hot rolled coil (Shanghai)** | Manufacturing steel demand | `MMHRF00 Index` | Daily | 10% |
+
+**Directionality:**
+- ↑ Rebar price = Strong construction = BULLISH
+- ↓ Rebar inventory = Tight supply/strong demand = BULLISH (invert)
+- ↑ HRC price = Strong manufacturing = BULLISH
+
+**Bloomberg Formula:**
+```
+=BDH("MMRBF00 Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+=BDH("CNRBINV Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+=BDH("MMHRF00 Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+```
+
+**Alternative:**
+- Mysteel (mysteel.com): Premium rebar/steel data
+- SHFE website: shfe.com.cn (inventory data)
+- Shanghai Futures Exchange
+
+---
+
+#### Industrial Activity
+
+| Component | Description | Bloomberg Ticker | Frequency | Weight |
+|-----------|-------------|------------------|-----------|--------|
+| **6 major power plant coal** | Industrial activity proxy | `COAL6 Index` | Daily | 30% |
+| **Electricity generation** | Grid + manufacturing demand | `CNELEC Index` | Weekly | 10% |
+| **Freight index** | Logistics = economic activity | `CCFI Index` | Weekly | 10% |
+
+**Bloomberg Formula:**
+```
+=BDH("COAL6 Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+=BDH("CNELEC Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+=BDH("CCFI Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+```
+
+**Alternative:**
+- China Coal Transport: Coal consumption data
+- National Energy Administration: Electricity data
+- Shanghai Shipping Exchange: CCFI
+
+**NOTE:** These are harder to source. If unavailable, increase Tier 1 weight to 60-70%.
+
+---
+
+#### Other Industrial Metals (Non-Copper)
+
+| Component | Description | Bloomberg Ticker | Frequency | Weight |
+|-----------|-------------|------------------|-----------|--------|
+| **Shanghai zinc** | Manufacturing activity (galvanizing) | `SHFEZINC Index` | Daily | 15% |
+| **Shanghai aluminum** | Construction/transport | `SHALUM Index` | Daily | 10% |
+| **Iron ore 62% Fe** | Infrastructure intensity | `SZZIIOIA Index` | Daily | 5% |
+
+**Bloomberg Formula:**
+```
+=BDH("SHFEZINC Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+=BDH("SHALUM Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+=BDH("SZZIIOIA Index","PX_LAST","2020-01-01","2025-11-10","Fill=P")
+```
+
+**Important:** Don't use Shanghai copper (circular reference). Use other metals as proxies.
+
+---
+
+### TIER 3: EQUIPMENT & PRODUCTION (20% of Demand Nowcast)
+
+#### Equipment Sales (Leading Indicators - YOUR INSIGHT!)
+
+| Component | Description | Bloomberg Ticker | Frequency | Lead Time | Weight |
+|-----------|-------------|------------------|-----------|-----------|--------|
+| **Excavator sales** | Construction equipment | `CNEXCSLS Index` | Monthly | 2-4 months | 50% |
+| **Heavy truck sales** | Logistics/infrastructure | `CNTRUCKS Index` | Monthly | 1-2 months | 25% |
+| **Crane rentals/sales** | High-rise construction | `CNCRANE Index` | Monthly | 2-3 months | 15% |
+| **Forklift sales** | Manufacturing activity | `CNFKLIFT Index` | Monthly | 1-2 months | 10% |
+
+**Bloomberg Formula:**
+```
+=BDH("CNEXCSLS Index","PX_LAST","2020-01-01","2025-11-10","Periodicity=M")
+=BDH("CNTRUCKS Index","PX_LAST","2020-01-01","2025-11-10","Periodicity=M")
+```
+
+**Alternative Sources:**
+- **China Construction Machinery Association (CCMA):** ccma.org.cn (monthly reports, FREE)
+- **China Association of Automobile Manufacturers (CAAM):** caam.org.cn (truck sales, FREE)
+- **Wind Terminal:** If you have access
+- **CEIC Database:** Premium but comprehensive
+
+**NOTE:** If Bloomberg doesn't have these, manual collection from CCMA/CAAM websites is straightforward (monthly releases).
+
+---
+
+#### Production Indicators (Coincident/Slight Lead)
+
+| Component | Description | Bloomberg Ticker | Frequency | Lead Time | Weight |
+|-----------|-------------|------------------|-----------|-----------|--------|
+| **EV production/sales** | 4x copper vs ICE vehicles | `CNEVTSAL Index` | Monthly | 2-3 months | 40% |
+| **Auto production** | Manufacturing copper | `CNAPROD Index` | Monthly | 1-2 months | 30% |
+| **Air conditioner output** | Seasonal copper demand | `CNACPROD Index` | Monthly | 1-2 months | 15% |
+| **Copper rod production** | Direct downstream | `CNRODPRD Index` | Monthly | 0-1 month | 15% |
+
+**Bloomberg Formula:**
+```
+=BDH("CNEVTSAL Index","PX_LAST","2020-01-01","2025-11-10","Periodicity=M")
+=BDH("CNAPROD Index","PX_LAST","2020-01-01","2025-11-10","Periodicity=M")
+```
+
+**Alternative:**
+- **China Passenger Car Association (CPCA):** cpcaauto.com (EV sales, FREE)
+- **National Bureau of Statistics:** stats.gov.cn (production data, FREE but delayed)
+- **SMM (Shanghai Metals Market):** Copper rod production (premium)
+
+---
+
+#### Construction Data (Coincident)
+
+| Component | Description | Bloomberg Ticker | Frequency | Lead Time | Weight |
+|-----------|-------------|------------------|-----------|-----------|--------|
+| **Floor space sold** | Property sales | `CNFLRSAL Index` | Monthly | 1 month | 40% |
+| **Land sales (300 cities)** | Future construction | `CNLAND300 Index` | Weekly/Monthly | 3-6 months | 60% |
+
+**Bloomberg Formula:**
+```
+=BDH("CNFLRSAL Index","PX_LAST","2020-01-01","2025-11-10","Periodicity=M")
+=BDH("CNLAND300 Index","PX_LAST","2020-01-01","2025-11-10","Periodicity=M")
+```
+
+**Alternative:**
+- **CRIC (China Real Estate Information Corp):** Land sales tracker
+- **NBS:** Property statistics (delayed)
+- **Wind Terminal:** Real estate data suite
+
+---
+
+### DEMAND NOWCAST DATA SUMMARY
+
+**TIER 1 (Daily, 50% weight):**
+- Use same 7 series as StimulusCore (efficient!)
+
+**TIER 2 (Daily/Weekly, 30% weight) - 9 Series:**
+1. MMRBF00 Index (Rebar futures)
+2. CNRBINV Index (Rebar inventory)
+3. MMHRF00 Index (HRC futures)
+4. COAL6 Index (Coal consumption)
+5. CNELEC Index (Electricity)
+6. CCFI Index (Freight)
+7. SHFEZINC Index (Zinc)
+8. SHALUM Index (Aluminum)
+9. SZZIIOIA Index (Iron ore)
+
+**TIER 3 (Monthly, 20% weight) - 9 Series:**
+Equipment:
+1. CNEXCSLS Index (Excavators) ← START HERE
+2. CNTRUCKS Index (Trucks)
+3. CNCRANE Index (Cranes)
+4. CNFKLIFT Index (Forklifts)
+
+Production:
+5. CNEVTSAL Index (EV sales)
+6. CNAPROD Index (Auto production)
+7. CNACPROD Index (AC production)
+8. CNRODPRD Index (Copper rod)
+
+Construction:
+9. CNFLRSAL Index (Floor space)
+10. CNLAND300 Index (Land sales)
+
+**Total Demand Nowcast: 7 (Tier 1) + 9 (Tier 2) + 10 (Tier 3) = 26 series**
+
+---
+
+## IMPLEMENTATION PRIORITY
+
+### Phase 1: StimulusCore (Week 1) - 7 SERIES
+**Start with the overlay - highest impact, easiest build**
+
+Required Bloomberg series:
+1. ✅ CNREPO7D Index
+2. ✅ CNGGB10YR Index
+3. ✅ CNGGB2YR Index
+4. ✅ CSIINFR Index
+5. ✅ CSIREALE Index
+6. ✅ CSINERGY Index
+7. ✅ USDCNY Curncy
+
+**Action:** Pull these 7 from Bloomberg, build stimulus index, test on 2008/2020 periods.
+
+---
+
+### Phase 2: Tier 3 Equipment (Week 2) - START WITH 1 SERIES
+**Your excavator insight - critical validation**
+
+Required:
+1. ✅ CNEXCSLS Index (Excavators)
+
+**If Bloomberg doesn't have it:**
+- CCMA website (ccma.org.cn) → Monthly reports → Manual entry
+- Only 12 data points per year (manageable)
+
+**Action:** Get excavator sales, validate 2-4 month lead time vs copper.
+
+---
+
+### Phase 3: Tier 2 Activity Proxies (Week 3-4) - 3-4 KEY SERIES
+**Start with easiest/highest value:**
+
+1. ✅ MMRBF00 Index (Rebar - construction proxy)
+2. ✅ SHFEZINC Index (Zinc - manufacturing proxy)
+3. ✅ SHALUM Index (Aluminum - construction proxy)
+4. ⚠️ COAL6 Index (Coal - if available)
+
+**Action:** Add rebar + other metals first (daily, Bloomberg-native). Skip coal/electricity if hard to source.
+
+---
+
+### Phase 4: Full Integration (Week 5+)
+**Polish and optimize:**
+
+- Add remaining Tier 2 series if available
+- Add remaining Tier 3 series (trucks, EV sales, etc.)
+- Fine-tune weights
+- Full backtest
+
+---
+
+## BLOOMBER EXCEL API SETUP
+
+If using Excel + Bloomberg API:
+
+```vba
+' In Excel, use these formulas:
+
+' TIER 1 (StimulusCore)
+=BDH("CNREPO7D Index","PX_LAST",A1,TODAY(),"Fill=P")
+=BDH("CNGGB10YR Index","PX_LAST",A1,TODAY(),"Fill=P")
+=BDH("CNGGB2YR Index","PX_LAST",A1,TODAY(),"Fill=P")
+=BDH("CSIINFR Index","PX_LAST",A1,TODAY(),"Fill=P")
+=BDH("CSIREALE Index","PX_LAST",A1,TODAY(),"Fill=P")
+=BDH("CSINERGY Index","PX_LAST",A1,TODAY(),"Fill=P")
+=BDH("USDCNY Curncy","PX_LAST",A1,TODAY(),"Fill=P")
+
+' TIER 2 (Activity)
+=BDH("MMRBF00 Index","PX_LAST",A1,TODAY(),"Fill=P")
+=BDH("SHFEZINC Index","PX_LAST",A1,TODAY(),"Fill=P")
+=BDH("SHALUM Index","PX_LAST",A1,TODAY(),"Fill=P")
+
+' TIER 3 (Equipment - Monthly)
+=BDH("CNEXCSLS Index","PX_LAST",A1,TODAY(),"Periodicity=M")
+=BDH("CNEVTSAL Index","PX_LAST",A1,TODAY(),"Periodicity=M")
+
+' Where A1 contains start date, e.g. 2020-01-01
+' "Fill=P" fills missing data with prior value
+' "Periodicity=M" aggregates to monthly
+```
+
+---
+
+## PYTHON BLOOMBERG API
+
+If using Python `xbbg` or `blpapi`:
+
+```python
+from xbbg import blp
+import pandas as pd
+
+# Pull StimulusCore data (daily)
+tickers = [
+    'CNREPO7D Index',
+    'CNGGB10YR Index',
+    'CNGGB2YR Index',
+    'CSIINFR Index',
+    'CSIREALE Index',
+    'CSINERGY Index',
+    'USDCNY Curncy'
+]
+
+data = blp.bdh(
+    tickers=tickers,
+    flds=['PX_LAST'],
+    start_date='2020-01-01',
+    end_date='2025-11-10'
+)
+
+# Fill forward missing values
+data = data.fillna(method='ffill', limit=5)
+
+# Save to CSV
+data.to_csv('Data/china/stimulus_core_data.csv')
+```
+
+---
+
+## FALLBACK STRATEGIES
+
+### If Bloomberg Unavailable:
+
+**StimulusCore (Critical):**
+1. **Repo rates:** PBoC website (pbc.gov.cn) → OMO announcements
+2. **CGB yields:** Investing.com → China Government Bonds section
+3. **CNY:** Free on Investing.com, TradingView, Yahoo Finance
+4. **CSI indices:** Wind Terminal (if available) or CSI website (csindex.com.cn)
+
+**Demand Nowcast:**
+1. **Excavators:** CCMA website (FREE monthly reports)
+2. **Rebar:** Mysteel or Shanghai Futures Exchange website
+3. **EV sales:** CPCA website (FREE monthly reports)
+4. **Industrial metals:** Shanghai Futures Exchange prices
+
+---
+
+## DATA REFRESH FREQUENCY
+
+| Data Type | Update Frequency | When to Refresh |
+|-----------|------------------|-----------------|
+| **Tier 1 Financial** | Daily | Every trading day (realtime if possible) |
+| **Tier 2 Activity** | Daily/Weekly | Daily for futures, weekly for inventories |
+| **Tier 3 Equipment** | Monthly | Within 10 days of month-end (CCMA release) |
+| **Tier 3 Production** | Monthly | Within 20 days of month-end (NBS release) |
+
+---
+
+## CRITICAL NOTES
+
+1. **Bloomberg ticker availability varies by subscription level.** Some indices (especially sector indices like CSIINFR) may require specific data packages. Check with your Bloomberg rep if tickers don't work.
+
+2. **Start minimal:** Build StimulusCore with just 7 core series first. Test. Then add complexity.
+
+3. **Excavators are your quick win:** Even without full demand nowcast, excavator sales alone (1 series!) provide 2-4 month lead time. Bloomberg ticker: CNEXCSLS Index. If missing, CCMA website has free monthly data.
+
+4. **Double-duty efficiency:** Tier 1 financial signals serve BOTH StimulusCore overlay AND Demand Nowcast. One dataset, two uses.
+
+5. **Manual collection is OK for monthly data:** Don't let perfect be the enemy of good. If Bloomberg doesn't have excavator sales, manually entering 12 data points per year from CCMA takes 10 minutes.
+
+---
+
+## FINAL CHECKLIST
+
+**StimulusCore Overlay (Critical - Week 1):**
+- [ ] CNREPO7D Index
+- [ ] CNGGB10YR Index
+- [ ] CNGGB2YR Index
+- [ ] CSIINFR Index
+- [ ] CSIREALE Index
+- [ ] CSINERGY Index
+- [ ] USDCNY Curncy
+
+**Demand Nowcast - Tier 3 (Quick Win - Week 2):**
+- [ ] CNEXCSLS Index (Excavators)
+
+**Demand Nowcast - Tier 2 (Week 3-4):**
+- [ ] MMRBF00 Index (Rebar)
+- [ ] SHFEZINC Index (Zinc)
+- [ ] SHALUM Index (Aluminum)
+
+**Everything else:** Add incrementally as time permits.
+
+---
+
+## NEXT STEPS
+
+1. **Verify Bloomberg access:** Log in and test if you can pull these tickers
+2. **Start with StimulusCore:** Pull 7 core series, build stimulus index
+3. **Validate on history:** Test stimulus regime classification on 2008, 2016, 2020
+4. **Add excavators:** Get CNEXCSLS or manual CCMA data
+5. **Integrate overlays:** Add StimulusCore as position amplifier to existing system
+
+**You have everything you need to start. The 7 core series for StimulusCore are the foundation.**

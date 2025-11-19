@@ -1,0 +1,250 @@
+================================================================================
+REGIME-AWARE ROTATION RULES - QUICK REFERENCE
+For Implementation in portfolio.py
+================================================================================
+
+CURRENT STATE (Static Weights)
+-------------------------------
+TrendMedium:  29%  (0.29)
+TrendImpulse: 22%  (0.22)
+MomentumCore: 49%  (0.49)
+Portfolio Sharpe: 0.767
+
+TARGET STATE (Regime-Aware Weights)
+------------------------------------
+Target Sharpe: 0.95-1.05
+
+================================================================================
+ROTATION LOGIC (Priority Order)
+================================================================================
+
+STEP 1: Check for CRISIS State (Highest Priority - Overrides Everything)
+-------------------------------------------------------------------------
+
+IF crisis_state == CRISIS:
+    
+    IF tightness_state == LOOSE:
+        # Supply disruption narrative - MC dominates
+        # Historical: 4.82 Sharpe, +47.7% returns (38 days)
+        weights = {TM: 0.20, TI: 0.20, MC: 0.60}
+        gross_scale = 1.0
+        REASON: "LOOSE+CRISIS: Supply disruption, amplify momentum"
+    
+    ELIF tightness_state == NORMAL:
+        # Complex dynamics - TM wins, avoid MC
+        # Historical: TM 4.01 Sharpe vs MC -3.32 Sharpe (22 days)
+        weights = {TM: 0.70, TI: 0.10, MC: 0.20}
+        gross_scale = 1.0
+        REASON: "NORMAL+CRISIS: Uncertain, favor trend medium"
+    
+    ELIF tightness_state == TIGHT:
+        # Demand destruction - defensive
+        # Historical: TM 1.24 Sharpe best (24 days)
+        weights = {TM: 0.80, TI: 0.00, MC: 0.20}
+        gross_scale = 0.70  # Reduce gross 30%
+        REASON: "TIGHT+CRISIS: Demand destruction risk"
+    
+    RETURN weights, gross_scale  # Exit early, crisis overrides vol regime
+
+
+STEP 2: Non-Crisis States - Use Volatility Regime (Primary Driver)
+-------------------------------------------------------------------
+
+IF vol_regime == LOW:
+    # TI works well, MC stable
+    # Historical: TI 0.701 Sharpe, MC 0.866 Sharpe
+    base_weights = {TM: 0.20, TI: 0.35, MC: 0.45}
+    
+    # Tightness fine-tuning
+    IF tightness_state == TIGHT:
+        # MC dominates in TIGHT+LOW (1.418 Sharpe)
+        weights = {TM: 0.25, TI: 0.25, MC: 0.50}
+        REASON: "TIGHT+LOW: MC opportunity"
+    ELSE:
+        weights = base_weights
+        REASON: "LOW vol: TI and MC both work"
+
+
+ELIF vol_regime == MEDIUM:
+    # CRITICAL: TI destroys value (-0.658 Sharpe)
+    # TM and MC are stable
+    base_weights = {TM: 0.50, TI: 0.00, MC: 0.50}
+    
+    # Tightness fine-tuning
+    IF tightness_state == LOOSE:
+        # MC sweet spot (1.545 Sharpe, +9.9% returns)
+        weights = {TM: 0.30, TI: 0.00, MC: 0.70}
+        REASON: "LOOSE+MEDIUM: MC sweet spot"
+    
+    ELIF tightness_state == NORMAL:
+        # Both TM and MC work (0.898 and 1.052 Sharpe)
+        weights = {TM: 0.40, TI: 0.00, MC: 0.60}
+        REASON: "NORMAL+MEDIUM: Favor MC slightly"
+    
+    ELSE:  # TIGHT
+        # TM more stable in tight conditions
+        weights = {TM: 0.60, TI: 0.00, MC: 0.40}
+        REASON: "TIGHT+MEDIUM: Favor TM stability"
+
+
+ELIF vol_regime == HIGH:
+    # TI bleeding heavily (-0.951 Sharpe)
+    # TM most stable, MC struggles
+    base_weights = {TM: 0.55, TI: 0.00, MC: 0.45}
+    
+    # Tightness fine-tuning
+    IF tightness_state == LOOSE:
+        # TM wins (0.824 Sharpe vs MC 0.781)
+        weights = {TM: 0.60, TI: 0.00, MC: 0.40}
+        REASON: "LOOSE+HIGH: TM stability"
+    
+    ELIF tightness_state == NORMAL:
+        # All struggle, TM least bad (0.045 Sharpe)
+        weights = {TM: 0.70, TI: 0.00, MC: 0.30}
+        REASON: "NORMAL+HIGH: Defensive TM"
+    
+    ELSE:  # TIGHT
+        # Danger zone, TI catastrophic (-1.529 Sharpe)
+        weights = {TM: 0.80, TI: 0.00, MC: 0.20}
+        REASON: "TIGHT+HIGH: Maximum defensive"
+
+STEP 3: Return Weights and Gross Scale
+---------------------------------------
+gross_scale = 1.0  # Unless in TIGHT+CRISIS (then 0.70)
+RETURN weights, gross_scale
+
+
+================================================================================
+IMPLEMENTATION PSEUDOCODE
+================================================================================
+
+def get_regime_weights(vol_regime, crisis_state, tightness_state):
+    """
+    Return optimal sleeve weights based on current regime.
+    
+    Parameters:
+    -----------
+    vol_regime : str
+        One of {'LOW', 'MEDIUM', 'HIGH'}
+    crisis_state : str
+        One of {'NORMAL', 'STRESS', 'PRE_CRISIS', 'CRISIS'}
+    tightness_state : str
+        One of {'LOOSE', 'NORMAL', 'TIGHT'}
+    
+    Returns:
+    --------
+    weights : dict
+        {'TM': float, 'TI': float, 'MC': float}
+        Sum to 1.0
+    gross_scale : float
+        Multiplier for gross exposure (0.7-1.0)
+    reason : str
+        Explanation for logging
+    """
+    
+    # Priority 1: Crisis states override everything
+    if crisis_state == 'CRISIS':
+        if tightness_state == 'LOOSE':
+            return {'TM': 0.20, 'TI': 0.20, 'MC': 0.60}, 1.0, "LOOSE+CRISIS"
+        elif tightness_state == 'NORMAL':
+            return {'TM': 0.70, 'TI': 0.10, 'MC': 0.20}, 1.0, "NORMAL+CRISIS"
+        else:  # TIGHT
+            return {'TM': 0.80, 'TI': 0.00, 'MC': 0.20}, 0.70, "TIGHT+CRISIS"
+    
+    # Priority 2: Volatility regime
+    if vol_regime == 'LOW':
+        if tightness_state == 'TIGHT':
+            return {'TM': 0.25, 'TI': 0.25, 'MC': 0.50}, 1.0, "TIGHT+LOW"
+        else:
+            return {'TM': 0.20, 'TI': 0.35, 'MC': 0.45}, 1.0, "LOW"
+    
+    elif vol_regime == 'MEDIUM':
+        if tightness_state == 'LOOSE':
+            return {'TM': 0.30, 'TI': 0.00, 'MC': 0.70}, 1.0, "LOOSE+MEDIUM"
+        elif tightness_state == 'NORMAL':
+            return {'TM': 0.40, 'TI': 0.00, 'MC': 0.60}, 1.0, "NORMAL+MEDIUM"
+        else:  # TIGHT
+            return {'TM': 0.60, 'TI': 0.00, 'MC': 0.40}, 1.0, "TIGHT+MEDIUM"
+    
+    else:  # HIGH
+        if tightness_state == 'LOOSE':
+            return {'TM': 0.60, 'TI': 0.00, 'MC': 0.40}, 1.0, "LOOSE+HIGH"
+        elif tightness_state == 'NORMAL':
+            return {'TM': 0.70, 'TI': 0.00, 'MC': 0.30}, 1.0, "NORMAL+HIGH"
+        else:  # TIGHT
+            return {'TM': 0.80, 'TI': 0.00, 'MC': 0.20}, 1.0, "TIGHT+HIGH"
+
+
+================================================================================
+CRITICAL NOTES
+================================================================================
+
+1. T+1 LAG FOR US INDICATORS
+   ⚠️ VIX and HY spreads close AFTER LME
+   → Use yesterday's VIX/HY for today's crisis classification
+   → crisis_state[t] = f(VIX[t-1], HY[t-1])
+
+2. WEIGHT CONSTRAINTS
+   • Min weight: 0.0 (can eliminate a sleeve)
+   • Max weight: 0.8 (maintain some diversification)
+   • Weights sum to 1.0
+
+3. TRANSITION SMOOTHING (Optional Enhancement)
+   • If regime changes, smooth transition over 2-3 days
+   • Avoids large one-day rebalances
+   • Example: weights[t] = 0.7 * weights[t-1] + 0.3 * target_weights
+
+4. LOGGING
+   Always log:
+   • Date
+   • Regimes (vol, crisis, tightness)
+   • Weights (TM, TI, MC)
+   • Gross scale
+   • Reason
+   
+   Example log line:
+   2025-01-15 | MEDIUM | NORMAL | LOOSE | TM:0.30 TI:0.00 MC:0.70 | 1.0 | LOOSE+MEDIUM
+
+5. VALIDATION
+   Check weights sum to 1.0:
+   assert abs(sum(weights.values()) - 1.0) < 0.001
+
+================================================================================
+EXPECTED PERFORMANCE BY STATE (Reference)
+================================================================================
+
+State                    Proposed      Expected     Days    % of
+                         Best Sleeve   Sharpe               Sample
+--------------------------------------------------------------------------------
+LOOSE + CRISIS           MC (60%)      4.82         38      0.9%
+NORMAL + CRISIS          TM (70%)      4.01         22      0.5%
+TIGHT + CRISIS           TM (80%)      1.24         24      0.6%
+NORMAL + MEDIUM          MC (60%)      1.05         307     7.5%
+LOOSE + MEDIUM           MC (70%)      1.55         239     5.8%
+TIGHT + MEDIUM           TM (60%)      0.05         406     9.9%
+NORMAL + HIGH            TM (70%)      0.05         523     12.7%
+TIGHT + HIGH             TM (80%)      0.29         343     8.3%
+TIGHT + LOW              MC (50%)      1.42         608     14.8%
+NORMAL + LOW             TI (35%)      1.13         569     13.8%
+LOOSE + LOW              MC (45%)      0.71         658     16.0%
+
+Weighted Average Expected Sharpe: 0.95-1.02
+
+================================================================================
+IMPLEMENTATION CHECKLIST
+================================================================================
+
+[ ] Create regime_rotation.py with get_regime_weights() function
+[ ] Add regime classification to daily workflow
+[ ] Verify T+1 lag on VIX/HY inputs
+[ ] Integrate with portfolio.py position sizing
+[ ] Add logging for all weight changes
+[ ] Backtest on historical data
+[ ] Validate Sharpe improvement
+[ ] Monitor for overfitting (out-of-sample test)
+[ ] Document all parameter choices
+[ ] Create monitoring dashboard
+
+================================================================================
+END OF QUICK REFERENCE
+================================================================================

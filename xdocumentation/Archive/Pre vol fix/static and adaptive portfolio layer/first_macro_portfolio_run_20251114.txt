@@ -1,0 +1,161 @@
+# FIRST MACRO PORTFOLIO RUN - 5-DAY SMOOTHING
+## Baseline Performance with Smoothed Regimes
+
+**Date:** November 14, 2025  
+**Weights:** TM=40%, TI=15%, MC=45% (from vol static optimization)  
+**Smoothing:** 5-day minimum regime persistence  
+**Period:** 2000-2025 (full history, 6,744 days)
+
+---
+
+## 🎯 KEY RESULTS
+
+### Performance by Macro State
+
+| State | Days | % Time | Sharpe | Comment |
+|-------|------|--------|--------|---------|
+| **NORMAL** | 4,792 | 71.1% | **0.7797** | Solid baseline ✅ |
+| **CHOP** | 1,285 | 19.1% | **0.3967** | Positive! (not bleeding) ✅ |
+| **CRISIS** | 667 | 9.9% | **1.0563** | Excellent ✅ |
+| **FULL** | 6,744 | 100% | **0.7385** | Strong baseline |
+
+---
+
+## 📊 SMOOTHING IMPACT
+
+**Regime Changes:**
+- Raw: 606 changes (avg 11.1 days per regime)
+- 5-day smoothed: 316 changes (avg 21.3 days per regime)
+- **Reduction: 48%** ✅
+
+**Why smoothing helped:**
+- Eliminated 290 noisy regime flips
+- Reduced whipsaw from rapid transitions
+- More realistic macro persistence (21 days vs 11 days)
+- Macro confusion doesn't flip daily!
+
+---
+
+## 💡 KEY INSIGHTS
+
+### 1. Crisis Performance is Already Excellent
+- **Sharpe 1.0563** in crisis periods
+- Model works very well when credit stress hits
+- Trends naturally thrive in crisis → static weights already good
+- **Implication:** May not need heavy Path B adjustments for crisis
+
+### 2. CHOP is Positive (Not Bleeding!)
+- Expected: -0.31 Sharpe (from earlier analysis)
+- Actual with smoothing: **+0.40 Sharpe**
+- **Key finding:** The "CHOP bleeding" was partly an artifact of noisy regime changes
+- With proper smoothing, CHOP is manageable but could still be improved
+
+### 3. NORMAL is Solid Baseline
+- Sharpe 0.78 (slightly below earlier 0.91 estimate)
+- Still good performance
+- Majority of time spent here (71%)
+
+---
+
+## 🎯 PATH B STRATEGY IMPLICATIONS
+
+**Original plan:** Adjust both CHOP and CRISIS
+
+**New thinking based on results:**
+
+### CRISIS: Minimal adjustment needed
+- Already excellent (1.06 Sharpe)
+- Static 40/15/45 works well
+- Maybe just slight boost to trends? Or leave as-is?
+
+### CHOP: Focus optimization here
+- Currently +0.40 Sharpe (okay but could be better)
+- Opportunity to improve with sleeve adjustments
+- This is where Path B adds most value
+- Goal: Push CHOP from 0.40 → 0.60+ Sharpe
+
+### Impact Calculation:
+```
+Current CHOP contribution: 0.40 × 19.1% = 0.076
+Target CHOP contribution:  0.60 × 19.1% = 0.115
+Improvement: +0.039 Sharpe from CHOP alone
+
+Full portfolio: 0.7385 + 0.039 = 0.78 Sharpe target
+```
+
+---
+
+## 📈 COMPARISON TO EXPECTATIONS
+
+| Metric | Expected (Raw) | Actual (Smoothed) | Difference |
+|--------|---------------|-------------------|------------|
+| CHOP Sharpe | -0.31 | **+0.40** | **+0.71** ✅ |
+| CRISIS Sharpe | +0.84 | +1.06 | +0.22 ✅ |
+| NORMAL Sharpe | +0.91 | +0.78 | -0.13 |
+| Full Sharpe | 0.75 | 0.74 | -0.01 |
+
+**Net:** Smoothing dramatically improved CHOP and CRISIS, slight reduction in NORMAL.
+
+---
+
+## ⏭️ NEXT STEPS
+
+### 1. Test Other Smoothing Levels
+- Try 3-day minimum (less aggressive)
+- Try 7-day minimum (moderate)
+- Try 10-day minimum (more conservative)
+- Compare: Sharpe, turnover, regime stability
+
+### 2. Optimize Path B Focus
+- **Primary:** CHOP adjustments (0.40 → 0.60+ Sharpe)
+- **Secondary:** Crisis (already good, light touch if any)
+- Avoid over-optimizing crisis (diminishing returns)
+
+### 3. Test on IS/OOS Split
+- IS: 2000-2018 optimization
+- OOS: 2019-2025 validation
+- Ensure smoothing doesn't overfit
+
+---
+
+## 🔍 TECHNICAL DETAILS
+
+### Smoothing Algorithm Used:
+```python
+1. Identify all regime blocks in raw data
+2. Find blocks < 5 days long
+3. Replace with neighboring regime (prefer sandwiched)
+4. Result: Only blocks ≥5 days persist
+```
+
+### Distribution Changes:
+```
+Raw:      NORMAL 70.8%, CHOP 19.1%, CRISIS 10.0%
+Smoothed: NORMAL 71.1%, CHOP 19.1%, CRISIS 9.9%
+→ Minimal change in overall distribution
+```
+
+---
+
+## 📝 KEY TAKEAWAY
+
+**Smoothing is critical!**
+
+The original analysis showed CHOP bleeding (-0.31 Sharpe), but with proper 5-day smoothing, CHOP is actually positive (+0.40 Sharpe). This validates:
+
+1. ✅ Macro regime detection works (identifies right periods)
+2. ✅ Smoothing reduces noise and whipsaw
+3. ✅ Static weights are reasonable baseline
+4. ✅ Crisis performance is already excellent (1.06 Sharpe)
+5. 🎯 Focus Path B optimization on CHOP primarily
+
+**Next:** Test 3/7/10-day smoothing to find optimal level, then build targeted CHOP adjustments.
+
+---
+
+## 📊 FILES GENERATED
+
+- `macro_regimes_5day_smoothed.csv` - Smoothed regime classification
+- Quick test results (this document)
+
+**Status:** Promising first pass! Continue with smoothing tests before Path B optimization.

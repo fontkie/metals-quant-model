@@ -1,0 +1,47 @@
+## Session: November 4, 2025
+## Duration: 8 hours
+## Status: Waiting on HookCore v5 confirmation
+
+### PRIMARY TRACK (Independent of HC)
+
+Hour 1-2: Regime Detection - Vol & Trend Classification
+- Build vol_regime detector (low/med/high)
+- Build trend_regime detector (trending/ranging/transitional)
+- Test on historical data
+- Validate against known periods
+
+Hour 3-4: Regime Detection - Chop Probability & Integration
+- Build chop probability calculator
+- Integrate all detectors into unified framework
+- Create comprehensive test suite
+- Document regime classification rules
+
+Hour 5-6: Regime-Stratified Performance Analysis
+- Load TC + TI daily series
+- Classify each day by regime
+- Calculate Sharpe within each regime bucket
+- Generate heatmaps and insights
+
+Hour 7-8: Gap Analysis & Documentation
+- Identify which regimes are underserved
+- Quantify performance gaps
+- Document requirements for ChopCore
+- Write up findings and recommendations
+
+### DELIVERABLES
+1. src/core/regime.py (tested, working)
+2. Regime performance report (TC + TI analysis)
+3. Gap analysis document
+4. Requirements doc for ChopCore v1
+
+### SUCCESS CRITERIA
+- Regime detection validated on 3+ historical periods
+- Clear Sharpe numbers for each (vol x trend) regime
+- Documented understanding of portfolio gaps
+- Ready to build adaptive blender tomorrow
+
+### CONTINGENCY
+If HC v5 returns:
+- Insert 1-hour review/validation
+- Adjust evening plans if needed
+- Still hit main deliverables

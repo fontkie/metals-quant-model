@@ -1,0 +1,60 @@
+io:
+  commodity: Copper
+  portfolio_name: AdaptiveBlend_AUTO_v3
+  description: Auto-optimized from sleeve_performance_3x3_matrix.csv - NO hardcoded weights!
+
+# Performance matrix path - SINGLE SOURCE OF TRUTH
+optimization:
+  matrix_path: outputs/Copper/VolRegime/sleeve_performance_3x3_matrix.csv
+  strategy: |
+    Weights calculated dynamically from matrix Sharpe ratios:
+    - Dominant sleeve (>1.0, others <0.5): 80% allocation
+    - Strong preference (gap >0.5): 70% allocation
+    - Moderate preference (gap >0.2): 60% allocation
+    - Close competition: 50/35/15 split
+    - All negative: 33/33/33 defensive
+
+sleeves:
+  TrendMedium:
+    path: outputs/Copper/TrendMedium/daily_series.csv
+    description: 25/70 dual MA trend follower
+    enabled: true
+    
+  TrendImpulse:
+    path: outputs/Copper/TrendImpulse_v4/daily_series.csv
+    description: 20-day momentum
+    enabled: true
+    
+  MomentumCore:
+    path: outputs/Copper/MomentumCore_v1/daily_series.csv
+    description: Short-term momentum specialist
+    enabled: true
+
+costs:
+  transaction_cost_bp: 3  # Basis points per portfolio trade
+  apply_at_portfolio_level: true
+
+regime_detection:
+  volatility:
+    mode: research
+    vol_window_days: 63
+    percentile_lookback_days: 252
+    low_vol_percentile: 0.33
+    high_vol_percentile: 0.67
+  
+  trend:
+    source: adx_csv
+    path: outputs/Copper/VolRegime/adx_trend_regimes.csv
+
+transition_smoothing:
+  enabled: true
+  method: exponential
+  window_days: 1
+
+backtest:
+  start_date: 2000-01-03
+  end_date: 2025-11-01
+
+# NOTE: No regime_weights section!
+# Weights are calculated dynamically from the optimization matrix
+# This ensures single source of truth and prevents manual errors

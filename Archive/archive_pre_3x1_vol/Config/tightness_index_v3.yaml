@@ -1,0 +1,87 @@
+# TIGHTNESS INDEX V3 CONFIGURATION
+# Multi-layer physical market tightness framework
+# Date: November 7, 2025
+
+# Global demand assumption (kt/year)
+demand:
+  annual_demand_kt: 26000  # Global refined copper demand
+
+# Layer 1A: LME Micro Tightness
+layer_1a_lme_micro:
+  
+  # Days of consumption thresholds
+  days_consumption_thresholds:
+    very_tight: 2.0      # <2 days = very tight (95/100)
+    tight: 3.5           # 2-3.5 days = tight (75/100)
+    balanced: 5.0        # 3.5-5 days = balanced (50/100)
+    loose: 7.0           # 5-7 days = loose (30/100)
+                         # >7 days = very loose (10/100)
+  
+  # Forward curve spread parameters
+  spread_thresholds:
+    mean_backwardation: 0.79  # Historical mean 3mo-12mo spread (%)
+    # Positive = backwardation (tight), Negative = contango (loose)
+  
+  # Component weights (must sum to 1.0)
+  component_weights:
+    stock_level: 0.30      # Absolute stock level (percentile)
+    days_consumption: 0.30 # Days of consumption
+    spread: 0.30           # Forward curve spread
+    velocity: 0.10         # Stock velocity (momentum)
+
+# Layer 1B: Global Macro Tightness
+layer_1b_global_macro:
+  
+  # Weeks of coverage thresholds
+  weeks_coverage_thresholds:
+    very_tight: 1.5      # <1.5 weeks = very tight (95/100)
+    tight: 2.5           # 1.5-2.5 weeks = tight (75/100)
+    balanced: 4.0        # 2.5-4 weeks = balanced (50/100)
+    loose: 6.0           # 4-6 weeks = loose (30/100)
+                         # >6 weeks = very loose (10/100)
+  
+  # Component weights (must sum to 1.0)
+  component_weights:
+    coverage: 0.50        # Weeks of coverage (primary signal)
+    percentile: 0.30      # Historical percentile rank
+    coordination: 0.20    # Cross-exchange trend coordination
+
+# Layer 1C: Divergence Detection
+layer_1c_divergence:
+  
+  # Divergence thresholds (points difference in scores)
+  moderate_threshold: 15   # Score diff >15 = moderate divergence
+  high_threshold: 30       # Score diff >30 = high divergence
+  
+  # Confidence multipliers
+  confidence_multipliers:
+    aligned: 1.0           # Low divergence - high confidence
+    moderate: 0.8          # Moderate divergence - reduced confidence
+    lme_false_squeeze: 0.5 # LME tight but global not - likely relocation
+    regional_tight: 1.2    # Global tight but LME not - metal elsewhere
+
+# Integration: Combining layers
+integration:
+  
+  # Layer weights (must sum to 1.0)
+  lme_weight: 0.40      # LME micro tightness
+  global_weight: 0.60   # Global macro tightness (more important)
+  
+  # Score interpretation
+  score_thresholds:
+    very_tight: 80      # >80 = very tight
+    tight: 70           # 70-80 = tight
+    balanced: 40        # 40-70 = balanced
+    loose: 30           # 30-40 = loose
+                        # <30 = very loose
+
+# Historical context
+historical:
+  lookback_years: 5      # Years to use for percentile calculations
+  min_observations: 252  # Minimum days needed for valid percentile
+
+# Output settings
+output:
+  include_diagnostics: true
+  include_component_breakdown: true
+  save_historical_scores: true

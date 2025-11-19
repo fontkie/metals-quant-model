@@ -1,0 +1,197 @@
+# Vol Static N-Sleeve Integration
+
+## What We're Building
+
+Config-driven static weight optimizer that handles N sleeves with different constraints and start dates.
+
+---
+
+## Files Delivered
+
+1. **`build_vol_static_weights_v2.py`** - Optimizes weights (run rarely)
+2. **`build_vol_static_portfolio_v2.py`** - Applies weights (run frequently)  
+3. **`vol_static_portfolio_5sleeve.yaml`** - Config with 5 sleeves + constraints
+4. **`run_vol_static_weights_v2.bat`** - Batch runner for optimization
+5. **`run_vol_static_portfolio_v2.bat`** - Batch runner for portfolio
+
+---
+
+## Key Features
+
+- **No hardcoding** - Sleeves defined in YAML config
+- **Constraint enforcement** - Floor/ceiling per sleeve type
+- **Handles late-starting sleeves** - VolCore from 2011 fills earlier dates with 0
+- **Timestamped outputs** - Full audit trail
+- **IS/OOS split** - Automatic performance comparison
+
+---
+
+## Dependencies
+
+**New: scipy required**
+
+```
+pip install scipy
+```
+
+Why scipy? Old version used grid search (loop through weight combinations). Fine for 3 sleeves, expensive for 5+. New version uses constrained optimization (scipy.optimize.minimize with SLSQP) - mathematically finds optimal weights while respecting floor/ceiling constraints per sleeve. Faster and handles constraints properly.
+
+---
+
+## Workflow
+
+**Step 1: Run weights optimizer**
+```
+run_vol_static_weights_v2.bat
+```
+- Reads sleeve data from paths in config
+- Optimizes weights subject to constraints (2003-2018 IS)
+- Outputs: `vol_static_weights_{timestamp}.csv` + `.yaml`
+
+**Step 2: Verify weights (review CSV)**
+- Check allocations make sense
+- Verify constraints respected
+- Look at individual Sharpes and correlations
+
+**Step 3: Run portfolio builder**
+```
+run_vol_static_portfolio_v2.bat
+```
+- Applies weights from YAML
+- Calculates portfolio returns with costs
+- Outputs: `daily_series_{timestamp}.csv`, metrics JSON
+
+---
+
+## File Placement (Your Structure)
+
+```
+C:\Code\Metals\
+├── src\cli\
+│   ├── build_vol_static_weights_v2.py
+│   └── build_vol_static_portfolio_v2.py
+├── Config\Copper\
+│   └── vol_static_portfolio_5sleeve.yaml
+├── scripts\
+│   ├── run_vol_static_weights_v2.bat
+│   └── run_vol_static_portfolio_v2.bat
+└── outputs\Copper\VolStatic\
+    ├── vol_static_weights_latest.yaml
+    ├── vol_static_weights_latest.csv
+    └── daily_series_latest.csv
+```
+
+---
+
+## Config Example
+
+```yaml
+sleeves:
+  TrendMedium:
+    path: outputs/Copper/TrendMedium/daily_series.csv
+    type: always_active
+    min_weight: 0.15
+    max_weight: 0.60
+    
+  VolCore:
+    path: outputs/Copper/VolCore_v2/daily_series.csv
+    type: selective
+    min_weight: 0.00
+    max_weight: 0.30
+```
+
+---
+
+## Next Steps
+
+1. Place files in your directory structure
+2. Update config YAML with your actual sleeve paths
+3. Run weights optimizer → share CSV output
+4. If weights look good → run portfolio builder
+5. Review IS/OOS Sharpe split
+6. Then: build adaptive version with same pattern
+
+---
+
+## Adding a New Sleeve (Future)
+
+When you add PositioningCore, DXY signal, etc:
+
+1. **Build the sleeve's daily_series.csv** with columns: `date`, `pos`, `pnl_gross`
+
+2. **Add entry in config YAML:**
+```yaml
+PositioningCore:
+  path: outputs/Copper/PositioningCore_v1/daily_series.csv
+  enabled: true
+  type: selective
+  min_weight: 0.00
+  max_weight: 0.25
+```
+
+3. **Run weights optimizer** → finds optimal weights for N+1 sleeves
+
+4. **Run portfolio builder** → applies new weights
+
+No code changes required. Config drives everything.
+
+---
+
+## Selective Sleeves: No Dilution When Flat
+
+**Key insight:** Selective sleeves (TightStocks, VolCore) don't dilute performance when flat.
+
+When VolCore pos = 0:
+```
+Portfolio return = TM × TM_ret + TI × TI_ret + MC × MC_ret + TS × TS_ret + VC × 0
+                 = Active sleeves only
+```
+
+**What the weight means:**
+- Always_active (15% weight): Always deployed, always contributing
+- Selective (5% weight): Risk budget reserved, only deployed when signal fires
+
+**No dilution.** When flat, contributes 0. Other sleeves continue normally.
+
+**The only cost:** Reserved risk budget sits idle when signal not firing. Worth it for orthogonal alpha when it does fire.
+
+---
+
+## Short History Sleeves
+
+**Problem:** VolCore data starts 2011, optimization period is 2003-2018.
+
+**Solution:** Let optimizer naturally underweight short-history sleeves. This is statistically appropriate - less data = less confidence = conservative allocation.
+
+**Override with conviction:** Set min_weight to force allocation:
+```yaml
+VolCore:
+  min_weight: 0.05  # Force 5% despite short history
+  max_weight: 0.30
+```
+
+## Combined Selective Cap
+
+**Problem:** Multiple selective sleeves could consume too much risk budget.
+
+**Solution:** Add combined cap in config:
+```yaml
+portfolio_constraints:
+  selective_total_max: 0.40
+```
+
+**How it works:**
+- Individual caps enforced (TightStocks ≤ 25%, VolCore ≤ 25%)
+- Combined constraint: TightStocks + VolCore ≤ 40% total
+- Optimizer satisfies both simultaneously
+- Guarantees always_active get ≥ 60%
+
+**Example:**
+- TightStocks: 25% (individual max)
+- VolCore: 15% (constrained by combined)
+- Total selective: 40% ✓
+- Always_active: 60% ✓
+
+**Future-proof:** Adding PositioningCore competes within 40% budget.
+
+**Renaissance principle:** Quantitative optimization + discretionary conviction overlay. If you believe sleeve is valid, guarantee minimum allocation. Track record builds confidence over time.

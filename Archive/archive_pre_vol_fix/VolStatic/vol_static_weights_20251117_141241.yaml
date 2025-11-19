@@ -1,0 +1,83 @@
+optimization_metadata:
+  date_generated: '2025-11-17'
+  timestamp: '20251117_141241'
+  script_version: '2.0'
+  config_file: Config\Copper\vol_static_portfolio_v2.yaml
+  is_start: '2003-01-01'
+  is_end: '2018-12-31'
+  objective: max_sharpe
+  method: max_sharpe
+constraints:
+  TrendMedium:
+    type: always_active
+    min_weight: 0.15
+    max_weight: 0.6
+  TrendImpulse:
+    type: always_active
+    min_weight: 0.15
+    max_weight: 0.6
+  MomentumCore:
+    type: always_active
+    min_weight: 0.15
+    max_weight: 0.6
+  TightStocks:
+    type: selective
+    min_weight: 0.0
+    max_weight: 0.25
+  VolCore:
+    type: selective
+    min_weight: 0.05
+    max_weight: 0.25
+data_availability:
+  TrendMedium:
+    data_start: '2000-01-03'
+    data_end: '2025-11-06'
+    data_days: 6744
+  TrendImpulse:
+    data_start: '2000-01-03'
+    data_end: '2025-11-06'
+    data_days: 6744
+  MomentumCore:
+    data_start: '2000-01-03'
+    data_end: '2025-11-06'
+    data_days: 6744
+  TightStocks:
+    data_start: '2000-01-04'
+    data_end: '2025-11-12'
+    data_days: 6747
+  VolCore:
+    data_start: '2011-06-13'
+    data_end: '2025-11-12'
+    data_days: 3763
+optimal_weights:
+  TrendMedium: 0.1964158475970093
+  TrendImpulse: 0.15
+  MomentumCore: 0.35358415240299046
+  TightStocks: 0.25
+  VolCore: 0.050000000000000155
+performance_at_optimization:
+  sharpe: 0.9416904555518192
+  annual_return: 0.034041293567151396
+  annual_vol: 0.036149133047338376
+  max_drawdown: -0.05140660677811592
+sleeve_contributions:
+  TrendMedium:
+    weight: 0.1964158475970093
+    individual_sharpe: 0.6001402399793405
+    correlation_to_portfolio: 0.6492555032846772
+  TrendImpulse:
+    weight: 0.15
+    individual_sharpe: 0.6323837604177945
+    correlation_to_portfolio: 0.7507737104376822
+  MomentumCore:
+    weight: 0.35358415240299046
+    individual_sharpe: 0.5744642007479378
+    correlation_to_portfolio: 0.7885154460863486
+  TightStocks:
+    weight: 0.25
+    individual_sharpe: 0.444521937038525
+    correlation_to_portfolio: 0.3134315046287775
+  VolCore:
+    weight: 0.050000000000000155
+    individual_sharpe: 0.05575012490520645
+    correlation_to_portfolio: 0.04188254102290779

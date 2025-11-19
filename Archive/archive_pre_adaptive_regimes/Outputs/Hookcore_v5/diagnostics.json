@@ -1,0 +1,35 @@
+{
+  "signal_stats": {
+    "mean": -0.012593033640964571,
+    "mean_abs": 0.03221941053885085,
+    "std": 0.18726615782994485,
+    "min": -1.8,
+    "max": 1.8,
+    "pct_nonzero": 3.572491813039595,
+    "pct_long": 1.1015183090205418,
+    "pct_short": 2.470973504019053
+  },
+  "position_stats": {
+    "mean": -0.005363912028854364,
+    "mean_abs": 0.014595167891033236,
+    "std": 0.08467478064876607,
+    "min": -0.9601348772868781,
+    "max": 0.8288252443033818
+  },
+  "metrics": {
+    "annual_return": 0.004278123543405732,
+    "annual_vol": 0.019125624356307526,
+    "sharpe": 0.2327910734620909,
+    "max_drawdown": -0.07719360142017785,
+    "obs": 6718,
+    "cost_bps": 1.5
+  },
+  "parameters": {
+    "bb_window": 20,
+    "bb_std": 2.0,
+    "trend_window": 100,
+    "trend_threshold": 0.07,
+    "vol_lookback": 63,
+    "use_stock_scaling": true
+  }
+}

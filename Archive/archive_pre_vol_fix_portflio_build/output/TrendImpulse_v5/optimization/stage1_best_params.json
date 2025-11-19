@@ -1,0 +1,18 @@
+{
+  "best_params": {
+    "momentum_window": 20.0,
+    "entry_threshold": 0.01,
+    "exit_threshold": 0.002
+  },
+  "best_metrics": {
+    "sharpe": 0.33390710382675426,
+    "annual_return": 0.03539635477567558,
+    "annual_vol": 0.10600659395986006,
+    "max_drawdown": -0.2331020388218802,
+    "annual_turnover": 21.905206123515207,
+    "pct_active": 91.54389505549949
+  },
+  "optimization_date": "2025-11-19T13:58:31.206469",
+  "in_sample_period": "2000-01-04 00:00:00 to 2018-12-31 00:00:00",
+  "combinations_tested": 48
+}

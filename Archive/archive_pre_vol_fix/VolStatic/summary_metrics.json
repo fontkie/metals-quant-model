@@ -1,0 +1,20 @@
+{
+  "static_weights": {
+    "TrendMedium": 0.4,
+    "TrendImpulse": 0.15,
+    "MomentumCore": 0.4499999999999999
+  },
+  "metrics": {
+    "sharpe": 0.7305869214796018,
+    "annual_return": 0.032980847134812,
+    "annual_vol": 0.04514294762903559,
+    "max_drawdown": -0.07586477394687105,
+    "calmar": 0.43473202935935534,
+    "total_portfolio_costs": 0.05349847926580158,
+    "annual_portfolio_costs": 0.0019990534956972118,
+    "cost_drag_bps": 19.990534956972116,
+    "obs": 6744,
+    "start_date": "2000-01-03",
+    "end_date": "2025-11-06"
+  }
+}

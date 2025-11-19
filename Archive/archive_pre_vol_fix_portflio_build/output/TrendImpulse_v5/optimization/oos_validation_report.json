@@ -1,0 +1,39 @@
+{
+  "optimized_parameters": {
+    "momentum_window": 20,
+    "entry_threshold": 0.01,
+    "exit_threshold": 0.002,
+    "low_vol_threshold": 0.35,
+    "medium_vol_threshold": 0.75,
+    "low_vol_scale": 1.3,
+    "medium_vol_scale": 0.6,
+    "high_vol_scale": 0.9
+  },
+  "is_metrics": {
+    "sharpe": 0.3728547379444752,
+    "period": "in-sample data used for optimization"
+  },
+  "oos_metrics": {
+    "sharpe": -0.0398578291807056,
+    "sharpe_gross": 0.040284639110732996,
+    "annual_return": -0.0043204918186985145,
+    "annual_return_gross": 0.004366756977858645,
+    "annual_vol": 0.10839756974998478,
+    "max_drawdown": -0.3252315868426982,
+    "annual_turnover": 28.941336671566003,
+    "pct_active": 88.16964285714286,
+    "win_rate": 0.4249022892238973,
+    "cost_drag_sharpe": 0.08014246829143859,
+    "cost_drag_return": 0.008687248796557159
+  },
+  "comparison": {
+    "is_sharpe": 0.3728547379444752,
+    "oos_sharpe": -0.0398578291807056,
+    "oos_is_ratio": -0.10689908193319284,
+    "degradation": 0.4127125671251808
+  },
+  "verdict": "DO NOT DEPLOY - POSSIBLE FORWARD BIAS",
+  "validation_date": "2025-11-19T14:10:37.580479",
+  "oos_period": "2019-01-01 00:00:00 to 2025-11-12 00:00:00",
+  "critical_reminder": "DO NOT re-optimize based on these results. Use OOS Sharpe for production expectations."
+}

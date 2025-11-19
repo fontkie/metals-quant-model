@@ -1,0 +1,46 @@
+# Config/Copper/hookcore.yaml (v2.0)
+
+io:
+  commodity: Copper
+  sleeve: HookCore
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10
+    vol_lookback_days_default: 63  # HookCore uses 63D rolling vol
+    leverage_cap_default: 1.5      # HookCore caps scale at 1.5x
+
+  costs:
+    one_way_bps_default: 1.5
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true  # REQUIRED: T→T+1 accrual
+
+# HookCore-specific signal parameters
+signal:
+  bollinger:
+    lookback_days: 5
+    sigma_multiplier: 1.5
+    shift_bars: 1  # 1 = use bands from T-1 (no look-ahead)
+  
+  filters:
+    trend_lookback: 10
+    trend_thresh: 0.05      # |cumret| < 5%
+    vol_lookback: 20
+    vol_thresh: 0.02        # daily std < 2%
+    autocorr_lookback: 10
+    autocorr_thresh: -0.1   # negative autocorr
+  
+  holding:
+    hold_days_trading: 3    # 3-day hold with overlaps

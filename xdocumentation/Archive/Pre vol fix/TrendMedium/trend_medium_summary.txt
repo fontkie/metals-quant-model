@@ -1,0 +1,109 @@
+# TrendMedium - Executive Summary
+
+**Quick Reference**: What it is, how it works, why we switched
+
+---
+
+## What It Is
+
+**TrendMedium**: Dual moving average trend follower with 25/70 day MAs
+
+- **Type**: Systematic trend following
+- **Target**: Medium-term trends (2-4 months)  
+- **Configuration**: 25-day fast MA, 70-day slow MA
+- **Sharpe**: 0.638 (standalone), 0.792 (in portfolio)
+
+---
+
+## How It Works
+
+**Core Logic**: Long when fast MA > slow MA, short when fast MA < slow MA
+
+**v3 Enhancements**:
+1. **Rangebound filter**: Reduce 70% when price range tight
+2. **Trend quality**: Scale by directional consistency  
+3. **Vol regime**: Cut 30% in high volatility
+
+**Signal Flow**:
+```
+Price Data → MAs (lagged) → Base Signal (±1) 
+→ Apply Filters (0.3-1.0x) → Vol Target → Position
+```
+
+---
+
+## Why We Switched from TrendCore v3
+
+### Performance Comparison
+
+| Metric | TrendCore v3 | TrendMedium | Winner |
+|--------|--------------|-------------|---------|
+| Sharpe | 0.507 | **0.638** | **+26%** |
+| Annual Vol | 4.61% | **4.19%** | **Better** |
+| Max DD | -13.59% | **-9.91%** | **Better** |
+| 2010-2025 | 0.519 | **0.638** | **+23%** |
+
+### Decision Logic
+
+1. **Correlation**: 0.86 (very high) = strategies redundant
+2. **Performance**: TrendMedium wins on ALL metrics
+3. **Portfolio test**: Blending reduces Sharpe (better to use only TM)
+4. **Conclusion**: Replace TrendCore with TrendMedium
+
+### Why It's Better
+
+**TrendMedium (25/70)** is faster than **TrendCore (30/100)**:
+- ✅ Catches trends 5-30 days earlier
+- ✅ Exits before late-cycle losses  
+- ✅ Better aligned with copper's 2-4 month cycle
+- ✅ Stronger in recent markets (+14.5% in 2020s)
+
+**Trade-off**: Slightly weaker in very long trends (6+ months), but overall improvement worth it.
+
+---
+
+## Technical Details
+
+**Timeline** (no forward bias):
+```
+T-1 close: Calculate MAs using data through T-1 (.shift(1))
+T-1 close: Generate signal for tomorrow
+T open:    Execute position  
+T close:   Realize P&L (pos[T-1] × ret[T])
+```
+
+**Parameters** (all in YAML):
+- Fast MA: 25 days
+- Slow MA: 70 days
+- Range lookback: 70 days
+- Quality lookback: 15 days
+- Vol lookback: 63 days
+- Transaction cost: 1.5 bps
+
+---
+
+## Current Status
+
+**Role**: Primary trend sleeve in adaptive portfolio (40-60% weight by regime)
+
+**Performance**: 
+- Standalone: 0.638 Sharpe
+- In portfolio: 0.792 Sharpe  
+- 2020-2025: 0.717 Sharpe, 31.6% total return
+
+**Next**: Add overlays (ChopCore, StressCore, TightnessCore) to push toward 0.90+ Sharpe
+
+---
+
+## Bottom Line
+
+**What**: 25/70 dual MA trend follower  
+**Why**: +26% better Sharpe than TrendCore v3  
+**How**: Faster MAs + v3 filters + vol targeting  
+**Status**: Production-ready, validated, outperforming  
+
+**TrendMedium is now our core trend strategy.** ✅
+
+---
+
+📄 [Full Documentation](computer:///mnt/user-data/outputs/TRENDMEDIUM_DOCUMENTATION.md)

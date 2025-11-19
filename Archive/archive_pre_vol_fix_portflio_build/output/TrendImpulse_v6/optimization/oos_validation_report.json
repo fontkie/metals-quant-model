@@ -1,0 +1,48 @@
+{
+  "validation_date": "2025-11-19T10:28:23.200800",
+  "parameters": {
+    "momentum_window": 20,
+    "entry_threshold": 0.012,
+    "exit_threshold": 0.003,
+    "adx_trending_threshold": 20.0,
+    "low_vol_threshold": 0.35,
+    "medium_vol_threshold": 0.7,
+    "low_vol_scale": 1.7,
+    "medium_vol_scale": 0.6,
+    "high_vol_scale": 0.5,
+    "adx_window": 14,
+    "weekly_vol_updates": true,
+    "update_frequency": 5,
+    "use_regime_scaling": true,
+    "vol_window": 63,
+    "vol_percentile_window": 252
+  },
+  "is_performance": {
+    "sharpe": 0.5323275957305016,
+    "annual_return": 0.11517981793474981,
+    "annual_vol": 0.21637018042750736,
+    "max_drawdown": -0.3450931375704543,
+    "activity_pct": 70.09081735620585,
+    "long_pct": 38.20383451059536,
+    "short_pct": 31.886982845610497,
+    "win_rate": 0.49790419161676647,
+    "n_days": 4954.0
+  },
+  "oos_performance": {
+    "sharpe": 0.16167494736901897,
+    "annual_return": 0.02618643161448987,
+    "annual_vol": 0.1619696312918538,
+    "max_drawdown": -0.4015671100188496,
+    "activity_pct": 70.917225950783,
+    "long_pct": 43.51230425055929,
+    "short_pct": 27.40492170022371,
+    "win_rate": 0.5053147996729354,
+    "n_days": 1787.0
+  },
+  "degradation": {
+    "sharpe_degradation": 0.3706526483614826,
+    "oos_as_pct_of_is": 30.371325602077036
+  },
+  "verdict": "overfit",
+  "recommended_for_production": false
+}

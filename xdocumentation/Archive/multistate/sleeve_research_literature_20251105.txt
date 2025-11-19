@@ -1,0 +1,22 @@
+Research & Literature Review
+2.1 Core Papers to Implement
+Momentum & Trend:
+
+Moskowitz, Ooi, Pedersen (2012) - "Time Series Momentum"
+
+Implement their 12-month TSMOM with vol scaling
+Expected Sharpe: 0.6-0.8 for single commodity
+
+
+Hurst, Ooi, Pedersen (2017) - "A Century of Evidence on Trend-Following"
+
+Multi-speed trend combination
+Shows diversification benefit across timeframes
+
+
+
+Mean Reversion:
+3. Baltas & Kosowski (2013) - "Momentum Strategies in Futures Markets and Trend-Following Funds"
+
+Short-term reversal overlay
+Works at 1-5 day horizon

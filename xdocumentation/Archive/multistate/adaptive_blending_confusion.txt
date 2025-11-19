@@ -1,0 +1,18 @@
+LAYER C: ADAPTIVE BLENDING (Exists)
+------------------------------------
+File: build_integrated_system.py (or similar)
+
+• Classifies market into 9 buckets (vol × trend regimes)
+• Adjusts GROSS EXPOSURE based on volatility regime
+  - LOW vol: May increase exposure
+  - HIGH vol: May decrease exposure
+• Uses STATIC sleeve weights: TM 29%, TI 22%, MC 49%
+
+THIS IS KEY: Your adaptive blending adjusts HOW MUCH total exposure you have,
+but it ALWAYS uses the same 29/22/49 sleeve mix.
+
+Example:
+  • NORMAL + LOW vol: 1.0x gross exposure × (29% TM, 22% TI, 49% MC)
+  • NORMAL + HIGH vol: 0.8x gross exposure × (29% TM, 22% TI, 49% MC)
+
+The 29/22/49 ratio NEVER CHANGES in your current system.

@@ -1,0 +1,40 @@
+# Config/Copper/trendcore.yaml (v2.0)
+
+io:
+  commodity: Copper
+  sleeve: TrendCore
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10
+    vol_lookback_days_default: 63
+    leverage_cap_default: 2.5  # TrendCore can use more leverage than HookCore
+
+  costs:
+    one_way_bps_default: 1.5
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true  # REQUIRED: T→T+1 accrual
+
+# TrendCore-specific signal parameters
+signal:
+  moving_average:
+    lookback_days: 50      # Medium-term trend (approx 10 weeks)
+    buffer_pct: 0.0        # No buffer (pure crossover)
+    shift_bars: 1          # Use MA from T-1 (no look-ahead)
+  
+  # Alternative parameters to test later:
+  # lookback_days: 20   # Fast trend (1 month)
+  # lookback_days: 100  # Slow trend (5 months)
+  # buffer_pct: 0.01    # 1% buffer to reduce whipsaw

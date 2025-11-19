@@ -1,0 +1,24 @@
+io:
+  commodity: Copper
+  portfolio_name: StaticBlend_Vol
+  description: Static weight baseline with proper portfolio-level costs
+
+sleeves:
+  TrendMedium:
+    path: outputs/Copper/TrendMedium/daily_series.csv
+    enabled: true
+    
+  TrendImpulse:
+    path: outputs/Copper/TrendImpulse_v4/daily_series.csv
+    enabled: true
+    
+  MomentumCore:
+    path: outputs/Copper/MomentumCore_v1/daily_series.csv
+    enabled: true
+
+costs:
+  transaction_cost_bp: 3  # Portfolio-level transaction costs
+
+backtest:
+  start_date: 2000-01-03
+  end_date: 2025-11-01

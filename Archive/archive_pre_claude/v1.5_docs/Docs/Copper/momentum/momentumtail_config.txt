@@ -1,0 +1,80 @@
+policy:
+  schema: Config/schema.yaml
+  sleeve: Donchian_252_ATR0p5
+
+  # EVENT-BASED: allow execution any weekday (no M/W/F restriction)
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]             # Mon..Fri
+    origin_for_exec: {'0': '-1B', '1': '-1B', '2': '-1B', '3': '-1B', '4': '-1B'}
+    fill_default: close_T                       # trade at close of T (signal day)
+  sizing:
+    ann_target: 0.10                            # 10% vol target
+    vol_lookback_days_default: 21               # RV window for scaling
+    vol_info_timing_default: T                  # use info available at T
+    leverage_cap_default: 2.5
+  costs:
+    one_way_bps_default: 1.5
+  pnl:
+    formula: pos_lag_times_simple_return        # PnL_t = pos_{t-1} * ret_t - cost_t
+
+signal:
+  type: donchian_breakout_with_atr_entry
+  breakout_window: 252                          # 1-year high
+  exit_window: 126                              # channel exit (½ window)
+
+  entry_condition:
+    price_crosses_prior_high: true              # close_T > rolling_high_252_(T-1)
+    atr_entry_filter:
+      enabled: true
+      atr_lookback: 20
+      overshoot_multiple: 0.5                   # E1a: (close_T - prior_high) >= 0.5 * ATR20_T
+
+  exit_condition:
+    type: channel_low
+    lookback: 126                               # exit when close_T < rolling_low_126_(T-1)
+
+  filters:
+    vol_state_gate:
+      enabled: false
+      z_lookback: 252
+      z_threshold: 0.0
+    positioning_gate:
+      enabled: false
+      source: CFTC_or_LME
+      percentile_max: 0.90
+
+data:
+  date_col: Date
+  price_col: copper_lme_3mo                     # fall back to first non-date if absent
+  ohlc_cols:                                    # optional; if present, ATR uses true range
+    high: null
+    low: null
+    close: null
+  atr_method:
+    prefer: true_range                          # if OHLC present: ATR = RMA(TR, n)
+    fallback: close_to_close                    # else: ATR ≈ Price_{t-1} * stdev(ret, n) * sqrt(n)
+
+audit:
+  enforce_Tplus1_pnl: true                      # PnL starts the day after execution
+  forbid_intraday_info: true
+  check_no_trades_before_warmup: true
+  write_daily_series: true
+  outdir: outputs/Copper/MomentumTail/Donchian_252_ATR0p5_event
+
+outputs:
+  daily_series_filename: donchian252_ATR0p5_event_daily_series.csv
+  columns:
+    - Date
+    - Price
+    - ret
+    - rv21
+    - atr20
+    - donch_high_prev
+    - donch_low_prev
+    - enter_sig
+    - pos_eod
+    - lev
+    - pos_for_ret_t
+    - cost_ret
+    - strat_ret
+    - equity

@@ -1,0 +1,52 @@
+# Config/Copper/crashandrecover.yaml (v2.0)
+
+io:
+  commodity: Copper
+  sleeve: CrashAndRecover
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri daily execution
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10
+    vol_lookback_days_default: 63
+    leverage_cap_default: 2.0  # Moderate leverage (mean-reversion)
+
+  costs:
+    one_way_bps_default: 1.5
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true  # REQUIRED: T→T+1 accrual
+
+# CrashAndRecover-specific signal parameters
+signal:
+  swing_structure:
+    window: 60                   # 60-day swing high/low detection
+    atr_lookback: 20             # 20-day ATR calculation
+    atr_tolerance: 0.5           # 0.5x ATR buffer (avoids noise)
+  
+  volume_confirmation:
+    lookback: 20                 # 20-day volume moving average
+    threshold: 2.0               # Volume > 2x average (high bar for selectivity)
+  
+  exit_logic:
+    timeout_days: 90             # Auto-exit after 90 days (copper cycles faster)
+  
+  risk_controls:
+    signal_shift: 1              # Use data up to T-1 (no look-ahead)
+  
+  # Expected behavior:
+  # - "Higher Low": Price breaks above swing low + ATR buffer, volume confirms → LONG
+  # - "Lower High": Price breaks below swing high - ATR buffer, volume confirms → SHORT
+  # - Hold until timeout (90d) or opposite signal
+  # - Captures structural regime changes in copper (crashes and recoveries)
+  # - Low turnover (~180%/year), crisis alpha during volatility regimes

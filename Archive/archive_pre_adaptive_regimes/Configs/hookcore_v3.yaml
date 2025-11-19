@@ -1,0 +1,100 @@
+# Config/Copper/hookcore_v3.yaml
+
+io:
+  commodity: Copper
+  sleeve: HookCore_v3
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10                      # 10% target vol
+    vol_lookback_days_default: 63         # ~3 months rolling vol
+    leverage_cap_default: 1.5             # Max 1.5x leverage
+
+  costs:
+    one_way_bps_default: 1.5              # 1.5 bps per trade
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true                  # REQUIRED: T→T+1 accrual
+
+# HookCore v3.0 signal parameters
+signal:
+  # Core strategy
+  strategy_version: "3.0"
+  description: "Regime-aware Bollinger mean reversion, longs only"
+  
+  # Bollinger bands (OPTIMIZED: Keep 5d/1.5σ for signal quality)
+  bollinger:
+    lookback_days: 5         # v3.0: Keep tight bands for entries
+    sigma_multiplier: 1.5    # v3.0: Keep at 1.5σ
+    shift_bars: 1            # Use bands from T-1 (no look-ahead)
+  
+  # Basic filters (RELAXED from v1.0)
+  filters:
+    trend_lookback: 10
+    trend_thresh: 0.05        # |cumret| < 5%
+    vol_lookback: 20
+    vol_thresh: 0.025         # v1.0: 0.02 → v3.0: 0.025 (relaxed)
+    autocorr_lookback: 10
+    autocorr_thresh: -0.05    # v1.0: -0.1 → v3.0: -0.05 (RELAXED)
+  
+  # Hold period (LONGER than v1.0)
+  holding:
+    hold_days_trading: 5      # v1.0: 3 days → v3.0: 5 days
+  
+  # Tier 1 safety filters (NEW in v3.0)
+  tier1_safety:
+    iv_shutdown: 30.0         # Flat if IV > 30% (95th percentile)
+    iv_elevated: 25.0         # Widen bands if IV > 25% (80th percentile)
+    curve_extreme_backwardation: 3.0   # Longs-only if > +3% (85th percentile)
+    curve_weak_contango: -3.0          # Half size if < -2% (10th percentile)
+  
+  # Regime adaptation (NEW in v3.0)
+  regime:
+    use_adaptation: true
+    stocks_low_threshold: 0.3    # Bottom 30% = LOW stocks
+    stocks_high_threshold: 0.7   # Top 30% = HIGH stocks
+    
+    # Adaptive parameters by regime
+    params_by_stocks_regime:
+      LOW:    # Tight market (low stocks)
+        bb_lookback: 25
+        bb_sigma: 2.5
+      MEDIUM: # Normal market
+        bb_lookback: 20
+        bb_sigma: 3.0
+      HIGH:   # Loose market (high stocks)
+        bb_lookback: 15
+        bb_sigma: 3.0
+  
+  # Directional bias (NEW in v3.0)
+  directional:
+    longs_only: true          # v1.0: false → v3.0: true (asymmetric alpha)
+    reason: "Shorts have no edge (+0.5 bps vs longs +9.6 bps)"
+
+# Expected performance improvements (REVISED after optimization)
+expected_improvements:
+  v1_0_sharpe: 0.34
+  v3_0_target_sharpe: 0.55
+  v1_0_turnover: 43.0
+  v3_0_target_turnover: 21.0
+  v1_0_max_dd: -0.26
+  v3_0_target_max_dd: -0.20
+  
+  key_changes:
+    - "Longs only (eliminate worthless shorts)"
+    - "Relaxed autocorr filter (-0.05 vs -0.1)"
+    - "Longer hold (5d vs 3d)"
+    - "Relaxed vol filter (2.5% vs 3.0%)"
+    - "Tier 1 safety filters (IV/curve)"
+    - "Regime-adaptive (future enhancement)"

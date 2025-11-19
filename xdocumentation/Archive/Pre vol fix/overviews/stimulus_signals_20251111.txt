@@ -1,0 +1,93 @@
+🇨🇳 Objective
+
+Create a daily quantitative indicator that detects when Chinese stimulus is likely underway or anticipated.
+Signal output:
+
++1 = easing/stimulus bias
+
+0 = neutral
+
+–1 = tightening bias
+
+1️⃣ Design Principles
+
+High-frequency inputs (daily or weekly, no monthly TSF or FAI data).
+
+Financial market proxies for liquidity, credit expectations, and growth sentiment.
+
+Bloomberg-available tickers only.
+
+Excludes commodities (so the model isn’t circular if you’re trading metals).
+
+2️⃣ Key Channels and Bloomberg Proxies
+🏦 A. Monetary Liquidity Channel
+
+Captures PBoC policy stance and interbank liquidity.
+
+Component	Description	Bloomberg Ticker	Direction (Stimulus = ↑ or ↓)
+1. 7-day repo rate (interbank)	Core liquidity gauge.	CNREPO7D Index	↓ = easier liquidity
+2. 3-month SHIBOR	Funding stress & policy expectations.	CHSHIBOR3M Index	↓ = easing
+3. 10y CGB yield	Long-term rate expectations.	CNGGB10YR Index	↓ = easing
+4. PBoC open market operation size (OMO)	Optional, low freq; liquidity injections.	CNOMONET Index	↑ = easing
+💴 B. Credit & Currency Channel
+
+Captures how liquidity transmits into credit expectations and FX.
+
+Component	Description	Bloomberg Ticker	Direction
+5. USDCNY spot	CNY depreciation reflects easier liquidity.	USDCNY Curncy	↑ (CNY weaker) = easing
+6. CNH-Hibor spread (CNH vs onshore)	Tight spread or negative = more offshore liquidity.	CNH3M Index – CHSHIBOR3M Index	↓ = easing
+7. Chinese Government 2s10s spread	Steepening = growth optimism/stimulus anticipation.	CNGGB10YR Index – CNGGB2YR Index	↑ = stimulus anticipation
+📈 C. Market Sentiment / Risk Channel
+
+Equities and credit spreads incorporate expectations of stimulus before data shows it.
+
+Component	Description	Bloomberg Ticker	Direction
+8. CSI 300 Index	Broad onshore equity barometer.	SHSZ300 Index	↑ = stimulus optimism
+9. Infrastructure/Construction sub-index	Tracks infra & SOE names.	CSIINFR Index or SHCOMPIND Index	↑ = anticipation
+10. China USD corporate credit spread	Wider = stress; narrower = stimulus risk-on.	CNUDCORP Index or JPMACCC Index	↓ = easing expectations
+
+Step 4: Convert to Binary Signal
+
+Smooth via 10-day EMA and threshold:
+
+CSI > +0.5 → “Stimulus / easing” regime
+
+–0.5 < CSI < +0.5 → Neutral
+
+CSI < –0.5 → Tightening
+
+This gives a daily, regime-style index that flips when liquidity and sentiment cohere around policy shifts.
+
+4️⃣ Example Interpretation
+Period	Signal Behaviour	Historical Context
+2008–09	Repo ↓, yields ↓, equities ↑ → CSI > +1	RMB 4 tn stimulus
+2015–16	Repo ↓, CNY weak, infra equities ↑	Infrastructure mini-stimulus
+2020	Repo ↓, CNY weak→strong, yields ↓, equities ↑	COVID fiscal & monetary
+2023	Yields ↓, CNY weak, infra stocks ↑	Local government debt plan
+5️⃣ Optional Refinements
+
+Add a volatility-adjusted filter: require >2 indicators per channel to confirm a move (avoids false positives).
+
+Add surprise factor: e.g. when repo rate moves >1σ intraday relative to 30d mean → “policy event”.
+
+Test correlation vs. official monthly TSF or fiscal impulse data to calibrate weights.
+
+6️⃣ Example Bloomberg Implementation
+
+If you want to build it inside Bloomberg (e.g. in Excel API):
+
+=BDH("CNREPO7D Index","PX_LAST","2020-01-01","2025-11-10")
+=BDH("CNGGB10YR Index","PX_LAST",...)
+=BDH("USDCNY Curncy","PX_LAST",...)
+=BDH("SHSZ300 Index","PX_LAST",...)
+
+
+Then calculate z-scores, directionality, weighted sum, and smoothed regime signal.
+
+7️⃣ Why It Works
+
+All components are liquidity-sensitive and daily.
+
+The model picks up both actual and anticipated stimulus: repo & CGB yields move before policy is official, equities and CNY reflect expectations.
+
+It excludes commodities, making it a clean leading indicator for trading copper, iron ore, or AUD.

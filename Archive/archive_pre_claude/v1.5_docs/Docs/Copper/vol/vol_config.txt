@@ -1,0 +1,55 @@
+# Vol v1.0 — Vol Mean-Reversion Sleeve (Copper 3M)
+# Purpose: Z-score reversion on implied-realised gap.
+sleeve:
+  name: Vol
+  version: "v1.0"
+  asset: "LME Copper 3M"
+  description: "Short high vol gap, long low; proxy returns; T execution, PnL from T+1; 10% vol target."
+
+data:
+  input_file: "vol_values.xlsx"  # merge with pricing
+  date_parse: "Excel serial for vol"
+  vol_column: "implied_minus_realised"  # implied_3mo - realised_vol_20d
+  cleaning:
+    drop_na_vol: true
+  returns:
+    vol_ret: "-vol.pct_change()"
+
+execution:
+  decision_time: "T close"
+  execute_at: "T"
+  pnl_begins: "T+1"
+  allow_overlaps: true
+  entry_costs:
+    bps: 1.5
+
+signal:
+  z_score:
+    lookback_days: 40
+    thresh: 2.0
+    shift_bars: 1
+  entry_logic:
+    short: "z >= 2.0"
+    long: "z <= -2.0"
+    flat: "otherwise"
+  holding:
+    hold_days: 5
+
+position_sizing:
+  target_vol_annual: 0.10
+  realized_vol_window_days: 28
+  scale_method: "rolling"
+  clamp:
+    min: 0.4
+    max: 2.5
+
+testing:
+  periods:
+    train: "2000-01-01 to 2007-12-31"
+    validate: "2008-01-01 to 2017-12-31"
+    test: "2018-01-01 to present"
+  costs_sensitivity_bps: [1.5, 3.0]
+
+notes:
+  rationale: "Gap for skew edge; proxy for options vega."
+  deployment: "T ok; real trade via straddles."

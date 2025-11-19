@@ -1,0 +1,278 @@
+# HOOKCORE v5 - SIMPLE BUILD REQUIREMENTS
+## Add Shorts Only - Keep It Simple
+### November 4, 2025
+
+---
+
+## 🎯 OBJECTIVE
+
+Upgrade HookCore v4 to v5 by adding symmetric short signals. That's it.
+
+**Current (v4):** Long-only mean reversion  
+**Target (v5):** Long/short mean reversion  
+**Time to build:** 30-60 minutes
+
+---
+
+## 📊 CURRENT STATE (HookCore v4)
+
+### Performance
+- Overall Sharpe: 0.26 (long-only, trades all regimes)
+- Best regime: Medium vol + transitional (Sharpe 1.07)
+- Activity: 7.4% of time
+
+### What It Does
+```python
+# Long-only signals
+if price < lower_bollinger and volume_spike:
+    pos = +1  # LONG (buy oversold)
+else:
+    pos = 0   # FLAT
+```
+
+### Files Available
+- `/mnt/user-data/uploads/daily_series_hookcore_v4.csv`
+- Code: `hookcore.py` (if you have it)
+
+---
+
+## ✅ WHAT TO BUILD (v5)
+
+### Single Change: Add Shorts
+
+```python
+# Current v4 (long-only):
+if price < lower_bollinger and volume_spike:
+    pos = +1  # LONG
+else:
+    pos = 0
+
+# New v5 (symmetric long/short):
+if price < lower_bollinger and volume_spike:
+    pos = +1  # LONG (buy oversold)
+elif price > upper_bollinger and volume_spike:
+    pos = -1  # SHORT (sell overbought) ← ADD THIS
+else:
+    pos = 0
+```
+
+**That's the only change!**
+
+---
+
+## 🚫 WHAT NOT TO BUILD
+
+### DON'T Add Regime Filter to HookCore
+
+❌ **Don't do this:**
+```python
+# DON'T add regime awareness to the sleeve
+if regime == 'high_vol_trending':
+    return 0  # Don't add this logic!
+```
+
+**Why not?**
+- Regime filtering belongs in the adaptive portfolio layer
+- Keep HookCore as a pure signal generator
+- Separation of concerns = cleaner architecture
+
+**Where regime filtering happens:**
+- In the adaptive portfolio (separate component)
+- Portfolio will set weight = 0 in bad regimes
+- HookCore just generates signals always
+
+---
+
+## 📋 EXPECTED PERFORMANCE
+
+### Conservative Estimate
+- Overall Sharpe: 0.26 → 0.35-0.45
+- Activity: 7.4% → 10-12%
+- Improvement from shorts alone: +30-50%
+
+### Optimistic Estimate  
+- Overall Sharpe: 0.26 → 0.50-0.60
+- Activity: 7.4% → 12-15%
+- Shorts capture both directions well
+
+### With Adaptive Portfolio (Later)
+- Portfolio will filter regimes + apply dynamic weights
+- Expected: Sharpe 0.70-0.90 (portfolio level)
+- But HookCore v5 itself stays regime-agnostic
+
+---
+
+## 🔧 IMPLEMENTATION DETAILS
+
+### Parameters (Keep Same as v4)
+
+**Bollinger Bands:**
+- Window: 20 days
+- Std dev: 2.0 sigma
+- Same as v4 ✓
+
+**Volume Filter:**
+- Threshold: 1.3x recent average
+- Window: 20 days
+- Same as v4 ✓
+
+**Exit Logic:**
+- Mean reversion (price returns to middle)
+- Or max hold period: 5 days
+- Same as v4 ✓
+
+**Only change:** Add symmetric short when overbought
+
+### Validation Checklist
+
+**Smoke tests:**
+- [ ] Long signals still trigger when oversold
+- [ ] Short signals now trigger when overbought
+- [ ] Position is -1, 0, or +1 (not other values)
+- [ ] Shorts are roughly 40-50% of longs (symmetric)
+
+**Performance checks:**
+- [ ] Overall Sharpe >0.35 (improvement over 0.26)
+- [ ] Activity 10-15% (up from 7.4%)
+- [ ] Max drawdown <-20%
+- [ ] No extreme outliers in PnL
+
+**Edge cases:**
+- [ ] Both overbought AND oversold same day? (take most recent)
+- [ ] Volume spike but not at band? (no signal)
+- [ ] At band but no volume spike? (no signal)
+
+---
+
+## 📁 DELIVERABLES
+
+**Required outputs:**
+1. `daily_series_hookcore_v5.csv` (with shorts)
+2. `summary_metrics.json` (performance stats)
+3. Brief comparison: v4 vs v5
+
+**CSV format (same as v4):**
+```
+date, price, ret, pos, pos_for_ret_t, trade, cost, pnl_gross, pnl_net
+```
+
+---
+
+## 🎯 SUCCESS CRITERIA
+
+### Minimum (Must Achieve)
+- [ ] Shorts enabled (position can be -1)
+- [ ] Sharpe >0.35 (vs 0.26 in v4)
+- [ ] Activity 10%+ (vs 7.4% in v4)
+- [ ] No bugs or crashes
+
+### Target (Should Achieve)
+- [ ] Sharpe >0.40
+- [ ] Activity 12%+
+- [ ] Shorts work as well as longs
+- [ ] Clean, professional code
+
+### Stretch (Nice to Have)
+- [ ] Sharpe >0.50
+- [ ] Activity 15%+
+- [ ] Ready for portfolio integration immediately
+
+---
+
+## 💬 SESSION STARTER FOR NEW CHAT
+
+**Copy-paste this to start the HookCore v5 chat:**
+
+> Hi! I need to upgrade HookCore v4 to v5 by adding symmetric short signals.
+> 
+> **Current state (v4):**
+> - Long-only mean reversion strategy
+> - Sharpe: 0.26, Activity: 7.4%
+> - Signals: Buy when oversold (price < lower Bollinger) + volume spike
+> - Already works well in medium vol + transitional (Sharpe 1.07 in that regime)
+> 
+> **What I want (v5):**
+> - Add symmetric shorts: Sell when overbought (price > upper Bollinger) + volume spike
+> - Keep everything else the same (parameters, exit logic, etc.)
+> - Don't add regime filtering (that will live in the portfolio layer)
+> - Expected: Sharpe 0.35-0.50, Activity 10-15%
+> 
+> **Available:**
+> - HookCore v4 daily series: `/mnt/user-data/uploads/daily_series_hookcore_v4.csv`
+> - Copper price data: `/mnt/project/copper_lme_3mo_canonical.csv`
+> - Contract specs: `/mnt/project/contract.py`
+> 
+> Can you build HookCore v5 with symmetric shorts? Keep it simple - just add the short logic, nothing fancy.
+
+---
+
+## 📊 REFERENCE: WHY SHORTS WILL HELP
+
+### Data Insight
+
+**HookCore v4 only captures downside exhaustion:**
+- Buys oversold → captures bounce
+- Ignores overbought → misses pullbacks
+- Only using 50% of mean reversion opportunities
+
+**HookCore v5 captures both:**
+- Buys oversold → captures bounce ✓
+- Shorts overbought → captures pullback ✓
+- Uses 100% of opportunities
+
+**Expected impact:**
+- More signals (10-15% vs 7.4% activity)
+- Better risk-adjusted returns (Sharpe +30-50%)
+- Symmetric exposure (hedged better)
+
+---
+
+##⚠️ CRITICAL: KEEP IT SIMPLE
+
+**This upgrade should be SIMPLE:**
+- ✅ Add 3-4 lines of code (short condition)
+- ✅ Rerun backtest
+- ✅ Validate metrics
+- ✅ Done in 30-60 minutes
+
+**Don't over-complicate:**
+- ❌ Don't add regime filters
+- ❌ Don't change parameters
+- ❌ Don't add new features
+- ❌ Don't optimize anything
+
+**Philosophy:** 
+- v5 is a quick win (shorts only)
+- Regime filtering comes later (in portfolio)
+- Optimization comes later (if needed)
+- Keep the changes minimal and testable
+
+---
+
+## ✅ FINAL CHECKLIST
+
+**Before starting HookCore v5 chat:**
+- [ ] Have HookCore v4 daily series ready
+- [ ] Have copper price data available
+- [ ] Understand: v5 = v4 + shorts (nothing else)
+- [ ] Understand: No regime filtering in sleeve
+- [ ] Ready to build in 30-60 minutes
+
+**After completing HookCore v5:**
+- [ ] Have daily_series_hookcore_v5.csv
+- [ ] Sharpe improved (>0.35)
+- [ ] Activity increased (>10%)
+- [ ] Ready for adaptive portfolio integration
+
+---
+
+**Simple, focused, achievable.** 🎯
+
+Let's build HookCore v5 with minimal changes and maximum impact.
+
+---
+
+*Build time: 30-60 minutes*  
+*Expected improvement: +30-50% Sharpe*  
+*Complexity: Low (3-4 line change)*  
+*Risk: Minimal (symmetric logic)*

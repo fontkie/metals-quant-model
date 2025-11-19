@@ -1,0 +1,49 @@
+{
+  "signal_stats": {
+    "mean": 0.10991551800800355,
+    "mean_abs": 0.888335556543649,
+    "std": 1.0390540701924353,
+    "min": -1.5,
+    "max": 1.5,
+    "pct_nonzero": 89.77323254779903,
+    "pct_long": 50.22973173262191,
+    "pct_short": 39.54350081517712
+  },
+  "targeted_position_stats": {
+    "mean": 0.05907171385861186,
+    "mean_abs": 0.5102800612746794,
+    "std": 0.6222004976857001,
+    "min": -3.2551435581852965,
+    "max": 3.874711844237879
+  },
+  "realized_vol": 0.11105393526925443,
+  "target_vol": 0.1,
+  "vol_delta": 0.011053935269254425,
+  "strategy_type": "always_on",
+  "gross_sharpe": 0.27165061838575416,
+  "metrics": {
+    "annual_return": 0.014794272596728941,
+    "annual_vol": 0.11134189774802467,
+    "sharpe": 0.13287246666308425,
+    "max_drawdown": -0.3575847047124648,
+    "total_return": 0.47628108200283137,
+    "n_years": 26.523809523809526,
+    "n_trades": 6746,
+    "avg_trade_size": 0.004515953000991925
+  },
+  "turnover_metrics": {
+    "total_turnover": 833.0960708466707,
+    "annual_turnover": 31.11608268168979,
+    "avg_holding_days": 4.132608103554376,
+    "total_costs": 0.2499288212540012,
+    "annual_cost": 0.009334824804506937,
+    "cost_as_pct_gross": 0.008246833324597198
+  },
+  "execution_validation": {
+    "vol_in_target": true,
+    "no_nan_pnl": true,
+    "no_nan_costs": true,
+    "costs_positive": true,
+    "trades_reasonable": true
+  }
+}
