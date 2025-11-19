@@ -1,0 +1,35 @@
+
+# HookCore configuration (v1.1)
+
+sleeve: HookCore
+version: v1.1
+
+data:
+  excel: Data/copper/pricing/pricing_values.xlsx
+  sheet: Raw
+  date_col: Date
+  price_col: copper_lme_3mo
+  symbol: COPPER
+
+signal:
+  rsi_window: 3
+  rsi_thresholds: [35, 65]      # long on cross up through 35; short on cross down through 65
+  volratio_cap: 1.0             # trade only if 10d_vol/60d_vol < 1.0
+  cadence: biweekly             # evaluate Tuesdays / Fridays
+  exec: T                       # "T" (same-day) or "next" (T+1)
+  hold_bars: 2
+
+risk:
+  vol_target: 0.10              # annualised
+  vol_lookback: 28
+  leverage_cap: 2.5
+
+costs:
+  per_abs_delta_bps: 1.5        # 1.5 bps per |Δposition|
+
+outputs:
+  root: outputs/hookcore/COPPER
+  files:
+    - daily_series.csv
+    - equity_curves.csv
+    - summary_metrics.json

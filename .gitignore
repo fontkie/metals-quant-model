@@ -234,6 +234,4 @@ git add src/signals/hookcore.py Config/Copper/hookcore.yaml
 git commit -m "feat: optimize HookCore Bollinger parameters (5→7 day window)"
 git push origin feature/optimize-hookcore-params
 # Create PR, review, merge
-```outputs/ 
-Archive/ 
-*.csv 
+```

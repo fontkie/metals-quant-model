@@ -1,0 +1,13 @@
+# Combined WFV: combine sleeves using each fold's chosen params
+sleeves: ["pricing", "trend"]     # drop "trend" if it fails acceptance
+ensemble: equal_weight
+vintage_ensemble_last_n: 4
+
+filters:
+  apply_stocks_filter_at_combined: false
+
+acceptance:
+  keep_if:
+    median_oos_sharpe_min: 0.40
+    worst_quartile_sharpe_min: 0.10
+    corr_cap_between_sleeves: 0.60

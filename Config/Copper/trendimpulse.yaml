@@ -1,0 +1,45 @@
+# Config/Copper/trendimpulse.yaml (v2.0)
+
+io:
+  commodity: Copper
+  sleeve: TrendImpulse
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri daily execution
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10
+    vol_lookback_days_default: 63
+    leverage_cap_default: 2.0  # Slightly lower than TrendCore (more whipsaw risk)
+
+  costs:
+    one_way_bps_default: 1.5
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true  # REQUIRED: T→T+1 accrual
+
+# TrendImpulse-specific signal parameters
+signal:
+  momentum:
+    roc_lookback: 20           # 20-day rate of change (1 month)
+    zscore_lookback: 63        # Normalize by 63-day rolling vol
+    entry_threshold: 0.5       # Enter on 0.5 std dev momentum burst
+    exit_threshold: 0.0        # Exit when momentum fades to neutral
+    shift_bars: 1              # Use data up to T-1 (no look-ahead)
+  
+  trend_filter:
+    enabled: true              # Only trade with medium-term trend
+    ma_lookback: 50            # Align with TrendCore's trend definition
+  
+  # NOTE: Previous testing found 3-day fixed holds worked well
+  # Current version uses signal-driven exits
+  # Compare performance and consider adding fixed_hold_days: 3 option later
