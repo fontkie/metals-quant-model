@@ -1,0 +1,229 @@
+# PORTFOLIO ARCHITECTURE: ONE-PAGER
+**Systematic Copper Trading System - Signal Independence & Overlay Logic**
+
+---
+
+## THE CORE STRUCTURE
+
+```
+LAYER 3: PORTFOLIO BLENDING
+│
+├─ BASELINE (25-60% weight)
+│  ├─ TrendMedium (33%)
+│  ├─ TrendImpulse (33%)  
+│  └─ MomentumCore (33%)
+│     └─ + China Demand Overlay ← ONLY HERE
+│
+├─ TIGHTSTOCKS (25-40% weight) ← SEPARATE SLEEVE
+│  └─ Physical market tightness signal
+│
+└─ VOLCORE (15-35% weight) ← SEPARATE SLEEVE
+   └─ Volatility risk premium signal
+```
+
+**Critical Distinction:** TightStocks and VolCore are NOT optimizations of the baseline. They are independent alpha sources with different signal logic.
+
+---
+
+## WHY CHINA DEMAND APPLIES ONLY TO BASELINE
+
+### 1. Signal Independence = Diversification
+
+```
+Current: TightStocks correlation to Baseline = 0.055 (nearly zero)
+This is VALUABLE diversification.
+
+If we apply China Demand to both:
+→ Both get scaled by same factor
+→ Correlation rises
+→ Diversification benefit destroyed
+```
+
+### 2. TightStocks Already Captures Demand/Supply
+
+**TightStocks uses:**
+- LME stock levels (supply available)
+- 3mo-12mo spreads (physical tightness)
+- Supply disruptions (production shocks)
+
+**This IS a fundamental demand/supply signal** - just measured differently than China IP.
+
+**Applying China Demand on top = double-counting the same theme**
+
+### 3. VolCore is About Market Structure, Not Demand
+
+```
+VolCore logic: 
+- IV expensive vs realized → sell vol
+- IV cheap vs realized → buy vol
+
+This works whether demand is strong OR weak.
+It exploits options mispricing, not directional copper moves.
+```
+
+---
+
+## THE CORRECT IMPLEMENTATION
+
+```python
+# Step 1: Build component positions (all vol-targeted to 10%)
+baseline_pos = (TM_pos + TI_pos + MC_pos) / 3
+tightstocks_pos = calculate_TS_position()
+volcore_pos = calculate_VC_position()
+
+# Step 2: Apply China Demand ONLY to baseline
+china_scalar = calculate_demand_scalar(
+    china_ip_yoy, 
+    lag_months=2
+)  # Range: 0.77x to 1.30x
+
+baseline_pos_scaled = baseline_pos * china_scalar
+
+# Step 3: Keep TS/VC independent (they have their own fundamentals)
+# TightStocks uses LME stocks + spreads
+# VolCore uses IV vs realized vol
+
+# Step 4: Regime-adaptive portfolio blend
+if baseline_6mo_sharpe < 0.3:  # Defensive mode
+    weights = {
+        'baseline': 0.25,
+        'TS': 0.40,
+        'VC': 0.35
+    }
+else:  # Optimal mode
+    weights = {
+        'baseline': 0.60,
+        'TS': 0.25,
+        'VC': 0.15
+    }
+
+# Step 5: Final portfolio position
+portfolio_pos = (
+    baseline_pos_scaled * weights['baseline'] +
+    tightstocks_pos * weights['TS'] +
+    volcore_pos * weights['VC']
+)
+```
+
+---
+
+## THE ECONOMIC LOGIC
+
+### When China Demand is STRONG:
+
+| Sleeve | Response | Reason |
+|--------|----------|--------|
+| **Baseline** | Increases long positions | China scalar = 1.30x |
+| **TightStocks** | May still go short if stocks high | Independent signal |
+| **VolCore** | May still sell vol if IV expensive | Independent signal |
+
+**Result:** Portfolio has 3 different views, not all betting the same way.
+
+### When China Demand is WEAK:
+
+| Sleeve | Response | Reason |
+|--------|----------|--------|
+| **Baseline** | Reduces long / boosts short | China scalar = 0.77x |
+| **TightStocks** | May still go long if extreme tightness | Independent signal |
+| **VolCore** | May still buy vol if IV cheap | Independent signal |
+
+**Result:** Diversification works - not all positions follow same input.
+
+---
+
+## THE RENAISSANCE PRINCIPLE
+
+> **"Diversification comes from signal independence, not from having lots of strategies that all react to the same input."**
+
+**Good diversification:**
+```
+Baseline: Price trends × China Demand
+TightStocks: Physical market × LME stocks
+VolCore: Vol mispricing × IV levels
+→ Three different data sources, three different edges
+```
+
+**Bad diversification:**
+```
+Baseline: Price trends × China Demand
+TightStocks: Physical tightness × China Demand  
+VolCore: Vol premium × China Demand
+→ All three scaled by same factor = correlated moves
+```
+
+---
+
+## DEPLOYMENT PHASES
+
+### Phase 1: Defensive (Current - Baseline Broken)
+```yaml
+Baseline:     25%  (currently -0.78 Sharpe)
+TightStocks:  40%  (currently +0.94 Sharpe) ← Primary
+VolCore:      35%  (currently +0.35 Sharpe) ← Insurance
+
+Expected: 0.30-0.50 Sharpe (stop losses while baseline repairs)
+China Demand: Applies to 25% of portfolio (baseline only)
+```
+
+### Phase 2: Transition (After Baseline Repair)
+```yaml
+Baseline:     50%  (repaired)
+TightStocks:  30%  
+VolCore:      20%  
+
+Expected: 0.60-0.80 Sharpe (recovery)
+China Demand: Applies to 50% of portfolio (baseline only)
+```
+
+### Phase 3: Optimal (Full Performance)
+```yaml
+Baseline:     60%  ← Primary
+TightStocks:  25%  ← Diversifier
+VolCore:      15%  ← Insurance
+
+Expected: 1.00-1.10 Sharpe (institutional quality)
+China Demand: Applies to 60% of portfolio (baseline only)
+```
+
+---
+
+## EXCEPTION: EXTREME CONVICTION
+
+**ONLY in rare cases** (2-3 times per decade) with extreme fundamental view:
+
+```python
+# Example: China entering deep recession
+if extreme_macro_crisis:
+    portfolio_pos = portfolio_pos * 0.5  # Cut EVERYTHING 50%
+```
+
+This is a **portfolio-level gross exposure scalar** - different from regular China Demand overlay.
+
+**Use sparingly:** When you have conviction so strong it overrides all technical signals.
+
+---
+
+## KEY TAKEAWAYS
+
+✅ **China Demand overlay = Baseline only** (price-based strategies)  
+✅ **TightStocks = Independent** (already captures supply/demand via stocks)  
+✅ **VolCore = Independent** (captures market structure, not demand)  
+✅ **Diversification requires signal independence** (Renaissance principle)  
+✅ **Overlay percentages shift with portfolio weights** (defensive vs optimal)
+
+---
+
+## FILES & IMPLEMENTATION
+
+**Baseline Portfolio:** Equal-weight TM + TI + MC  
+**Overlay Module:** `src/overlays/china_demand.py`  
+**Portfolio Blender:** `src/portfolio/blender.py`  
+**Regime Logic:** Embedded in blender (defensive vs optimal weights)
+
+**Validation:** Walk-forward on each component separately, then combined.
+
+---
+
+**Date:** November 20, 2025  
+**Status:** Architecture defined, ready for implementation  
+**Next:** Build baseline, add China Demand, validate improvement

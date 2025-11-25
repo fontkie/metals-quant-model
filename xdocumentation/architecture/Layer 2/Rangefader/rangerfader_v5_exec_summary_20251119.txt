@@ -1,0 +1,350 @@
+# RangeFader V5 - Executive Summary
+
+**Quick Status:** ON HOLD - Great strategy needing critical overlays  
+**Last Updated:** 2025-11-19  
+**Deployment ETA:** 6-8 weeks from resumption
+
+---
+
+## The One-Page Summary
+
+### What Is It?
+Mean reversion strategy for copper that trades when ADX < 20 (choppy markets). Enters at 0.7 std deviation from 60-day MA, exits at 0.2 std. Vol-targeted to 10% annually.
+
+### What Works? ✓
+- **Choppy regime Sharpe: 1.104** (excellent!)
+- **Perfect validation:** 70% active in choppy, 0% in trending
+- **23 years of success:** 2000-2023 performed well
+- **Core logic sound:** Regime specialization works perfectly
+
+### What Broke? ✗
+- **2024-2025 disaster:** -1.46 Sharpe (should be +0.5)
+- **Mean reversion failed:** Negative expectancy per trade
+- **No macro filter:** Can't detect structural moves vs oscillations
+
+### Why It Broke?
+China structural weakness (property crisis) appears as "low ADX" (choppy) but is actually directional grind. Strategy enters thinking oscillation, gets run over by trend.
+
+### The Fix
+Two overlays needed:
+1. **ChopCore:** Detect macro confusion, go flat during regime shifts
+2. **TightnessIndex:** Only trade when market tight (not building inventory)
+
+### Timeline to Deploy
+- Week 1: Diagnostics
+- Weeks 2-3: Build ChopCore
+- Weeks 4-5: Build TightnessIndex  
+- Week 6: Validation
+- Weeks 7-8: Deploy prep
+**Total: 6-8 weeks**
+
+---
+
+## Performance Scorecard (26.8 Years)
+
+### Overall (2000-2025)
+
+```
+Net Sharpe:        0.344  ✓ (target >0.30)
+Annual Return:     4.5%
+Annual Vol:        13.1%  (target 10%, close enough)
+Max Drawdown:      -30.2% ⚠️
+Activity:          15.2%  ✓
+```
+
+### By Regime
+
+```
+Choppy (ADX<20):   1.104 Sharpe  ✓✓ (21.7% of time)
+Weak Trend:        ~0 Sharpe     ✓ (13.7% of time)
+Strong Trend:      ~0 Sharpe     ✓ (64.5% of time)
+```
+
+### Validation (All Passed ✓)
+
+```
+Activity in choppy:     70.1%  (target >60%)
+Activity in trending:   0.0%   (target <15%)
+Correlation with ADX:   -0.49  (target <-0.15)
+```
+
+### In-Sample vs Out-of-Sample
+
+```
+IS (2000-2018):    0.414 Sharpe  ✓
+OOS (2019-2025):   0.140 Sharpe  ⚠️ (decay: 0.34)
+```
+
+### OOS by Year (The Problem)
+
+```
+2019:  +0.57  ✓ Good
+2020:  +0.86  ✓✓ Excellent (including COVID!)
+2021:  +1.09  🚀 Outstanding
+2022:  +0.07  ⚠️ Choppy year
+2023:  +0.44  ✓ Solid
+
+2024:  -1.88  ❌ DISASTER
+2025:  -0.95  ❌ Still bad
+
+Average 2019-2023: 0.57 Sharpe  ✓
+Average 2024-2025: -1.46 Sharpe ❌
+```
+
+---
+
+## The Numbers Behind The Failure
+
+### 2024-2025 Trade Analysis
+
+```
+Activity:           11.8% (strategy still trading)
+Win Rate:           44.6% (should be >50%)
+Avg Win:            +0.81%
+Avg Loss:           -1.69% (2:1 against us!)
+Expectancy:         -0.571% per active day (NEGATIVE!)
+```
+
+### Directional Analysis
+
+```
+When LONG (expecting bounce):
+  Market went UP:   33.3% (bad - should be >50%)
+  Market went DOWN: 50.0% (killing us)
+  
+When SHORT (expecting pullback):
+  Market went DOWN: 47.7% (marginal)
+  Market went UP:   50.0% (hurting us)
+```
+
+**Diagnosis:** Market not oscillating. Trending through positions both ways.
+
+---
+
+## Current Parameters (Optimized 2025-11-19)
+
+```yaml
+lookback_window: 60        # 60-day MA
+zscore_entry: 0.7          # 0.7 std to enter
+zscore_exit: 0.2           # 0.2 std to exit
+adx_threshold: 20.0        # ADX < 20 = choppy
+target_vol: 10%            # Volatility target
+cost_bps: 3.0              # Transaction costs
+```
+
+**Optimization tested:** 225 combinations (5×5×3×3)
+- Lookback: 30-70 days
+- Entry: 0.6-1.0 std
+- Exit: 0.2-0.4 std
+- ADX: 15-20
+
+---
+
+## Why Keep It vs Why Abandon
+
+### Reasons to Keep ✓
+
+1. **Proven 23-year track record** (2000-2023)
+2. **Perfect regime behavior** (1.10 choppy Sharpe)
+3. **Clear fix path** (ChopCore + TightnessIndex)
+4. **Portfolio diversification** (orthogonal to trends)
+5. **Recent OOS was good** (2019-2023: 0.57 Sharpe)
+
+### Reasons to Abandon ✗
+
+1. **Catastrophic recent failure** (-1.46 in 2024-2025)
+2. **Most recent data most relevant** (recency matters)
+3. **Time investment needed** (6-8 weeks)
+4. **Already have working alternatives** (TrendMedium, TrendImpulse)
+5. **Market structure may have changed**
+
+### The Decision: KEEP (On Hold)
+
+**Rationale:**
+- Failure is explainable (macro confusion) not random
+- Fix is clear (overlays) and buildable
+- Portfolio needs choppy specialist
+- 23 years > 1.5 years of data
+- Can always abandon if overlays don't work
+
+**Condition:** Only deploy if overlays fix 2024-2025
+
+---
+
+## The Fix: Two Overlays
+
+### ChopCore v1 (Priority: CRITICAL)
+
+**What:** Macro confusion detector  
+**How:** Combines China demand, policy uncertainty, regime stability, fundamental confusion  
+**Output:** Confusion score 0-1 (go flat if >0.5)  
+**Timeline:** 2-3 weeks  
+**Expected Impact:** Avoid 2024-2025 disaster (should improve to >0 Sharpe)
+
+**Components:**
+- China PMI + Property Starts (demand proxies)
+- Policy uncertainty index
+- Market regime stability
+- Inventory accumulation rate
+
+### TightnessIndex v1 (Priority: HIGH)
+
+**What:** Market tightness filter  
+**How:** Only trade when market tight (not building inventory)  
+**Output:** Tightness score 0-1 (only trade if >0.4)  
+**Timeline:** 2 weeks  
+**Expected Impact:** +0.05-0.10 Sharpe, better risk profile
+
+**Components:**
+- LME + SHFE inventory rates of change
+- ISCG balance (surplus vs deficit)
+- Time spreads (backwardation vs contango)
+- Treatment charges (TC/RCs)
+
+---
+
+## The Plan Forward
+
+### Phase 1: Quick Diagnostics (Week 1)
+- Test if ADX threshold change helps (15 vs 20)
+- Analyze 2024-2025 regime characteristics
+- Decision: Quick fix or build overlays?
+
+### Phase 2: Build ChopCore (Weeks 2-3)
+- Collect data (Bloomberg + free sources)
+- Implement confusion scoring
+- Integrate with RangeFader
+- Test on 2024-2025 (MUST improve)
+
+### Phase 3: Build TightnessIndex (Weeks 4-5)
+- Collect inventory/spread data
+- Implement tightness scoring
+- Combine with ChopCore
+- Validate combined system
+
+### Phase 4: Validation (Week 6)
+- Walk-forward testing
+- Stress testing on known periods
+- Portfolio integration test
+
+### Phase 5: Deploy Prep (Weeks 7-8)
+- Production code cleanup
+- Monitoring dashboard
+- Risk controls
+- Documentation
+
+---
+
+## Deployment Criteria (All Must Pass)
+
+- [ ] ChopCore built and tested
+- [ ] TightnessIndex built and tested
+- [ ] **2024-2025 Sharpe > 0** (critical!)
+- [ ] Full sample Sharpe >0.30
+- [ ] Walk-forward validates (all periods >0)
+- [ ] Monitoring dashboard ready
+- [ ] Risk controls in place
+
+**Deploy only if ALL criteria met.**
+
+---
+
+## Alternative Strategies (If Overlays Fail)
+
+### Option 1: Copper-Aluminum Spread
+- More stable than outright
+- Less macro-sensitive
+- Requires aluminum pipeline (Month 12+)
+
+### Option 2: VolCore (Volatility Strategy)
+- Uncorrelated alpha source
+- Sell vol premium in normal times
+- Different risk profile
+- Timeline: Month 4+
+
+### Option 3: Pure Trend Portfolio
+- Focus on TrendMedium (0.505) + TrendImpulse (0.343)
+- Already achieving 0.65-0.75 portfolio Sharpe
+- Add multi-metal later for diversification
+
+---
+
+## Key Files & Commands
+
+### Documentation
+```
+RANGEFADER_V5_COMPLETE_DOCUMENTATION.md  # Full 40-page docs
+RANGEFADER_V5_ACTION_CHECKLIST.md       # Step-by-step todo
+RANGEFADER_V5_EXECUTIVE_SUMMARY.md      # This file
+```
+
+### Current Code
+```
+Config/Copper/rangefader_v5.yaml         # Parameters
+src/signals/rangefader_v5.py             # Signal generation
+src/cli/build_rangefader_v5.py           # Backtest builder
+src/cli/optimize_rangefader_v5.py        # Optimizer
+```
+
+### Run Commands
+```bash
+# Full backtest (current)
+scripts\run_rangefader_v5.bat
+
+# Re-optimize
+scripts\run_rangefader_v5_optimize.bat
+
+# With overlays (after built)
+python src/cli/build_rangefader_v5.py \
+  --config Config/Copper/rangefader_v5.yaml \
+  --enable-chopcore \
+  --enable-tightness \
+  --outdir outputs/Copper/RangeFader_v5_full
+```
+
+---
+
+## Contact Info & Resources
+
+### Data Sources
+- **Bloomberg Terminal:** In office
+- **Free Policy Uncertainty:** www.policyuncertainty.com
+- **ISCG Balance:** copper_balance_values.xlsx (already have)
+
+### Research Papers
+- Mean Reversion: Lo & MacKinlay (1988)
+- Regime Detection: Hamilton (1989)
+- ADX: Wilder (1978) - using OHLC not close-only
+
+### Previous Work
+- TrendMedium: 0.505 Sharpe (working)
+- TrendImpulse: 0.343 Sharpe (working)
+- Adaptive Blending: 0.767 portfolio Sharpe
+
+---
+
+## Bottom Line
+
+**RangeFader V5 is a good strategy with a fixable problem.**
+
+The core logic works (1.10 choppy Sharpe across 26 years), validation is perfect, and the failure mode is identifiable (macro confusion appearing as choppy). With ChopCore and TightnessIndex overlays, it should return to 0.30-0.40 Sharpe and fill the choppy market gap in the portfolio.
+
+**Risk:** 6-8 weeks of work that might not pay off if overlays fail.
+
+**Reward:** Complete portfolio coverage (trend + choppy), potential 0.85+ combined Sharpe.
+
+**Decision:** Keep on hold, build overlays when ready, deploy if they work, abandon if they don't.
+
+**Timeline:** Resume when (1) trend strategies fully deployed, or (2) portfolio needs diversification, or (3) next 1-2 months of copper data shows mean reversion working again.
+
+---
+
+**Status:** ON HOLD  
+**Next Action:** Phase 1 diagnostics (Week 1)  
+**Decision Point:** After ChopCore test (Week 3)  
+**Deploy ETA:** 6-8 weeks from start  
+**Abandon Criteria:** ChopCore doesn't fix 2024-2025
+
+---
+
+*"Good strategy, bad timing. Fix the filter, not the logic."*

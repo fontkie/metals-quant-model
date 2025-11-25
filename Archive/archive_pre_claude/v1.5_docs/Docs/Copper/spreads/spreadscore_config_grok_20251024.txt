@@ -1,0 +1,61 @@
+# Spreads v1.0 — Curve Mean-Reversion Sleeve (Copper 3M)
+# Purpose: Z-score reversion on mid-curve spread with delta filter.
+sleeve:
+  name: Spreads
+  version: "v1.0"
+  asset: "LME Copper 3M"
+  description: "Mean-reversion on 3mo-12mo spread; delta filter for change; T execution, PnL from T+1; 10% vol target."
+
+data:
+  input_file: "pricing_values.xlsx"
+  date_column: "Date"
+  date_parse:
+    origin: "Unix ns"  # pd.to_datetime(df['Date'], unit='ns')
+  spread_column: "spread_3mo_12mo"  # copper_lme_3mo - copper_lme_12mo_fut
+  price_column: "copper_lme_3mo"
+  cleaning:
+    drop_na_spread: true
+  returns:
+    spread_ret: "-spread.diff() / price.shift(1)"
+
+execution:
+  decision_time: "T close"
+  execute_at: "T"
+  pnl_begins: "T+1"
+  allow_overlaps: true
+  entry_costs:
+    bps: 1.5
+
+signal:
+  z_score:
+    lookback_days: 40
+    thresh: 2.0
+    shift_bars: 1
+  filters:
+    use_delta: true
+    delta_thresh: 0.01  # abs(delta_spread) > 0.01
+  entry_logic:
+    short: "z >= 2.0 AND filters_ok"
+    long: "z <= -2.0 AND filters_ok"
+    flat: "otherwise"
+  holding:
+    hold_days: 5
+
+position_sizing:
+  target_vol_annual: 0.10
+  realized_vol_window_days: 28
+  scale_method: "rolling"
+  clamp:
+    min: 0.4
+    max: 2.5
+
+testing:
+  periods:
+    train: "2000-01-01 to 2007-12-31"
+    validate: "2008-01-01 to 2017-12-31"
+    test: "2018-01-01 to present"
+  costs_sensitivity_bps: [1.5, 3.0]
+
+notes:
+  rationale: "Mid-curve to avoid front noise; delta for dynamic entries."
+  deployment: "T ok for futures."

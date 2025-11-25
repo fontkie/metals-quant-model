@@ -1,0 +1,103 @@
+# Config/Copper/hookcore_v5.yaml
+
+io:
+  commodity: Copper
+  sleeve: HookCore_v5
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10
+    vol_lookback_days_default: 63
+    leverage_cap_default: 1.5
+
+  costs:
+    one_way_bps_default: 1.5
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true
+
+# HookCore v5.0 - Longs-Only (Tested & Validated)
+signal:
+  strategy_version: "5.0"
+  description: "Longs-only mean reversion with regime filtering"
+  
+  # Testing showed: Longs Sharpe +1.00, Shorts Sharpe -0.79
+  # Decision: Remove shorts, keep longs only
+  directional:
+    longs_only: true
+    reason: "Testing proved shorts have negative Sharpe (-0.79) in copper. Longs work (+1.00)."
+  
+  # Bollinger bands (V4 PROVEN - from diagnostics)
+  bollinger:
+    lookback_days: 20    # V4 actual (diagnostics showed 20, not 5)
+    sigma_multiplier: 2.0  # V4 actual (diagnostics showed 2.0, not 1.5)
+    shift_bars: 1
+    reason: "V4 diagnostics showed 20d/2.0σ was actually used and worked (0.26 Sharpe)"
+  
+  # Volume confirmation
+  volume:
+    spike_threshold: 1.3
+    lookback: 20
+  
+  # REGIME FILTER (CRITICAL - per master brief)
+  # Only trade in: uptrends OR medium vol
+  # Avoids: low vol (-0.67 Sharpe) and downtrends (-5.42 Sharpe)
+  regime:
+    use_regime_filter: true
+    
+    # Uptrend definition
+    uptrend_lookback: 100  # Compare to 100 days ago
+    uptrend_threshold: 1.05  # 5% gain = uptrend
+    
+    # Medium vol definition  
+    vol_lookback: 63  # ~3 months
+    vol_percentile_window: 252  # Rank vol over 1 year
+    medium_vol_low: 0.30  # 30th percentile
+    medium_vol_high: 0.70  # 70th percentile
+    
+    reason: "V4 proved edge in uptrends (3.27) and medium vol (0.90). Avoid low vol (-0.67) and downtrends (-5.42)"
+  
+  # Hold period
+  holding:
+    hold_days_trading: 3
+    allow_overlap: false
+
+# Expected performance (Using V4 proven BB params + regime filter)
+expected_improvements:
+  v4_sharpe: 0.26  # V4 baseline (20d/2.0σ, longs, all regimes)
+  v5_target_sharpe: 0.40  # Conservative (v4 + regime filter)
+  v5_optimistic_sharpe: 0.60  # Optimistic (if regime filter works well)
+  
+  v4_activity: 0.074  # 7.4%
+  v5_target_activity: 0.08  # 8-10% (regime filtered, so similar to v4)
+  
+  evolution:
+    v5_attempt_1: "5d/1.5σ → FAILED (longs Sharpe -0.05)"
+    v5_final: "20d/2.0σ (v4 proven) + regime filter → Expected 0.40-0.60"
+  
+  regime_targets:
+    uptrends: 1.0  # V4 showed 3.27, should stay strong
+    medium_vol: 0.60  # V4 showed 0.90, should stay positive
+    
+  key_changes:
+    - "Using V4's PROVEN BB parameters (20d/2.0σ from diagnostics)"
+    - "Longs-only (shorts don't work: -0.79 Sharpe)"
+    - "Regime filter: only uptrends OR medium vol"
+    - "Volume spike confirmation"
+    - "Target: 0.26 → 0.40-0.60 Sharpe"
+
+# Data requirements
+data:
+  required:
+    - copper_lme_3mo_canonical.csv

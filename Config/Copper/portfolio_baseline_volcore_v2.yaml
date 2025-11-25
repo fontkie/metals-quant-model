@@ -1,0 +1,54 @@
+# Baseline + VolCore Portfolio v2 - IS/OOS Validated
+# ===================================================
+# Weights optimized on IS only, validated on OOS
+#
+# IMPORTANT: VolCore uses 2017+ as IS period because:
+# - LME copper options market was illiquid pre-2017
+# - Active rate: 10-16% (2011-2013) vs 35-50% (2017+)
+# - Pre-2017 data not representative of tradeable market
+# - 50% discount applied due to shorter IS period
+
+# Base path for data files
+base_path: "C:\\Code\\Metals"
+
+# IS period configuration
+# Using 2017 start because LME copper options market matured around this time
+is_start_date: "2017-01-01"
+is_oos_cutoff: "2021-01-01"
+
+# Allocation discount - applied to optimal weight
+# Reason: Shorter IS period (4 years vs standard 7+ years)
+allocation_discount: 0.5
+discount_reason: "Shorter IS period (2017-2020) due to illiquid options market pre-2017"
+
+# Grid search step (5% = tests 0%, 5%, 10%, ... 100%)
+grid_step: 0.05
+
+# Component sleeves
+components:
+  baseline:
+    # 3-sleeve baseline (TrendMedium + TrendImpulse + MomentumCore)
+    path: "outputs/Copper/Portfolio/BaselineEqualWeight/latest/daily_series.csv"
+    position_col: "portfolio_pos"
+    pnl_col: "pnl_gross"
+    
+  volcore:
+    # VolCore v2 with fixed vol targeting + IS-optimized parameters
+    path: "outputs/Copper/VolCore_v2/latest/daily_series.csv"
+    position_col: "pos"
+    pnl_col: "pnl_net"
+
+# Output directory
+output_dir: "outputs/Copper/Outputs/BaselineVolCore_v2"
+
+# Notes
+notes:
+  version: "v2"
+  methodology: |
+    IS optimization (2017-2020), OOS validation (2021-2025)
+    50% allocation discount due to:
+    1. Shorter IS period than other sleeves
+    2. LME copper options market illiquid pre-2017
+    3. Conservative approach while strategy proves itself
+  review_trigger: "If 12-month rolling Sharpe > 0.3, consider removing discount"
+  cut_trigger: "If 12-month rolling Sharpe < -0.3, reduce/remove allocation"

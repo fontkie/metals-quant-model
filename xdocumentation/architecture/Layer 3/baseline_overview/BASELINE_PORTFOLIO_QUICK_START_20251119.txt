@@ -1,0 +1,110 @@
+# BASELINE PORTFOLIO - QUICK START
+
+**Build equal-weight portfolio in 5 minutes**
+
+---
+
+## 1. CREATE FOLDERS (30 seconds)
+
+```cmd
+mkdir src\portfolio
+mkdir src\cli\portfolio
+mkdir outputs\Copper\Portfolio_Baseline
+```
+
+---
+
+## 2. COPY FILES (2 minutes)
+
+**From outputs/ to your project:**
+
+| Source File | Destination |
+|-------------|-------------|
+| blender.py | src\portfolio\blender.py |
+| portfolio__init__.py | src\portfolio\__init__.py |
+| build_baseline_portfolio.py | src\cli\portfolio\build_baseline_portfolio.py |
+| portfolio_baseline.yaml | Config\Copper\portfolio_baseline.yaml |
+| run_build_baseline_portfolio.bat | scripts\run_build_baseline_portfolio.bat |
+
+**Also create:**
+```cmd
+type nul > src\cli\portfolio\__init__.py
+```
+
+---
+
+## 3. UPDATE CONFIG (1 minute)
+
+**Edit:** `Config\Copper\portfolio_baseline.yaml`
+
+Update paths to match your files:
+```yaml
+sleeves:
+  TrendMedium: outputs/Copper/TrendMedium_v2/daily_series.csv
+  MomentumCore: outputs/Copper/MomentumCore_v2/daily_series.csv
+  RangeFader: outputs/Copper/RangeFader_v5/daily_series.csv
+```
+
+---
+
+## 4. RUN (1 minute)
+
+**Double-click:** `scripts\run_build_baseline_portfolio.bat`
+
+---
+
+## 5. VALIDATE
+
+**Check:** `outputs\Copper\Portfolio_Baseline\validation_report.txt`
+
+**Expected:**
+```
+Portfolio Sharpe:     0.773
+IS Sharpe:            0.774
+OOS Sharpe:           0.767
+OOS/IS Ratio:         99.0%
+Diversification:      +42.5%
+
+✅ All validation checks pass
+```
+
+---
+
+## FILES YOU GET
+
+```
+outputs\Copper\Portfolio_Baseline\
+├── daily_series.csv           # Full time series
+├── summary_metrics.json       # Key numbers
+├── sleeve_attribution.json    # Individual sleeves
+├── correlation_matrix.csv     # Diversification
+└── validation_report.txt      # Human-readable
+```
+
+---
+
+## TROUBLESHOOTING
+
+**Error: "No module named 'portfolio'"**
+→ Create `src\portfolio\__init__.py`
+
+**Error: "FileNotFoundError"**
+→ Update paths in config YAML
+
+**Numbers don't match**
+→ Check you're using TM v2, MC v2, RF v5 files
+
+---
+
+## WHAT'S NEXT?
+
+✅ **Baseline working (0.773 Sharpe)**
+
+**Then enhance:**
+1. Add regime-adaptive weights → 0.80+ Sharpe
+2. Add CopperDemand overlay → 0.82-0.87 Sharpe
+3. Add other overlays as validated
+
+---
+
+**Ready? Copy files and run!** 🚀

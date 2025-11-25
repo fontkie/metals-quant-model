@@ -1,0 +1,41 @@
+binds_to_base: "docs/copper/trend/config.yaml"
+tier: tierA
+
+optimise: true
+
+use_params:
+  fast_ma: 30
+  slow_ma: 90
+  confirm: false
+
+# Coarse grid
+grids:
+  fast_ma:  [20, 25, 30, 35, 40]
+  slow_ma:  [60, 80, 100, 120]
+  confirm:  [false, true]
+
+# Local refinement
+local_refine_template:
+  fast_ma:
+    band_pct: 0.10
+    min_band: 3
+    step: 1
+  slow_ma:
+    band_pct: 0.10
+    min_band: 6
+    step: 2
+  confirm:
+    candidates: [false, true]
+
+filters:
+  stocks_filter:
+    apply: [false, true]
+    pct_rank_window: [60]
+    threshold_low: [0.2]
+    threshold_high: [0.8]
+    side: ["both"]
+
+acceptance:
+  keep_if:
+    median_oos_sharpe_min: 0.30
+    worst_quartile_sharpe_min: 0.00

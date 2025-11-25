@@ -1,0 +1,35 @@
+# Baseline + TightStocks Portfolio v2 - IS/OOS Validated
+# ======================================================
+# Weights optimized on IS only, validated on OOS
+
+# Base path for data files
+base_path: "C:\\Code\\Metals"
+
+# IS/OOS cutoff
+is_oos_cutoff: "2019-01-01"
+
+# Grid search step (5% = tests 0%, 5%, 10%, ... 100%)
+grid_step: 0.05
+
+# Component sleeves
+components:
+  baseline:
+    # 3-sleeve baseline (TrendMedium + TrendImpulse + MomentumCore)
+    path: "outputs/Copper/Portfolio/BaselineEqualWeight/latest/daily_series.csv"
+    position_col: "portfolio_pos"
+    pnl_col: "pnl_gross"
+    
+  tightstocks:
+    # TightStocks v2 with fixed vol targeting
+    path: "outputs/Copper/TightStocks_v2/latest/daily_series.csv"
+    position_col: "pos"
+    pnl_col: "pnl_net"
+
+# Output directory
+output_dir: "outputs/Copper/Outputs/BaselineTightStocks_v2"
+
+# Notes
+notes:
+  version: "v2"
+  methodology: "IS optimization (2011-2018), OOS validation (2019-2025)"
+  previous: "v1 optimized on full period (forward bias)"

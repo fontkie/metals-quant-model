@@ -1,0 +1,138 @@
+# CHOPCORE V1 CONFIGURATION
+# Pure macro confusion detector (no crisis mixing)
+# Date: November 10, 2025
+
+# Core parameters
+parameters:
+  lookback: 60            # Days for correlation calculations
+  adx_period: 14          # ADX calculation period
+
+# VIX Filter (CRITICAL)
+# ChopCore ONLY operates when VIX is in this range
+# Outside this range, returns NORMAL (1.0x sizing)
+vix_filter:
+  min: 15.0               # Below = too calm (filtered)
+  max: 25.0               # Above = too volatile (filtered, crisis zone)
+  
+  # Rationale:
+  # - VIX < 15: Calm markets, trend strategies work fine
+  # - VIX 15-25: Medium volatility, opposing forces create chop
+  # - VIX > 25: High volatility, directional moves (crisis territory)
+
+# Layer 1: Opposition Score (USD vs China forces)
+# Detects when DXY and China markets move in opposite directions
+opposition:
+  correlation_window: 60  # Days for rolling correlation
+  
+  weights:
+    equity: 0.5           # DXY vs CSI300 weight
+    bond: 0.5             # DXY vs China 10Y weight
+
+# Layer 2: Uncertainty Score (VIX & CNY Spread)
+# Detects elevated fear and capital flow stress
+uncertainty:
+  weights:
+    vix: 0.6              # VIX percentile weight
+    cny_spread: 0.4       # CNY spread weight
+  
+  percentile_window: 60   # Days for percentile calculation
+
+# Layer 3: Copper ADX Confirmation
+# Reduces chop signal if copper trending strongly
+copper_confirmation:
+  adx_trending_threshold: 35    # ADX > 35 = strong trend
+  adx_reduction_start: 35       # Start reducing chop signal
+  adx_reduction_end: 50         # Full reduction at this ADX
+  max_reduction: 0.3            # Maximum 30% reduction in chop score
+
+# Composite Score Weights
+# Philosophy: Opposition (macro confusion) is primary, uncertainty confirms
+composite_weights:
+  opposition: 0.6         # PRIMARY - macro force conflicts
+  uncertainty: 0.4        # CONFIRMATION - fear and capital flows
+
+# Regime Classification Thresholds
+# Based on composite score (0 to 1)
+regime_classification:
+  mild_chop_threshold: 0.42    # Composite > 0.42 = MILD_CHOP
+  high_chop_threshold: 0.50    # Composite > 0.50 = HIGH_CHOP
+  
+  # Thresholds from calibration:
+  # - Mean composite: ~0.46
+  # - 75th percentile: ~0.53
+  # - Set thresholds to catch extended chop periods
+
+# Position Sizing by Regime
+sizing:
+  normal: 1.00            # Full size
+  mild_chop: 0.75         # Mild defense (25% cut)
+  high_chop: 0.50         # Deep defense (50% cut)
+
+# Smoothing
+smoothing:
+  span: 10                # EMA span for sizing transitions (days)
+
+# Expected Distribution (from validation)
+# These are targets, not enforced
+expected_distribution:
+  normal: 0.65            # 65% of time (when VIX in range)
+  mild_chop: 0.25         # 25% of time
+  high_chop: 0.10         # 10% of time
+
+# Validation Targets
+# Historical periods that MUST be detected as choppy
+validation_targets:
+  chop_era_2015_2016:
+    period: "2015-01 to 2016-12"
+    expected_chop_pct: 25     # At least 25% of days should be chop
+    avg_vix: 16.3
+    
+  trade_war_2017_2019:
+    period: "2017-01 to 2019-12"
+    expected_chop_pct: 25     # At least 25% of days should be chop
+    avg_vix: 14.4
+    
+  # Anti-targets: Should NOT flag as chop
+  covid_crisis_2020:
+    period: "2020-03-01 to 2020-03-31"
+    expected_chop_pct: 0      # VIX >40, should be filtered
+    avg_vix: 40.4
+    
+  recovery_2020_2021:
+    period: "2020-07-01 to 2021-12-31"
+    expected_chop_pct: 15     # Some chop but mostly normal
+    avg_vix: 21.7
+
+# Notes on design choices
+#
+# Why VIX filter [15-25]?
+# 1. Chop happens in medium volatility
+# 2. High vol (>25) is directional/crisis, not chop
+# 3. Low vol (<15) is calm grind, trends work fine
+# 4. Validated on 25 years of data
+#
+# Why opposition primary (60% weight)?
+# 1. Captures core chop mechanism (opposing macro forces)
+# 2. DXY vs China is key driver for copper
+# 3. More stable than pure VIX-based detection
+# 4. Works across different vol regimes
+#
+# Why uncertainty secondary (40% weight)?
+# 1. Confirms the opposition signal
+# 2. VIX catches fear spikes
+# 3. CNY spread flags capital flow stress
+# 4. Together provide confidence
+#
+# Why ADX confirmation?
+# 1. Prevents false positives when copper trending strongly
+# 2. Max 30% reduction preserves chop signal
+# 3. Only adjusts, doesn't override
+# 4. Respects price action
+#
+# Three-tier system rationale:
+# 1. NORMAL (65%): Macro forces aligned or weak opposition
+# 2. MILD_CHOP (25%): Moderate confusion, partial defense
+# 3. HIGH_CHOP (10%): Strong confusion, significant defense
+#
+# This distribution matches observed market behavior and
+# provides graduated response rather than binary on/off.

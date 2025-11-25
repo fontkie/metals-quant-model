@@ -1,0 +1,54 @@
+# Config/Copper/trendmedium_v2.yaml
+
+io:
+  commodity: Copper
+  sleeve: TrendMedium_v2
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10                    # Target 10% sleeve vol
+    vol_lookback_days_default: 63       # 3-month rolling vol
+    leverage_cap_default: 2.5           # Max 2.5x leverage
+
+  costs:
+    one_way_bps_default: 1.5            # 1.5 bps per trade
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true                # REQUIRED: T→T+1 accrual
+
+# TrendMedium v2 signal parameters
+signal:
+  moving_average:
+    # Dual MA system (25/70) - faster than TrendCore's 30/100
+    fast_lookback_days: 25              # Fast MA
+    slow_lookback_days: 70              # Slow MA
+    
+    # Rangebound detection (aligned with medium-term focus)
+    range_threshold: 0.10               # Reduce position if 70d range < 10%
+    range_lookback_days: 70             # Same as slow MA
+    
+    # Trend quality filtering
+    trend_quality_lookback: 15          # 15-day directional consistency
+    
+    # Volatility regime awareness
+    vol_lookback_days: 63               # 3-month vol calculation
+    vol_regime_threshold: 0.75          # Top 25% = high vol
+    
+# Notes on v2:
+# - Pure signal in Layer 1 (no calibration)
+# - Vol targeting in Layer 2 (closed-loop EWMA)
+# - Costs in Layer 4 (once on net position)
+# - Expected realized vol: ~10%
+# - Expected Sharpe: 0.50-0.55
+# - Expected max DD: ~-24%

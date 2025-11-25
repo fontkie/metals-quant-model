@@ -1,0 +1,98 @@
+# Portfolio: Baseline Layer4 Demand + TightStocks + VolCore
+# ==========================================================
+# This applies pre-determined weights (NOT optimizing)
+# 
+# Architecture:
+#   70% - Baseline with Copper Demand Overlay (Layer 4)
+#         Core 3 sleeves (TM/MC/RF) with demand overlay applied
+#         Demand overlay scales TM/MC when fundamentals disagree
+#   25% - TightStocks v2 (supply-side fundamental - INDEPENDENT)
+#   05% - VolCore v2 (vol risk premium - INDEPENDENT)
+#
+# Note: Demand overlay applied to Core 3 ONLY (not TS/VC)
+#       This maintains three orthogonal alpha sources
+#
+# Cost handling: All sleeves use GROSS PnL, costs applied once
+#                at portfolio level on blended position changes
+
+# Base path
+base_path: "C:\\Code\\Metals"
+
+# Standard IS/OOS split
+is_oos_cutoff: "2019-01-01"
+
+# FIXED WEIGHTS - Pre-determined from separate validation tests
+fixed_weights:
+  baseline_demand: 0.70   # Core 3 with demand overlay
+  tightstocks: 0.25       # Supply-side fundamental (independent)
+  volcore: 0.05           # Vol risk premium (independent)
+
+# Documentation of weight derivation
+weight_sources:
+  baseline_demand: |
+    Core 3 (TM 40% / MC 45% / RF 15%) with Chinese demand overlay.
+    Demand overlay: scales TM/MC positions when demand regime 
+    disagrees with technical positioning.
+    - BEARISH demand + LONG position → scale to 0.0x (flat)
+    - BULLISH demand → scale to 1.3x (boost)
+    - 2-month publication lag applied (no forward bias)
+    Weight: 70% (reduced from 75% to accommodate VolCore)
+  tightstocks: |
+    Validated via build_baseline_tightstocks_v2.py
+    IS: 2011-2018, OOS: 2019-2025
+    Result: PASS (OOS Sharpe 0.981 vs IS 0.923)
+    Optimal: 75% BL / 25% TS
+    NOT scaled by demand overlay (supply-side is orthogonal)
+  volcore: |
+    Validated via build_baseline_volcore_v2.py
+    IS: 2017-2020 (shorter due to illiquid options market pre-2017)
+    OOS: 2021-2025
+    Raw optimal: 90% BL / 10% VC
+    After 50% discount: 95% BL / 5% VC
+    Applied 5% as conservative proving ground allocation
+    NOT scaled by demand overlay (vol premium is orthogonal)
+
+# Component sleeves
+# NOTE: All use GROSS PnL - costs applied once at portfolio level
+components:
+  baseline_demand:
+    path: "outputs/Copper/Portfolio/copper_demand/latest/daily_series.csv"
+    position_col: "pos_scaled"        # Position after demand overlay
+    pnl_col: "pnl_gross_overlay"      # GROSS PnL (costs applied at portfolio level)
+    
+  tightstocks:
+    path: "outputs/Copper/TightStocks_v2/latest/daily_series.csv"
+    position_col: "pos"
+    pnl_col: "pnl_gross"              # GROSS PnL (costs applied at portfolio level)
+    
+  volcore:
+    path: "outputs/Copper/VolCore_v2/latest/daily_series.csv"
+    position_col: "pos"
+    pnl_col: "pnl_gross"              # GROSS PnL (costs applied at portfolio level)
+
+# Output directory
+output_dir: "outputs/Copper/Portfolio/BaselineLayer4Demand"
+
+# Transaction costs (applied at portfolio level on blended position)
+transaction_cost_bps: 3
+
+# Notes
+notes:
+  version: "v1"
+  layer4_overlay: "copper_demand"
+  future_overlays:
+    - "supply_disruptions (TightnessIndex)"
+    - "combined (demand + supply)"
+  purpose: |
+    Production portfolio combining:
+    - Technical alpha (Core 3) filtered by demand fundamentals
+    - Supply-side fundamental alpha (TightStocks) - independent
+    - Vol risk premium alpha (VolCore) - independent
+    
+    Three orthogonal alpha sources with demand overlay applied
+    only to Core 3 (technical sleeves).
+  cost_methodology: |
+    All sleeves provide GROSS PnL.
+    Costs applied once at portfolio level on |delta_position|.
+    This avoids double-counting that occurs when using NET PnL
+    from individual sleeves.

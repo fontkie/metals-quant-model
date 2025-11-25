@@ -1,0 +1,27 @@
+Composite v0.3 diagnostics
+Sleeves: TrendCore, TrendImpulse, HookCore, StockScore
+Inputs dir: outputs/Copper
+
+Per-sleeve realised vol vs copper (pre-scale):
+  TrendCore   : 10.98%
+  TrendImpulse:  6.09%
+  HookCore    :  4.11%
+  StockScore  : 12.08%
+
+Per-sleeve realised vol vs copper (post-scale to ~target):
+  TrendCore   : 10.00%
+  TrendImpulse: 10.00%
+  HookCore    : 10.00%
+  StockScore  : 10.00%
+
+ERC weights:
+  TrendCore   : 25.00%
+  TrendImpulse: 25.00%
+  HookCore    : 25.00%
+  StockScore  : 25.00%
+
+Scales applied (target_vol / pre_vol):
+  TrendCore   : 0.9107
+  TrendImpulse: 1.6431
+  HookCore    : 2.4342
+  StockScore  : 0.8277

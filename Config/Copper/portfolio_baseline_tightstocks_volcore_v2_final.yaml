@@ -1,0 +1,66 @@
+# Final Portfolio Validation - Fixed Weights
+# ==========================================
+# This applies pre-determined weights (NOT optimizing)
+# Weights were validated in separate tests
+
+# Base path
+base_path: "C:\\Code\\Metals"
+
+# Standard IS/OOS split (same as other sleeves)
+is_oos_cutoff: "2019-01-01"
+
+# FIXED WEIGHTS - Pre-determined from separate validation tests
+# These are NOT optimized in this script - just applied and reported
+fixed_weights:
+  baseline: 0.70      # Reduced from 75% to make room for VolCore
+  tightstocks: 0.25   # Validated via IS 2011-2018, OOS 2019-2025 (PASS)
+  volcore: 0.05       # 10% raw, 50% discount = 5% (conservative proving ground)
+
+# Documentation of where weights came from
+weight_sources:
+  baseline: "Remainder after TightStocks and VolCore"
+  tightstocks: |
+    Validated via build_baseline_tightstocks_v2.py
+    IS: 2011-2018, OOS: 2019-2025
+    Result: PASS (OOS Sharpe 0.981 vs IS 0.923)
+    Optimal: 75% BL / 25% TS
+  volcore: |
+    Validated via build_baseline_volcore_v2.py
+    IS: 2017-2020 (shorter due to illiquid options market pre-2017)
+    OOS: 2021-2025
+    Raw optimal: 90% BL / 10% VC
+    After 50% discount: 95% BL / 5% VC
+    Applied 5% as conservative proving ground allocation
+
+# Component sleeves
+components:
+  baseline:
+    path: "outputs/Copper/Portfolio/BaselineEqualWeight/latest/daily_series.csv"
+    position_col: "portfolio_pos"
+    pnl_col: "pnl_gross"
+    
+  tightstocks:
+    path: "outputs/Copper/TightStocks_v2/latest/daily_series.csv"
+    position_col: "pos"
+    pnl_col: "pnl_net"
+    
+  volcore:
+    path: "outputs/Copper/VolCore_v2/latest/daily_series.csv"
+    position_col: "pos"
+    pnl_col: "pnl_net"
+
+# Output directory
+output_dir: "outputs/Copper/Portfolio/BaselineTightStocksVolCore_v2_final"
+
+# Notes
+notes:
+  version: "v2"
+  purpose: |
+    Validate the FINAL production portfolio with fixed weights.
+    This is NOT an optimization - weights were determined from separate tests.
+    This script just applies 70/25/5 and reports IS/OOS performance.
+  is_period: "2011-06 to 2018-12 (when all sleeves have data)"
+  oos_period: "2019-01 to present"
+  review_criteria: |
+    VolCore scale-up: If 12-month rolling Sharpe > 0.3
+    VolCore cut: If 12-month rolling Sharpe < -0.3

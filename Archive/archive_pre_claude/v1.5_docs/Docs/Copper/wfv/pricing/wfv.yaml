@@ -1,0 +1,20 @@
+# Copper HookCore WFV — sleeve override
+# Real-world: Mon/Wed exec (Fri/Tue origins), T+1 fills
+# Vol targeting: 10% (fixed in code), 21-day lookback, cap 2.5x
+# Costs: 1.5 bps per |Δposition| (on trade days)
+
+costs:
+  cost_bps_per_turnover: 1.5
+
+signals:
+  # Grid over the z-threshold; keep others fixed to v0.4.0 defaults
+  threshold: [0.65, 0.70, 0.75, 0.80, 0.85]
+  z_std_lb: 252
+  veto_enabled: false
+  veto_abs_threshold: 0.30
+  veto_stdev_lb: 100
+
+execution:
+  # ann_target is fixed at 10% in the builder per project baseline
+  vol_lookback_days: [21]   # keep fixed for parity
+  vol_cap: [2.5]            # keep fixed for parity

@@ -1,0 +1,68 @@
+# PORTFOLIO CONFIG: Baseline + TightStocks
+# Tests marginal contribution of TightStocks sleeve
+
+portfolio_name: "Baseline + TightStocks"
+output_dir: "outputs/Copper/Portfolio/BaselineTightStocks"
+
+# Component sleeves
+components:
+  baseline:
+    path: "outputs/Copper/Portfolio/BaselineEqualWeight/latest/daily_series.csv"
+    position_col: "portfolio_pos"  # Column containing positions
+    pnl_col: "pnl_gross"           # Column containing PnL (no costs yet)
+    description: "Equal-weight TM + TI + MC"
+    
+  tightstocks:
+    path: "outputs/Copper/TightStocks_v1/Latest/daily_series.csv"
+    position_col: "pos_portfolio"  # Adjust if different
+    pnl_col: "pnl_gross"           # Adjust if different
+    description: "Physical market tightness signal"
+
+# Weight allocations to test
+# Format: {baseline_weight: tightstocks_weight}
+weight_tests:
+  - name: "Equal Weight"
+    weights: {baseline: 0.50, tightstocks: 0.50}
+    
+  - name: "Baseline Heavy"
+    weights: {baseline: 0.60, tightstocks: 0.40}
+    
+  - name: "TightStocks Heavy"
+    weights: {baseline: 0.40, tightstocks: 0.60}
+    
+  - name: "Defensive (from Exec Summary)"
+    weights: {baseline: 0.25, tightstocks: 0.40}
+    note: "Scale to 100%: 38.5% baseline, 61.5% TS"
+    
+  - name: "Baseline Dominant"
+    weights: {baseline: 0.75, tightstocks: 0.25}
+
+# In-sample / Out-of-sample split
+is_oos_cutoff: "2019-01-01"
+
+# Analysis settings
+analysis:
+  calculate_correlation: true
+  calculate_attribution: true
+  regime_analysis: true
+  period_breakdown:
+    - name: "Full Period"
+      start: null
+      end: null
+    - name: "Recent (2023-2025)"
+      start: "2023-01-01"
+      end: null
+    - name: "In-Sample"
+      start: null
+      end: "2018-12-31"
+    - name: "Out-of-Sample"
+      start: "2019-01-01"
+      end: null
+
+# Output files
+outputs:
+  daily_series: "daily_series.csv"
+  weight_comparison: "weight_comparison.json"
+  attribution_analysis: "attribution_analysis.json"
+  correlation_matrix: "correlation_matrix.csv"
+  validation_report: "validation_report.txt"

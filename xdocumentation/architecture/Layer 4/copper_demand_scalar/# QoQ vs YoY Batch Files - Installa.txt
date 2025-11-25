@@ -1,0 +1,176 @@
+# QoQ vs YoY Batch Files - Installation Guide
+
+## What You're Getting
+
+Two separate batch files so you can easily run either method:
+
+1. **`run_copper_demand_qoq.bat`** - For QoQ (3-month momentum) - RECOMMENDED ⭐
+2. **`run_copper_demand_yoy.bat`** - For YoY (12-month momentum) - For comparison
+
+---
+
+## Installation
+
+### Copy Both Files to Your Scripts Folder:
+
+```batch
+cd C:\Code\Metals\scripts
+
+REM Copy the new files
+copy [your-downloads]\run_copper_demand_qoq.bat .
+copy [your-downloads]\run_copper_demand_yoy.bat .
+```
+
+---
+
+## Usage
+
+### To Run QoQ (Recommended):
+
+```batch
+cd C:\Code\Metals
+scripts\run_copper_demand_qoq.bat
+```
+
+**Expected output:**
+```
+Sharpe improvement: ~+0.096 (+11.5%)
+Max drawdown: ~-16.76% (better than baseline!)
+```
+
+### To Run YoY (For Comparison):
+
+```batch
+cd C:\Code\Metals
+scripts\run_copper_demand_yoy.bat
+```
+
+**Expected output:**
+```
+Sharpe improvement: ~+0.064 (+7.0%)
+Max drawdown: ~-20.02% (worse than baseline)
+```
+
+---
+
+## Output Locations
+
+Both write to the same folder but with different filenames:
+
+```
+C:\Code\Metals\outputs\Copper\Portfolio\copper_demand\lag_2\
+
+QoQ files:
+  ├── daily_series_china_demand_qoq_2mo_TIMESTAMP.csv
+  ├── copper_demand_signals_qoq_2mo_TIMESTAMP.csv
+  ├── summary_metrics_qoq_2mo_TIMESTAMP.json
+  └── summary_qoq_2mo_TIMESTAMP.txt  ← Check this for results
+
+YoY files:
+  ├── daily_series_china_demand_yoy_2mo_TIMESTAMP.csv
+  ├── copper_demand_signals_yoy_2mo_TIMESTAMP.csv
+  ├── summary_metrics_yoy_2mo_TIMESTAMP.json
+  └── summary_yoy_2mo_TIMESTAMP.txt  ← Check this for results
+```
+
+---
+
+## Comparison Workflow
+
+1. **Run QoQ** (you already did this - got +0.096 Sharpe)
+   ```batch
+   scripts\run_copper_demand_qoq.bat
+   ```
+
+2. **Run YoY** (to compare)
+   ```batch
+   scripts\run_copper_demand_yoy.bat
+   ```
+
+3. **Compare results:**
+   ```batch
+   REM Open both summary files
+   notepad outputs\Copper\Portfolio\copper_demand\lag_2\summary_qoq_2mo_*.txt
+   notepad outputs\Copper\Portfolio\copper_demand\lag_2\summary_yoy_2mo_*.txt
+   ```
+
+4. **Choose the winner** (spoiler: it's QoQ)
+
+---
+
+## Expected Comparison Results
+
+| Metric | QoQ (3-month) | YoY (12-month) | Winner |
+|--------|---------------|----------------|---------|
+| Sharpe Improvement | **+0.096** | +0.064 | **QoQ** ⭐ |
+| Sharpe % | **+11.5%** | +7.0% | **QoQ** |
+| Max Drawdown | **-16.76%** | -20.02% | **QoQ** ⭐ |
+| DD vs Baseline | **+2.08% better** | -1.18% worse | **QoQ** ⭐ |
+
+**Conclusion:** QoQ wins on all metrics.
+
+---
+
+## What About the Original Batch File?
+
+You can:
+
+**Option A: Delete it** (since you have specific QoQ and YoY versions)
+```batch
+del scripts\run_copper_demand.bat
+```
+
+**Option B: Keep it as a generic version** (rename to make it clear)
+```batch
+ren scripts\run_copper_demand.bat run_copper_demand_generic.bat
+```
+
+**Option C: Just leave it** (it won't interfere with the new ones)
+
+---
+
+## Quick Test
+
+```batch
+cd C:\Code\Metals
+
+REM Test QoQ
+echo Testing QoQ...
+scripts\run_copper_demand_qoq.bat
+
+REM Test YoY
+echo Testing YoY...
+scripts\run_copper_demand_yoy.bat
+
+REM Compare
+echo.
+echo ============================================================
+echo COMPARISON:
+echo ============================================================
+findstr "Sharpe:" outputs\Copper\Portfolio\copper_demand\lag_2\summary_qoq_2mo_*.txt
+findstr "Sharpe:" outputs\Copper\Portfolio\copper_demand\lag_2\summary_yoy_2mo_*.txt
+```
+
+---
+
+## Recommendation
+
+**Use QoQ as your production method:**
+- Better Sharpe improvement (+0.096 vs +0.064)
+- Better drawdown control (-16.76% vs -20.02%)
+- Only configuration that improves drawdown vs baseline
+- Validated through rigorous testing
+
+**Keep YoY results for:**
+- Documentation/comparison
+- Showing you tested alternatives
+- Academic/investor presentations
+
+---
+
+## Files Delivered
+
+1. **[run_copper_demand_qoq.bat](computer:///mnt/user-data/outputs/run_copper_demand_qoq.bat)** - QoQ method (recommended)
+2. **[run_copper_demand_yoy.bat](computer:///mnt/user-data/outputs/run_copper_demand_yoy.bat)** - YoY method (comparison)
+
+Copy both to `C:\Code\Metals\scripts\` and you're ready to go! 🚀

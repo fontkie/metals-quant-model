@@ -1,0 +1,69 @@
+[33m38393e0[m[33m ([m[1;36mHEAD[m[33m, [m[1;31morigin/adaptive-regime[m[33m, [m[1;32mfeature/optimize-sleeves[m[33m)[m HEAD@{0}: checkout: moving from portfolio_baseline to origin/adaptive-regime
+[33m4dcda8d[m[33m ([m[1;32mportfolio_baseline[m[33m)[m HEAD@{1}: checkout: moving from feature/composite-v0.1 to portfolio_baseline
+[33me905d77[m[33m ([m[1;31morigin/feature/composite-v0.1[m[33m, [m[1;32mfeature/composite-v0.1[m[33m)[m HEAD@{2}: checkout: moving from main to feature/composite-v0.1
+[33m7bde4ba[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{3}: reset: moving to origin/main
+[33m4dcda8d[m[33m ([m[1;32mportfolio_baseline[m[33m)[m HEAD@{4}: checkout: moving from portfolio_baseline to main
+[33m4dcda8d[m[33m ([m[1;32mportfolio_baseline[m[33m)[m HEAD@{5}: checkout: moving from main to portfolio_baseline
+[33m4dcda8d[m[33m ([m[1;32mportfolio_baseline[m[33m)[m HEAD@{6}: commit: Archive old code and add .gitignore
+[33m7bde4ba[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{7}: checkout: moving from vol_targeting_refactor to main
+[33m92fd270[m[33m ([m[1;32mvol_targeting_refactor[m[33m)[m HEAD@{8}: Branch: renamed refs/heads/adaptive-regime to refs/heads/vol_targeting_refactor
+[33m92fd270[m[33m ([m[1;32mvol_targeting_refactor[m[33m)[m HEAD@{10}: commit: Archive: Move old code to archive folder
+[33m38393e0[m[33m ([m[1;36mHEAD[m[33m, [m[1;31morigin/adaptive-regime[m[33m, [m[1;32mfeature/optimize-sleeves[m[33m)[m HEAD@{11}: checkout: moving from feature/optimize-sleeves to adaptive-regime
+[33m38393e0[m[33m ([m[1;36mHEAD[m[33m, [m[1;31morigin/adaptive-regime[m[33m, [m[1;32mfeature/optimize-sleeves[m[33m)[m HEAD@{12}: commit: Complete adaptive portfolio optimization with regime-based weighting
+[33m7cf2c43[m HEAD@{13}: commit: Adaptive portfolio v2.0 complete - Sharpe 0.77
+[33m7bde4ba[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{14}: checkout: moving from main to feature/optimize-sleeves
+[33m7bde4ba[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{15}: pull origin main: Fast-forward
+[33ma1ae8c9[m[33m ([m[1;33mtag: [m[1;33mpre-composite-2025-10-21[m[33m, [m[1;31morigin/archive/legacy-src-2025-10[m[33m, [m[1;32marchive/legacy-src-2025-10[m[33m)[m HEAD@{16}: checkout: moving from feature/composite-v0.1 to main
+[33me905d77[m[33m ([m[1;31morigin/feature/composite-v0.1[m[33m, [m[1;32mfeature/composite-v0.1[m[33m)[m HEAD@{17}: commit: feat: v2.0 infrastructure with Layer A/B architecture and 5 operational sleeves
+[33m16e98b5[m HEAD@{18}: commit: Sleeves: add central policy header + banner and mismatch warnings
+[33m90dd69d[m HEAD@{19}: commit: Add TrendImpulse config.yaml (tue/fri) for composite runner
+[33m4f073ea[m HEAD@{20}: checkout: moving from feature/composite-v0.1 to feature/composite-v0.1
+[33m4f073ea[m HEAD@{21}: commit: Policy: finalise central execution policy + defaults (M/W/F, T+1, 1.5bps, lev cap 2.5); ensure packages
+[33ma1ae8c9[m[33m ([m[1;33mtag: [m[1;33mpre-composite-2025-10-21[m[33m, [m[1;31morigin/archive/legacy-src-2025-10[m[33m, [m[1;32marchive/legacy-src-2025-10[m[33m)[m HEAD@{22}: checkout: moving from feature/composite-v0.1 to feature/composite-v0.1
+[33ma1ae8c9[m[33m ([m[1;33mtag: [m[1;33mpre-composite-2025-10-21[m[33m, [m[1;31morigin/archive/legacy-src-2025-10[m[33m, [m[1;32marchive/legacy-src-2025-10[m[33m)[m HEAD@{23}: checkout: moving from feature/composite-v0.1 to feature/composite-v0.1
+[33ma1ae8c9[m[33m ([m[1;33mtag: [m[1;33mpre-composite-2025-10-21[m[33m, [m[1;31morigin/archive/legacy-src-2025-10[m[33m, [m[1;32marchive/legacy-src-2025-10[m[33m)[m HEAD@{24}: checkout: moving from feature/composite-v0.1 to feature/composite-v0.1
+[33ma1ae8c9[m[33m ([m[1;33mtag: [m[1;33mpre-composite-2025-10-21[m[33m, [m[1;31morigin/archive/legacy-src-2025-10[m[33m, [m[1;32marchive/legacy-src-2025-10[m[33m)[m HEAD@{25}: checkout: moving from main to feature/composite-v0.1
+[33ma1ae8c9[m[33m ([m[1;33mtag: [m[1;33mpre-composite-2025-10-21[m[33m, [m[1;31morigin/archive/legacy-src-2025-10[m[33m, [m[1;32marchive/legacy-src-2025-10[m[33m)[m HEAD@{26}: checkout: moving from main to main
+[33ma1ae8c9[m[33m ([m[1;33mtag: [m[1;33mpre-composite-2025-10-21[m[33m, [m[1;31morigin/archive/legacy-src-2025-10[m[33m, [m[1;32marchive/legacy-src-2025-10[m[33m)[m HEAD@{27}: commit: docs: add Copper StocksCore v0.1.1 README and changelog
+[33m8fac763[m HEAD@{28}: commit (merge): Merge feature/trendcore-cu-v1-tclose into main: keep feature versions for hookcore & wfv; remove legacy pricing config
+[33m8572f48[m HEAD@{29}: checkout: moving from feature/trendcore-cu-v1-tclose to main
+[33md9385b8[m[33m ([m[1;31morigin/feature/trendcore-cu-v1-tclose[m[33m, [m[1;32mfeature/trendcore-cu-v1-tclose[m[33m)[m HEAD@{30}: checkout: moving from feature/trendcore-cu-v1-tclose to feature/trendcore-cu-v1-tclose
+[33md9385b8[m[33m ([m[1;31morigin/feature/trendcore-cu-v1-tclose[m[33m, [m[1;32mfeature/trendcore-cu-v1-tclose[m[33m)[m HEAD@{31}: checkout: moving from main to feature/trendcore-cu-v1-tclose
+[33m8572f48[m HEAD@{32}: commit: Docs: rename Copper/pricing -> Copper/hookcore; update links
+[33m5a63320[m HEAD@{33}: commit: Docs: rename Copper/pricing -> Copper/hookcore; update internal links
+[33m3f44541[m HEAD@{34}: pull --rebase origin main: Fast-forward
+[33m673f8f6[m HEAD@{35}: checkout: moving from feature/trendcore-cu-v1-tclose to main
+[33md9385b8[m[33m ([m[1;31morigin/feature/trendcore-cu-v1-tclose[m[33m, [m[1;32mfeature/trendcore-cu-v1-tclose[m[33m)[m HEAD@{36}: commit: HookCore v1.1: docs rename/cleanup; remove stray 'hook new' folder; update references
+[33m4273ad1[m HEAD@{37}: pull --rebase --autostash origin main (finish): returning to refs/heads/feature/trendcore-cu-v1-tclose
+[33m4273ad1[m HEAD@{38}: pull --rebase --autostash origin main (pick): Add build_hookcore.py wrapper (delegates to build_signals.py)
+[33mc4578fd[m HEAD@{39}: pull --rebase --autostash origin main (pick): Docs: rename Copper/pricing -> Copper/hookcore; add stub README
+[33ma7adfb2[m HEAD@{40}: pull --rebase --autostash origin main (pick): Add TrendImpulse (Tue/Fri) sleeve for copper – OOS Sharpe 0.51, DD -11.6%
+[33m3f44541[m HEAD@{41}: pull --rebase --autostash origin main (start): checkout 3f4454172a0d7c74400f23fae8b771bbbdd26f72
+[33m524e150[m HEAD@{42}: commit: Add build_hookcore.py wrapper (delegates to build_signals.py)
+[33ma15e1d6[m HEAD@{43}: commit: Docs: rename Copper/pricing -> Copper/hookcore; add stub README
+[33m1031215[m HEAD@{44}: commit: Add TrendImpulse (Tue/Fri) sleeve for copper – OOS Sharpe 0.51, DD -11.6%
+[33mfa3e22c[m[33m ([m[1;31morigin/feature/wfv-hookcore-copper[m[33m, [m[1;32mfeature/wfv-hookcore-copper[m[33m)[m HEAD@{45}: checkout: moving from feature/wfv-hookcore-copper to feature/trendcore-cu-v1-tclose
+[33mfa3e22c[m[33m ([m[1;31morigin/feature/wfv-hookcore-copper[m[33m, [m[1;32mfeature/wfv-hookcore-copper[m[33m)[m HEAD@{46}: commit: feat(wfv): hookcore WFV runner, utils, global config, and pricing WFV yaml
+[33mf77127a[m[33m ([m[1;31morigin/composite-with-trendcore[m[33m, [m[1;32mcomposite-with-trendcore[m[33m)[m HEAD@{47}: checkout: moving from composite-with-trendcore to feature/wfv-hookcore-copper
+[33mf77127a[m[33m ([m[1;31morigin/composite-with-trendcore[m[33m, [m[1;32mcomposite-with-trendcore[m[33m)[m HEAD@{48}: commit: Add TrendCore docs + composite builder; freeze TrendCore v0.1
+[33m68e6121[m HEAD@{49}: commit: Composite v0.3.0: add TrendCore, switch to inverse-vol weighting, Mon/Wed T+1 VT
+[33m673f8f6[m HEAD@{50}: checkout: moving from main to composite-with-trendcore
+[33m673f8f6[m HEAD@{51}: commit: CopperComposite v0.2.1: freeze biweekly+pnl_net with T+1 VT; update Docs/Copper/combined + composite_build.py
+[33m3b26806[m HEAD@{52}: commit: CopperComposite v0.2.1: freeze to biweekly+pnl_net with T+1 VT; update README/CHANGELOG/config
+[33m59e2e82[m HEAD@{53}: merge feature/volpulse-simple: Merge made by the 'ort' strategy.
+[33ma435f4c[m HEAD@{54}: checkout: moving from feature/volpulse-simple to main
+[33mdede628[m HEAD@{55}: commit: Add VolPulse simple (regime + size; rolling quantile guardrails)
+[33ma435f4c[m HEAD@{56}: checkout: moving from main to feature/volpulse-simple
+[33ma435f4c[m HEAD@{57}: commit: copper/composite: add CopperComposite v0.1.0 (Hook v0.4.0 + Stocks v0.1.1, equal-risk, 10% scaled)
+[33m8427e1e[m HEAD@{58}: commit: copper/stocks: freeze StocksCore v0.1.1 (lb20 thr1.0, T+1 fix, 10% VT) + docs update
+[33me0ba06e[m HEAD@{59}: commit: chore: clean .gitignore and refresh tracked files
+[33md5b5797[m HEAD@{60}: commit: docs(copper): add HookCore v0.4.0 config + changelog; move params.yaml to docs/copper/
+[33mfc09331[m HEAD@{61}: commit: Add full SEED_CHAT.md with layout sync instructions
+[33mde6dcfd[m HEAD@{62}: commit: Initial structured commit: add Copper framework, .gitkeep placeholders, global config and docs
+[33m3c5cf67[m HEAD@{63}: commit: Phase complete: clean-load pipeline, updated schema in fix_views, added list_series utility, updated docs
+[33mb6b8587[m HEAD@{64}: commit: Add list_series.py helper + update README and CHANGELOG
+[33m620dd87[m HEAD@{65}: commit: Docs: add README, CHANGELOG, and requirements for stable pipeline
+[33m2ca04bf[m HEAD@{66}: commit: docs: add commit message guide to README
+[33m411b31f[m HEAD@{67}: Branch: renamed refs/heads/master to refs/heads/main
+[33m411b31f[m HEAD@{69}: commit: v0.2 stable baseline: end-to-end pipeline working
+[33m5da8bbe[m HEAD@{70}: commit (initial): Initial commit: loader + signals framework

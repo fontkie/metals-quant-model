@@ -1,0 +1,19 @@
+{
+  "params": {
+    "threshold": 0.6,
+    "z_std_lb": 252,
+    "vol_lookback_days": 28,
+    "lev_cap": 2.5,
+    "bps": 1.5,
+    "ann_target": 0.1,
+    "execution": "Mon/Wed close (T); PnL next day"
+  },
+  "IS": {
+    "sharpe_252": 0.5429625705533315,
+    "n": 4695
+  },
+  "OOS": {
+    "sharpe_252": 0.14300735149914098,
+    "n": 2023
+  }
+}

@@ -1,0 +1,23 @@
+# Baseline Portfolio Configuration
+# Equal-weight 33/33/33 (TrendMedium + MomentumCore + RangeFader)
+
+# Sleeve paths (update these to match your actual file locations)
+sleeves:
+  TrendMedium: outputs/Copper/TrendMedium_v2/daily_series.csv
+  MomentumCore: outputs/Copper/MomentumCore_v2/daily_series.csv
+  RangeFader: outputs/Copper/RangeFader_v5/daily_series.csv
+
+# IS/OOS split date
+is_oos_cutoff: '2020-01-01'
+
+# Portfolio method (future: will support 'regime_adaptive', 'fundamental_overlay', etc.)
+method: equal_weight
+
+# Metadata
+description: |
+  Baseline equal-weight portfolio (33.3% each sleeve)
+  No regime adaptation, no overlays
+  Simple diversification test
+
+created: 2025-11-19
+version: 1.0

@@ -1,0 +1,26 @@
+sleeve: MomentumTail
+calendar:
+  exec_weekdays: [0,1,2,3,4]
+  origin_for_exec:
+    "0": "-1B"
+    "1": "-1B"
+    "2": "-1B"
+    "3": "-1B"
+    "4": "-1B"
+policy:
+  sizing:
+    ann_target: 0.10
+    vol_lookback_days_default: 21
+    leverage_cap_default: 2.5
+  costs:
+    one_way_bps_default: 1.5
+signal:
+  breakout_window: 252
+  exit_window: 126
+  atr_lookback: 20
+  overshoot_multiple: 0.5
+  atr_multiple_trailing: 2.0
+  vol_z_lookback: 252
+  z_threshold: 0.2
+pnl:
+  formula: pos_lag_times_simple_return

@@ -1,0 +1,9 @@
+{
+  "threshold": 0.8,
+  "z_std_lb": 252,
+  "veto_enabled": false,
+  "veto_abs_threshold": 0.3,
+  "veto_stdev_lb": 100,
+  "execution.vol_cap": 2.5,
+  "execution.vol_lookback_days": 21
+}

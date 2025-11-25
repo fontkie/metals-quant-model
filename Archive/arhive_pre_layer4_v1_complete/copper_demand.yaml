@@ -1,0 +1,236 @@
+# Copper Demand Overlay Configuration
+# Date: November 18, 2025
+# Status: Production-ready
+# Performance: +0.07 Sharpe (OOS 2019-2025, 2-month lag)
+
+# Metadata
+io:
+  commodity: Copper
+  overlay: CopperDemand
+  description: "Regime-based position scaling using copper demand fundamentals"
+
+# Overlay Parameters
+overlay:
+  name: copper_demand
+  version: "1.0"
+  type: fundamental_overlay  # Not a signal - overlays existing portfolio
+  
+  # Position Scaling
+  scale_factor: 1.3  # Amplification/damping factor
+  # - RISING regime: Long Ã—1.3, Short Ã·1.3
+  # - DECLINING regime: Long Ã·1.3, Short Ã—1.3
+  # - NEUTRAL regime: No scaling (Ã—1.0)
+  
+  # Publication Lag
+  lag_months: 2  # Production default: 2 months (realistic for copper data)
+  # Options:
+  #   0 = Same month (unrealistic, +0.11 Sharpe)
+  #   1 = 1-month lag (investigate if possible, +0.08 Sharpe)
+  #   2 = 2-month lag (production default, +0.07 Sharpe)
+  
+  # Transaction Costs
+  transaction_cost_bps: 3.0  # Cost when regime transitions change position
+  # Notes:
+  # - Baseline rebalancing costs already in baseline portfolio
+  # - Overlay costs only charged when regime changes
+  # - NEUTRAL regime incurs no overlay costs (matches baseline)
+  
+  # Regime Classification Thresholds
+  thresholds:
+    declining: -2.0  # YoY change < -2 â†’ DECLINING
+    rising: 3.0      # YoY change > 3 â†’ RISING
+    # Anything between â†’ NEUTRAL
+    
+  # Rationale:
+  # Thresholds chosen based on historical analysis:
+  # - DECLINING (<-2): Captures demand contractions (trade war, lockdowns)
+  # - RISING (>3): Captures demand surges (stimulus, post-COVID)
+  # - NEUTRAL: Normal fluctuations, no fundamental signal
+
+# Data Sources
+data:
+  # Baseline Portfolio
+  baseline:
+    description: "3-sleeve blended portfolio (input to overlay)"
+    example_path: "daily_series_blended_33pct_20251118.csv"
+    required_columns:
+      - date       # Trading date
+      - price      # Copper price
+      - ret        # Daily return
+      - pos        # Baseline position
+      - cost       # Baseline costs
+      - pnl_net    # Baseline PnL
+    
+  # Copper Demand Proxy
+  demand_proxy:
+    source: bloomberg
+    filepath: "Data/copper/fundamentals/canonical/copper_demand_index.canonical.csv"
+    description: "Bloomberg Copper economic demand proxy index"
+    format: "monthly"
+    frequency: "end-of-month"
+    publication_lag: "2 months (typically)"
+    
+    # Alternative paths:
+    # Development: "Data/Copper/copper_demand.xlsx"
+    # Production:  "Data/copper/fundamentals/canonical/copper_demand_index.canonical.csv"
+    
+    columns:
+      - date          # Month-end date
+      - demand_index  # Demand proxy value
+    
+    notes: |
+      The demand proxy is calculated as YoY change:
+      YoY[t] = demand_index[t] - demand_index[t-12]
+      
+      First 12 months have no YoY (excluded from trading).
+
+# Expected Performance (Historical Backtest)
+expected_performance:
+  full_period_2013_2025:
+    baseline_sharpe: 0.521
+    overlay_sharpe: 0.588
+    improvement_pct: 12.9
+    max_dd_pct: -10.08  # vs -11.44% baseline
+    
+  oos_2019_2025:
+    baseline_sharpe: 0.534
+    overlay_sharpe: 0.607
+    improvement_pct: 13.7
+    statistical_significance: "t=2.18 (p<0.05)"
+    
+  neutral_regime_validation:
+    description: "NEUTRAL regime must match baseline (critical test)"
+    baseline_sharpe: 0.717
+    overlay_sharpe: 0.714
+    difference: -0.003  # Within tolerance
+    status: "PASS"
+    
+  regime_distribution_2mo_lag:
+    declining_pct: 47.9
+    neutral_pct: 25.2
+    rising_pct: 27.0
+    
+  alpha_source:
+    primary: "RISING regimes (+0.275 Sharpe)"
+    secondary: "DECLINING regimes (+0.020 Sharpe)"
+    neutral: "Matches baseline exactly"
+
+# Lag Sensitivity Analysis
+lag_sensitivity:
+  lag_0_months:
+    overlay_sharpe: 0.636
+    improvement_pct: 21.8
+    note: "Unrealistic - assumes instant data publication"
+    
+  lag_1_month:
+    overlay_sharpe: 0.620
+    improvement_pct: 15.4
+    note: "Investigate if Bloomberg can provide this"
+    value_vs_2mo: "+0.04 Sharpe recovery opportunity"
+    
+  lag_2_months:
+    overlay_sharpe: 0.593
+    improvement_pct: 13.7
+    note: "Production default - realistic for copper data"
+
+# Production Deployment
+deployment:
+  status: production_ready
+  confidence: high
+  
+  prerequisites:
+    - "Baseline portfolio running stably"
+    - "Bloomberg demand feed configured"
+    - "2-month publication lag confirmed"
+    - "All validation tests passed"
+  
+  monitoring:
+    daily:
+      - "Current demand regime (DECLINING/NEUTRAL/RISING)"
+      - "YoY demand change value"
+      - "Position scaling vs baseline"
+      - "Overlay transaction costs"
+      
+    weekly:
+      - "Rolling 3-month Sharpe ratio"
+      - "Regime transition frequency"
+      - "NEUTRAL regime matching validation"
+      
+    monthly:
+      - "Full performance attribution"
+      - "Regime-by-regime breakdown"
+      - "Cost analysis (baseline vs overlay)"
+      - "Parameter sensitivity review"
+  
+  alerts:
+    - "NEUTRAL regime deviates from baseline (>0.01 Sharpe)"
+    - "Regime transitions exceed 6 per year"
+    - "Overlay Sharpe falls below +0.05 vs baseline"
+    - "Demand data publication delayed beyond 2 months"
+
+# Known Limitations
+limitations:
+  publication_lag:
+    description: "2-month lag costs ~0.04 Sharpe vs 1-month"
+    severity: high
+    mitigation: "Investigate faster data sources"
+    
+  modest_improvement:
+    description: "+0.07 Sharpe vs +0.15 original target"
+    severity: medium
+    mitigation: "Combine with other overlays (TightnessIndex, StimulusCore)"
+    
+  counter_trend_risk:
+    description: "Can dampen longs during rapid rallies"
+    severity: low
+    example: "Feb-Mar 2025: fought rally on weak demand data"
+    mitigation: "Accept fundamental lag - this is feature not bug"
+    
+  statistical_significance:
+    description: "95% confidence, not 99%"
+    severity: low
+    mitigation: "Build longer track record, walk-forward validation"
+
+# Enhancement Opportunities
+enhancements:
+  priority_high:
+    - name: "1-month lag data"
+      value: "+0.04 Sharpe recovery"
+      action: "Contact Bloomberg about faster publication"
+      
+  priority_medium:
+    - name: "Combine with TightnessIndex"
+      value: "Supply + demand coverage"
+      action: "Test interaction effects"
+      
+    - name: "Add StimulusCore"
+      value: "Policy overlay"
+      action: "Develop stimulus detection"
+      
+  priority_low:
+    - name: "Parameter optimization"
+      value: "Marginal improvement"
+      action: "Test scale 1.2-1.4, thresholds Â±0.5"
+
+# Notes
+notes: |
+  CRITICAL FIXES APPLIED:
+  1. Regime mapping: Fixed pd.DateOffset() â†’ pd.offsets.MonthEnd()
+  2. Weekend handling: Adjusted regime dates to trading days only
+  3. Cost accounting: Includes both baseline and overlay costs
+  
+  VALIDATION:
+  - All 7 validation tests passed
+  - NEUTRAL regime matches baseline perfectly
+  - Out-of-sample performance validated
+  - Statistical significance confirmed (p < 0.05)
+  
+  DEPLOYMENT RECOMMENDATION:
+  Deploy if willing to accept +0.07 Sharpe for fundamental overlay.
+  Best case: Source 1-month lag data for +0.04 Sharpe recovery.
+  
+  This overlay is part of a larger quantamental system:
+  - Layer 1: Base sleeves (TrendCore, TrendImpulse, MomentumCore)
+  - Layer 2: Regime blending (9-state adaptive weights)
+  - Layer 3: Fundamental overlays (this overlay + future additions)
+  - Layer 4: Risk management & execution

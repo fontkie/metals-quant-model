@@ -1,0 +1,857 @@
+|   |   |
+|   |   +---framework
+|   |   |       CHANGELOG.md
+|   |   |       quant_dashboard_01102025.xlsx
+|   |   |       v1.md
+|   |   |
+|   |   +---v1.5_docs
+|   |   |   \---Docs
+|   |   |       |   SEED_CHAT.md
+|   |   |       |
+|   |   |       +---Copper
+|   |   |       |   |   params.yaml
+|   |   |       |   |   README.md
+|   |   |       |   |
+|   |   |       |   +---combined
+|   |   |       |   |       CHANGELOG.md
+|   |   |       |   |       composite_config.yaml
+|   |   |       |   |       composite_config_old.yaml
+|   |   |       |   |       README.md
+|   |   |       |   |       scratch_combine_copper.py
+|   |   |       |   |
+|   |   |       |   +---crashandrecover
+|   |   |       |   |       chat_review_20251028.txt
+|   |   |       |   |       crashandrecover.yaml
+|   |   |       |   |       crashandrecover_config_yaml.txt
+|   |   |       |   |
+|   |   |       |   +---hookcore
+|   |   |       |   |       CHANGELOG.md
+|   |   |       |   |       hookcore.yaml
+|   |   |       |   |       hookcore_chatgpt_v1.4.txt
+|   |   |       |   |       hookcore_config.txt
+|   |   |       |   |       hookcore_config.yaml
+|   |   |       |   |       README.md
+|   |   |       |   |
+|   |   |       |   +---momentum
+|   |   |       |   |       build_momentumtail_grok.txt
+|   |   |       |   |       momentumtail.yaml
+|   |   |       |   |       momentumtail_config.txt
+|   |   |       |   |       momentumtail_config_grok.txt
+|   |   |       |   |
+|   |   |       |   +---positioning
+|   |   |       |   +---spreads
+|   |   |       |   |       spreadscore_config_grok_20251024.txt
+|   |   |       |   |
+|   |   |       |   +---stocks
+|   |   |       |   |       CHANGELOG.md
+|   |   |       |   |       README.md
+|   |   |       |   |       stockcore_config_grok_20251024.txt
+|   |   |       |   |       stockscore_config.yaml
+|   |   |       |   |
+|   |   |       |   +---trend
+|   |   |       |   |       CHANGELOG.md
+|   |   |       |   |       config.yaml
+|   |   |       |   |       README.md
+|   |   |       |   |       trendcorev13_config.py
+|   |   |       |   |       trendcore_config.txt
+|   |   |       |   |
+|   |   |       |   +---trendimpulse
+|   |   |       |   |       CHANGELOG.md
+|   |   |       |   |       config.yaml
+|   |   |       |   |       README.md
+|   |   |       |   |       trendimpulse_config.txt
+|   |   |       |   |
+|   |   |       |   +---vol
+|   |   |       |   |       CHANGELOG.md
+|   |   |       |   |       README.md
+|   |   |       |   |       VolPulse_minimal_example.ipynb
+|   |   |       |   |       vol_config.txt
+|   |   |       |   |       vol_pulse.py
+|   |   |       |   |       vol_pulse.yaml
+|   |   |       |   |       __init__.py
+|   |   |       |   |
+|   |   |       |   \---wfv
+|   |   |       |       +---combined
+|   |   |       |       |       wfv.yaml
+|   |   |       |       |
+|   |   |       |       +---pricing
+|   |   |       |       |       wfv.yaml
+|   |   |       |       |       wfv_parity.yaml
+|   |   |       |       |
+|   |   |       |       \---trend
+|   |   |       |               wfv.yaml
+|   |   |       |
+|   |   |       +---overviews
+|   |   |       |       quant_sleeves.txt
+|   |   |       |
+|   |   |       \---standards
+|   |   |               build_script_template.md
+|   |   |               Execution_Policy_Guide.md
+|   |   |               quickstart_guide.md
+|   |   |               README.md
+|   |   |               real_world_rules.py
+|   |   |               yaml_example_template.md
+|   |   |
+|   |   \---v1.5_outputs
+|   |       +---Copper
+|   |       |   |   .gitkeep
+|   |       |   |   composite_v0.1.csv
+|   |       |   |   composite_v0.1_summary.txt
+|   |       |   |   composite_v0.2.csv
+|   |       |   |   composite_v0.2_summary.txt
+|   |       |   |   composite_v0.3.csv
+|   |       |   |   composite_v0.3_diagnostics.txt
+|   |       |   |   composite_v0.3_sleeve_corr.csv
+|   |       |   |   composite_v0.3_summary.txt
+|   |       |   |
+|   |       |   +---CrashAndRecover
+|   |       |   |       daily_series.csv
+|   |       |   |       run_config.json
+|   |       |   |       summary_metrics.json
+|   |       |   |
+|   |       |   +---hookcore
+|   |       |   |   |   daily_series.csv
+|   |       |   |   |   equity_curves.csv
+|   |       |   |   |   summary_metrics.json
+|   |       |   |   |
+|   |       |   |   +---experiments
+|   |       |   |   |   +---grid_20251022_200907
+|   |       |   |   |   |       summary_results.csv
+|   |       |   |   |   |
+|   |       |   |   |   +---grid_20251022_202024
+|   |       |   |   |   |       summary_results.csv
+|   |       |   |   |   |       
+|   |       |   |   |   +---grid_20251022_203752
+|   |       |   |   |   |       summary_results.csv
+|   |       |   |   |   |
+|   |       |   |   |   \---grid_20251022_204241
+|   |       |   |   |           summary_results.csv
+|   |       |   |   |
+|   |       |   |   \---wfv_parity
+|   |       |   |           fold_metrics.csv
+|   |       |   |           param_choices.csv
+|   |       |   |           static_oos_pnl.csv
+|   |       |   |           wfv_stitched_oos_pnl.csv
+|   |       |   |
+|   |       |   +---momentum
+|   |       |   +---MomentumTail
+|   |       |   |       daily_series.csv
+|   |       |   |       summary_metrics.json
+|   |       |   |
+|   |       |   +---old
+|   |       |   |   |   signals_export.csv
+|   |       |   |   |
+|   |       |   |   +---combined
+|   |       |   |   +---composite_ad_hoc
+|   |       |   |   |       daily_combo.csv
+|   |       |   |   |       daily_series.csv
+|   |       |   |   |       daily_series_20251010_100610.csv
+|   |       |   |   |       daily_series_20251010_110322.csv
+|   |       |   |   |       summary_metrics.csv
+|   |       |   |   |       summary_metrics_20251010_100611.csv
+|   |       |   |   |       summary_metrics_20251010_102628.csv
+|   |       |   |   |       summary_metrics_20251010_103358.csv
+|   |       |   |   |       summary_metrics_20251010_110322.csv
+|   |       |   |   |
+|   |       |   |   \---Copper
+|   |       |   |       |   backtest_summary_prices.csv
+|   |       |   |       |   equity_combo.png
+|   |       |   |       |   equity_curves_prices.csv
+|   |       |   |       |   equity_hook.png
+|   |       |   |       |   equity_trend.png
+|   |       |   |       |   signals_export.csv
+|   |       |   |       |
+|   |       |   |       \---Copper
+|   |       |   +---pricing
+|   |       |   |   |   annual_returns.csv
+|   |       |   |   |   daily_series.csv
+|   |       |   |   |   equity_curves.csv
+|   |       |   |   |   summary_metrics.csv
+|   |       |   |   |
+|   |       |   |   +---hookcore_grid
+|   |       |   |   |   |   grid_summary.csv
+|   |       |   |   |   |
+|   |       |   |   |   +---combo_01
+|   |       |   |   |   |       params.json
+|   |       |   |   |   |       pnl_daily.csv
+|   |       |   |   |   |       signals.csv
+|   |       |   |   |   |
+|   |       |   |   |   +---combo_02
+|   |       |   |   |   |       params.json
+|   |       |   |   |   |       pnl_daily.csv
+|   |       |   |   |   |       signals.csv
+|   |       |   |   |   |
+|   |       |   |   |   +---combo_03
+|   |       |   |   |   |       params.json
+|   |       |   |   |   |       pnl_daily.csv
+|   |       |   |   |   |       signals.csv
+|   |       |   |   |   |
+|   |       |   |   |   +---combo_04
+|   |       |   |   |   |       params.json
+|   |       |   |   |   |       pnl_daily.csv
+|   |       |   |   |   |       signals.csv
+|   |       |   |   |   |
+|   |       |   |   |   \---combo_05
+|   |       |   |   |           params.json
+|   |       |   |   |           pnl_daily.csv
+|   |       |   |   |           signals.csv
+|   |       |   |   |
+|   |       |   |   +---hookcore_single
+|   |       |   |   |       pnl_daily.csv
+|   |       |   |   |       signals.csv
+|   |       |   |   |       summary.json
+|   |       |   |   |
+|   |       |   |   +---hookcore_v15_Tclose
+|   |       |   |   |       pnl_daily.csv
+|   |       |   |   |       signals.csv
+|   |       |   |   |       summary.json
+|   |       |   |   |
+|   |       |   |   \---trendcore_single_Tclose
+|   |       |   |           pnl_daily.csv
+|   |       |   |           signals.csv
+|   |       |   |           summary.json
+|   |       |   |
+|   |       |   +---stockscore
+|   |       |   |   |   annual_returns.csv
+|   |       |   |   |   daily_series.csv
+|   |       |   |   |   equity_curves.csv
+|   |       |   |   |   summary_metrics.csv
+|   |       |   |   |
+|   |       |   |   \---stockscore
+|   |       |   |           annual_returns.csv
+|   |       |   |           daily_series.csv
+|   |       |   |           equity_curves.csv
+|   |       |   |           summary_metrics.csv
+|   |       |   |
+|   |       |   +---trendcore
+|   |       |   |   |   daily_series.csv
+|   |       |   |   |   equity_curves.csv
+|   |       |   |   |   summary_metrics.csv
+|   |       |   |   |   summary_metrics.json
+|   |       |   |   |   trendcore_daily_series.csv
+|   |       |   |   |
+|   |       |   |   \---copper
+|   |       |   |       \---pricing
+|   |       |   |           \---trendcore_single_Tclose
+|   |       |   |                   pnl_daily.csv
+|   |       |   |                   signals.csv
+|   |       |   |                   summary.json
+|   |       |   |
+|   |       |   \---trendimpulse
+|   |       |       |   daily_series.csv
+|   |       |       |   equity_curves.csv
+|   |       |       |   summary_metrics.json
+|   |       |       |
+|   |       |       \---COPPER
+|   |       |           |   daily_series.csv
+|   |       |           |   equity_curves.csv
+|   |       |           |   run_lock.json
+|   |       |           |   summary_metrics.json
+|   |       |           |   trendimpulse_daily_series.csv
+|   |       |           |
+|   |       |           +---20251017_183231
+|   |       |           |       daily_series.csv
+|   |       |           |       equity_curves.csv
+|   |       |           |       summary_metrics.json
+|   |       |           |
+|   |       |           +---20251017_183755
+|   |       |           |       daily_series.csv
+|   |       |           |       equity_curves.csv
+|   |       |           |       summary_metrics.json
+|   |       |           |
+|   |       |           +---20251017_190741
+|   |       |           |       daily_series.csv
+|   |       |           |       equity_curves.csv
+|   |       |           |       summary_metrics.json
+|   |       |           |
+|   |       |           \---20251017_191008
+|   |       +---hookcore
+|   |       |   \---COPPER
+|   |       |       \---RSI3_30_70_vr1.2_biweekly_T_hold3
+|   |       |               daily_series.csv
+|   |       |               equity_curves.csv
+|   |       |               summary_metrics.json
+|   |       |
+|   |       +---static
+|   |       |   \---Copper
+|   |       |       \---pricing
+|   |       |           \---copper
+|   |       |               \---pricing
+|   |       |                   +---hookcore_grid
+|   |       |                   |   |   grid_summary.csv
+|   |       |                   |   |
+|   |       |                   |   \---combo_01
+|   |       |                   |           params.json
+|   |       |                   |           pnl_daily.csv
+|   |       |                   |           signals.csv
+|   |       |                   |
+|   |       |                   \---hookcore_single
+|   |       |                           pnl_daily.csv
+|   |       |                           signals.csv
+|   |       |                           summary.json
+|   |       |
+|   |       +---wfv
+|   |       |   \---Copper
+|   |       |       \---pricing
+|   |       \---Zinc
+|   +---archive_pre_vol_fix
+|   |   +---cli
+|   |   |       build_adaptive_portfolio.py
+|   |   |       build_hookcore_v5.py
+|   |   |       build_momentumcore_v1.py
+|   |   |       build_trendcore_v3.py
+|   |   |       build_trendimpulse_v4.py
+|   |   |       build_trendmedium.py
+|   |   |       build_vol_adaptive_portfolio.py
+|   |   |       build_vol_adaptive_portfolio_v2.py
+|   |   |       build_vol_static_portfolio.py
+|   |   |       build_vol_static_portfolio_v2.py
+|   |   |
+|   |   +---config
+|   |   |       momentumcore_v1.yaml
+|   |   |       trendcore_v3.yaml
+|   |   |       trendimpulse_v4.yaml
+|   |   |       trendmedium.yaml
+|   |   |       vol_adaptive_portfolio.yaml
+|   |   |       vol_adaptive_portfolio_v2.yaml
+|   |   |       vol_static_portfolio.yaml
+|   |   |       vol_static_portfolio_v2.yaml
+|   |   |
+|   |   +---core
+|   |   |       cash.py
+|   |   |       contract.py
+|   |   |       portfolio.py
+|   |   |       portfolio_v1.py
+|   |   |       regime.py
+|   |   |       transitions.py
+|   |   |       vol_targeting_prev.py
+|   |   |
+|   |   +---Framework
+|   |   |       CHANGELOG.md
+|   |   |       v1.md
+|   |   |
+|   |   +---outputs
+|   |   |       build_composite.py
+|   |   |       build_composite_old.py
+|   |   |       build_crashandrecover.py
+|   |   |       build_hookcore.py
+|   |   |       build_hookcore_v12.py
+|   |   |       build_momentumtail.py
+|   |   |       build_stockscore_v011.py
+|   |   |       build_trend.py
+|   |   |       build_trendcore_v12.py
+|   |   |       build_trendimpulse.py
+|   |   |       utils_metrics.py
+|   |   |
+|   |   +---scripts
+|   |   |       run_adaptive_portfolio.bat
+|   |   |       run_momentumcore_v1.bat
+|   |   |       run_trendcore_v3.bat
+|   |   |       run_trendimpulse_v4.bat
+|   |   |
+|   |   +---signals
+|   |   |       crashandrecover.py
+|   |   |       hookcore.py
+|   |   |       hookcore_v3.py
+|   |   |       hookcore_v4.py
+|   |   |       hookcore_v4_1.py
+|   |   |       hookcore_v5.py
+|   |   |       momentumcore_v1.py
+|   |   |       momentumtail.py
+|   |   |       trendcore.py
+|   |   |       trendcore_v3_prev.py
+|   |   |       trendimpulse.py
+|   |   |       trendimpulse_v3.py
+|   |   |       trendimpulse_v4.py
+|   |   |       vol_static_weights.py
+|   |   |
+|   |   +---tools
+|   |   |       build_vol_adaptive_weights_v2.py
+|   |   |       build_vol_regimes.py
+|   |   |       build_vol_static_weights.py
+|   |   |       build_vol_static_weights_v2.py
+|   |   |
+|   |   \---VolStatic
+|   |           daily_series.csv
+|   |           daily_series_20251117_142214.csv
+|   |           daily_series_latest.csv
+|   |           daily_series_static.csv
+|   |           summary_metrics.json
+|   |           summary_metrics_20251117_142214.json
+|   |           summary_metrics_latest.json
+|   |           vol_static_weights_20251117_141241.csv
+|   |           vol_static_weights_20251117_141241.yaml
+|   |           vol_static_weights_latest.csv
+|   |           vol_static_weights_latest.yaml
+|   |
+|   \---archive_pre_vol_fix_portflio_build
+|       +---cli
+|       |       build_crashandrecover.py
+|       |       build_hookcore_v2.py
+|       |       build_momentumtail_v2.py
+|       |       build_rangefader_v4.py
+|       |       build_trendcore_v2.py
+|       |       build_trendimpulse_v4.py
+|       |       build_trendimpulse_v5.py
+|       |       build_trendimpulse_v6.py
+|       |
+|       +---config
+|       |       crashandrecover.yaml
+|       |       hookcore.yaml
+|       |       momentumtail.yaml
+|       |       rangefader_v4.yaml
+|       |       trendcore.yaml
+|       |       trendimpulse.yaml
+|       |       trendimpulse_v5.yaml
+|       |       trendimpulse_v6.yaml
+|       |
+|       +---output
+|       |   +---RangeFader_v4
+|       |   |       daily_series.csv
+|       |   |       diagnostics.json
+|       |   |       summary_metrics.json
+|       |   |       vol_diagnostics.csv
+|       |   |
+|       |   +---TrendImpulse_v5
+|       |   |   |   daily_series.csv
+|       |   |   |   diagnostics.json
+|       |   |   |   summary_metrics.json
+|       |   |   |   vol_diagnostics.csv
+|       |   |   |
+|       |   |   \---optimization
+|       |   |           daily_series_oos.csv
+|       |   |           oos_validation_report.json
+|       |   |           stage1_best_params.json
+|       |   |           stage1_full_results.csv
+|       |   |           stage2_best_params.json
+|       |   |           stage2_full_results.csv
+|       |   |
+|       |   \---TrendImpulse_v6
+|       |       |   daily_series.csv
+|       |       |   diagnostics.json
+|       |       |   summary_metrics.json
+|       |       |   vol_diagnostics.csv
+|       |       |
+|       |       \---optimization
+|       |               daily_series_is.csv
+|       |               daily_series_oos.csv
+|       |               oos_validation_report.json
+|       |               optimized_params.json
+|       |               stage1_full_results.csv
+|       |               stage2_full_results.csv
+|       |
+|       +---scripts
+|       |       run_macro_static_portfolio.bat
+|       |       run_optimize_trendimpulse_v6.bat
+|       |       run_rangefader_v4.bat
+|       |       run_tightnessindex_v5.bat
+|       |       run_trendimpulse_v4.bat
+|       |       run_trendimpulse_v5.bat
+|       |       run_trendimpulse_v6.bat
+|       |       run_validate_trendimpulse_v6_oos.bat
+|       |
+|       +---signals
+|       |       rangefader_v4.py
+|       |       trendimpulse_v4.py
+|       |       trendimpulse_v5.py
+|       |       trendimpulse_v6.py
+|       |       trendmedium.py
+|       |
+|       \---tools
+|               optimize_trendimpulse_v5_stage1.py
+|               optimize_trendimpulse_v5_stage2.py
+|               optimize_trendimpulse_v6_full.py
+|               validate_trendimpulse_v5_oos.py
+|               validate_trendimpulse_v6_oos.py
+|
++---Config
+|   |   schema.yaml
+|   |   wfv.yaml
+|   |
+|   \---Copper
+|       |   copper_demand.yaml
+|       |   momentumcore_v2.yaml
+|       |   portfolio_baseline_tightstocks.yaml
+|       |   portfolio_baseline_tightstocks_volcore.yaml
+|       |   portfolio_baseline_volcore.yaml
+|       |   rangefader_v5.yaml
+|       |   tightstocks_v1.yaml
+|       |   trendmedium_v2.yaml
+|       |
+|       \---portfolio
+|               baseline_tightstocks.yaml
+|               portfolio_baseline.yaml
+|
++---Copper
+|       .gitkeep
+|
++---Data
+|   |   metals_prices_formulas.xlsx
+|   |
+|   +---copper
+|   |   +---fundamentals
+|   |   |   |   balance_chilco.csv
+|   |   |   |   bbg copper demand.txt
+|   |   |   |   cochilco_historical_balances.csv
+|   |   |   |   copper_demand_values.xlsx
+|   |   |   |   historical_supply_disruptions_granular_20251110.csv
+|   |   |   |
+|   |   |   \---canonical
+|   |   |           copper_demand_index.canonical.csv
+|   |   |
+|   |   +---pricing
+|   |   |   \---canonical
+|   |   |           copper_balance.canonical.csv
+|   |   |           copper_comex_stocks.canonical.csv
+|   |   |           copper_lme_12mo_fut.canonical.csv
+|   |   |           copper_lme_1mo_impliedvol.canonical.csv
+|   |   |           copper_lme_24mo_fut.canonical.csv
+|   |   |           copper_lme_3mo.canonical.csv
+|   |   |           copper_lme_3mo_close.canonical.csv
+|   |   |           copper_lme_3mo_fut.canonical.csv
+|   |   |           copper_lme_3mo_high.canonical.csv
+|   |   |           copper_lme_3mo_impliedvol.canonical.csv
+|   |   |           copper_lme_3mo_low.canonical.csv
+|   |   |           copper_lme_3mo_open.canonical.csv
+|   |   |           copper_lme_3mo_openinterest.canonical.csv
+|   |   |           copper_lme_3mo_volume.canonical.csv
+|   |   |           copper_lme_cancelled_stocks.canonical.csv
+|   |   |           copper_lme_cash.canonical.csv
+|   |   |           copper_lme_cash_3mo.canonical.csv
+|   |   |           copper_lme_onwarrant_stocks.canonical.csv
+|   |   |           copper_lme_total_stocks.canonical.csv
+|   |   |           copper_shfe_12mo.canonical.csv
+|   |   |           copper_shfe_1mo.canonical.csv
+|   |   |           copper_shfe_3mo.canonical.csv
+|   |   |           copper_shfe_onwarrant_stocks.canonical.csv
+|   |   |           copper_shfe_total_stocks.canonical.csv
+|   |   |           iscg_balance.canconical.csv
+|   |   |
+|   |   \---stocks
+|   |           total_on_warrant_stocks_20251114.csv
+|   |
+|   +---Macro
+|   |   \---pricing
+|   |       \---canonical
+|   |               china_10y_rate.canonical.csv
+|   |               china_2y_rate.canonical.csv
+|   |               china_repo_7d_rate.canonical.csv
+|   |               cnh_fx.canonical.csv
+|   |               CNH_Index.canonical.csv
+|   |               cny_fx.canonical.csv
+|   |               csi300_index.canonical.csv
+|   |               csi_ev_etf.canonical.csv
+|   |               csi_infra_etf.canonical.csv
+|   |               csi_realestate_etf.canonical.csv
+|   |               dxy_index.canonical.csv
+|   |               ISM PMI.canonical.csv
+|   |               Manufacturing SA.canonical.csv
+|   |               usdbrl_fx.canonical.csv
+|   |               usdclp_fx.canonical.csv
+|   |               usdmxn_fx.canonical.csv
+|   |               usdzar_fx.canonical.csv
+|   |               usgg10yr_rate.canonical.csv
+|   |               usgg2yr_rate.canonical.csv
+|   |               usyc2y10_rate.canonical.csv
+|   |               us_hy_index.canonical.csv
+|   |               vix_iv.canonical.csv
+|   |
+|   \---Old for review
+|           bbg_downstream_demand_20251112.xlsx
+|
++---Docs
+|   |   SEED_CHAT.md
+|   |
+|   +---Copper
+|   |   |   params.yaml
+|   |   |   README.md
+|   |   |
+|   |   +---combined
+|   |   |       CHANGELOG.md
+|   |   |       composite_config.yaml
+|   |   |       README.md
+|   |   |       scratch_combine_copper.py
+|   |   |
+|   |   +---hookcore
+|   |   |       CHANGELOG.md
+|   |   |       hookcore_config.yaml
+|   |   |       README.md
+|   |   |
+|   |   +---stocks
+|   |   |       CHANGELOG.md
+|   |   |       README.md
+|   |   |       stockscore_config.yaml
+|   |   |
+|   |   +---trend
+|   |   |       CHANGELOG.md
+|   |   |       config.yaml
+|   |   |       README.md
+|   |   |
+|   |   +---trendimpulse
+|   |   |       CHANGELOG.md
+|   |   |       config.yaml
+|   |   |       README.md
+|   |   |
+|   |   +---vol
+|   |   |       CHANGELOG.md
+|   |   |       README.md
+|   |   |       VolPulse_minimal_example.ipynb
+|   |   |       vol_pulse.py
+|   |   |       vol_pulse.yaml
+|   |   |       __init__.py
+|   |   |
+|   |   \---wfv
+|   |       +---combined
+|   |       |       wfv.yaml
+|   |       |
+|   |       +---pricing
+|   |       |       wfv.yaml
+|   |       |       wfv_parity.yaml
+|   |       |
+|   |       \---trend
+|   |               wfv.yaml
+|   |
+|   \---standards
+|           real_world_rules.py
+|
++---outputs
+|   \---Copper
+|       +---MomentumCore_v2
+|       |       daily_series.csv
+|       |       daily_seriesMCv2.csv
+|       |       diagnostics.json
+|       |       summary_metrics.json
+|       |       vol_diagnostics.csv
+|       |       vol_diagnosticsMCv2.csv
+|       |
+|       +---Portfolio
+|       |   +---BaselineEqualWeight
+|       |   |   +---20251120_111608
+|       |   |   |       correlation_matrix.csv
+|       |   |   |       daily_series.csv
+|       |   |   |       sleeve_attribution.json
+|       |   |   |       summary_metrics.json
+|       |   |   |       validation_report.txt
+|       |   |   |
+|       |   |   +---20251120_121816
+|       |   |   |       correlation_matrix.csv
+|       |   |   |       daily_series.csv
+|       |   |   |       sleeve_attribution.json
+|       |   |   |       summary_metrics.json
+|       |   |   |       validation_report.txt
+|       |   |   |
+|       |   |   \---latest
+|       |   |           correlation_matrix.csv
+|       |   |           daily_series.csv
+|       |   |           sleeve_attribution.json
+|       |   |           summary_metrics.json
+|       |   |           validation_report.txt
+|       |   |
+|       |   +---BaselineTightStocks
+|       |   |       daily_series.csv
+|       |   |       validation_report.txt
+|       |   |       weight_comparison.json
+|       |   |
+|       |   +---BaselineTightStocksVolCore
+|       |   |       daily_series.csv
+|       |   |       grid_search_results.csv
+|       |   |       optimal_allocation.json
+|       |   |       three_way_correlation_matrix.csv
+|       |   |       validation_report.txt
+|       |   |       weight_comparison.json
+|       |   |
+|       |   +---BaselineVolCore
+|       |   |       daily_series.csv
+|       |   |       validation_report.txt
+|       |   |       weight_comparison.json
+|       |   |
+|       |   \---copper_demand
+|       |       \---lag_2
+|       |               copper_demand_signals_qoq_2mo_20251120_142549.csv
+|       |               copper_demand_signals_qoq_2mo_20251120_143359.csv
+|       |               copper_demand_signals_yoy_2mo_20251120_143448.csv
+|       |               daily_series_china_demand_qoq_2mo_20251120_142549.csv
+|       |               daily_series_china_demand_qoq_2mo_20251120_143359.csv
+|       |               daily_series_china_demand_yoy_2mo_20251120_143448.csv
+|       |               summary_metrics_qoq_2mo_20251120_142549.json
+|       |               summary_metrics_qoq_2mo_20251120_143359.json
+|       |               summary_metrics_yoy_2mo_20251120_143448.json
+|       |               summary_qoq_2mo_20251120_142549.txt
+|       |               summary_qoq_2mo_20251120_143359.txt
+|       |               summary_yoy_2mo_20251120_143448.txt
+|       |
+|       +---RangeFader_v5
+|       |       daily_series.csv
+|       |       daily_seriesRFv5.csv
+|       |       summary_metrics.json
+|       |
+|       +---RangeFader_v5_optimization
+|       |       optimization_results.csv
+|       |       optimization_resultsTRv5.csv
+|       |       optimization_summary.json
+|       |
+|       +---TightnessIndex_v5
+|       |       tightness_index_v5_diagnostics_20251119.csv
+|       |       tightness_index_v5_scores_20251119.csv
+|       |
+|       +---TightStocks_v1
+|       |   |   config_used.yaml
+|       |   |   daily_series.csv
+|       |   |   daily_series_TSv1_20251119.csv
+|       |   |   summary_metrics.json
+|       |   |
+|       |   \---Latest
+|       |           daily_series.csv
+|       |
+|       +---TrendMedium_v2
+|       |       daily_series.csv
+|       |       daily_seriesTMv2.csv
+|       |       diagnostics.json
+|       |       summary_metrics.json
+|       |       vol_diagnostics.csv
+|       |       vol_diagnosticsTMv2.csv
+|       |
+|       +---VolAdaptive
+|       |       daily_series.csv
+|       |       daily_series_20251117_165753.csv
+|       |       daily_series_20251117_173214.csv
+|       |       daily_series_20251117_173843.csv
+|       |       daily_series_20251117_174459.csv
+|       |       daily_series_20251117_174737.csv
+|       |       daily_series_adaptive.csv
+|       |       daily_series_latest.csv
+|       |       regime_summary.csv
+|       |       vol_adaptive_weights_20251117_164654.csv
+|       |       vol_adaptive_weights_20251117_173828.csv
+|       |       vol_adaptive_weights_20251117_174640.csv
+|       |       vol_adaptive_weights_20251117_175220.csv
+|       |       vol_adaptive_weights_20251117_181033.csv
+|       |       vol_adaptive_weights_latest.csv
+|       |
+|       +---VolCore_v1
+|       |   |   daily_series_VCv1.csv
+|       |   |   summary_metrics.json
+|       |   |
+|       |   \---Latest
+|       |           daily_series.csv
+|       |           summary_metrics.json
+|       |
+|       \---VolRegime
+|               adx_trend_regimes.csv
+|               regime_classification_vol_trend.csv
+|               sleeve_performance_3x3_matrix.csv
+|               vol_regimes.csv
+|               vol_static_weights.csv
+|
++---scripts
+|       run_build_baseline_portfolio.bat
+|       run_build_baseline_tightstocks.bat
+|       run_build_baseline_tightstocks_volcore.bat
+|       run_build_baseline_volcore.bat
+|       run_copper_demand_qoq.bat
+|       run_copper_demand_yoy.bat
+|       run_make_copper_demand.bat
+|       run_momentumcore_v2.bat
+|       run_rangefader_v5.bat
+|       run_rangefader_v5_optimize.bat
+|       run_tightstocks_v1.bat
+|       run_trendimpulse_copper.cmd
+|       run_trendmedium_v2.bat
+|
++---src
+|   |   __init__.py
+|   |
+|   +---cli
+|   |   |   build_copper_demand.py
+|   |   |   build_momentumcore_v2.py
+|   |   |   build_rangefader_v5.py
+|   |   |   build_tightstocks_v1.py
+|   |   |   build_trendimpulse_v2.py
+|   |   |   build_trendmedium_v2.py
+|   |   |   optimize_rangefader_v5.py
+|   |   |
+|   |   \---portfolio
+|   |           build_baseline_portfolio.py
+|   |           build_baseline_tightstocks.py
+|   |           build_baseline_tightstocks_volcore.py
+|   |           build_baseline_volcore.py
+|   |           __init__.py
+|   |
+|   +---core
+|   |   |   contract.py
+|   |   |   execution.py
+|   |   |   vol_targeting.py
+|   |   |
+|   |   \---__pycache__
+|   |           contract.cpython-313.pyc
+|   |           execution.cpython-313.pyc
+|   |           vol_targeting.cpython-313.pyc
+|   |
+|   +---experiments
+|   |       hookcore_grid_min.py
+|   |       hookcore_grid_v12.py
+|   |
+|   +---outputs
+|   |   \---Copper
+|   |       \---CrashAndRecover
+|   |               daily_series.csv
+|   |               run_config.json
+|   |
+|   +---overlays
+|   |   |   copper_demand.py
+|   |   |
+|   |   \---__pycache__
+|   |           copper_demand.cpython-313.pyc
+|   |
+|   +---portfolio
+|   |   |   blender.py
+|   |   |   portfolio__init__.py
+|   |   |
+|   |   \---__pycache__
+|   |           blender.cpython-313.pyc
+|   |
+|   +---signals
+|   |   |   copper_demand_old.py
+|   |   |   momentumcore_v2.py
+|   |   |   rangefader_v5.py
+|   |   |   tightstocks_v1.py
+|   |   |   trendcore.py
+|   |   |   trendmedium_v2.py
+|   |   |
+|   |   \---__pycache__
+|   |           copper_demand.cpython-313.pyc
+|   |           crashandrecover.cpython-313.pyc
+|   |           hookcore.cpython-313.pyc
+|   |           momentumcore_v2.cpython-313.pyc
+|   |           momentumtail.cpython-313.pyc
+|   |           rangefader_v5.cpython-313.pyc
+|   |           tightstocks_v1.cpython-313.pyc
+|   |           trendcore.cpython-313.pyc
+|   |           trendimpulse.cpython-313.pyc
+|   |           trendmedium_v2.cpython-313.pyc
+|   |
+|   +---utils
+|   |   |   policy.py
+|   |   |   __init__.py
+|   |   |
+|   |   \---__pycache__
+|   |           policy.cpython-313.pyc
+|   |           __init__.cpython-313.pyc
+|   |
+|   +---wfv
+|   |   \---__pycache__
+|   |           runner.cpython-313.pyc
+|   |           utils.cpython-313.pyc
+|   |           __init__.cpython-313.pyc
+|   |
+|   \---__pycache__
+|           build_hookcore_v12.cpython-313.pyc
+|           db.cpython-313.pyc
+|           __init__.cpython-313.pyc
+|
++---tools
+|       diag_turnover.py
+|       make_canonical.py
+|       make_canonical_copper_demand.py
+|       validate_outputs.py
+|

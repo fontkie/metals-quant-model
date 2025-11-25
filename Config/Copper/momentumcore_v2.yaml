@@ -1,0 +1,53 @@
+# Config/Copper/momentumcore_v2.yaml
+
+io:
+  commodity: Copper
+  sleeve: MomentumCore_v2
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10                      # 10% target vol
+    vol_lookback_days_default: 63         # ~3 months rolling vol
+    leverage_cap_default: 3.0             # Max 3x leverage (Layer 2 will handle)
+
+  costs:
+    one_way_bps_default: 3.0              # 3 bps per trade (institutional reality)
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true                  # T+1 accrual
+
+# MomentumCore v2 signal parameters (LAYER 1 ONLY)
+signal:
+  # Core strategy
+  strategy_version: "2.0"
+  description: "12-month Time Series Momentum (TSMOM) - 4-Layer Architecture"
+  architecture: "Pure signal in Layer 1, vol targeting in Layer 2, costs in Layer 4"
+  
+  # Momentum lookback
+  momentum:
+    lookback_days: 252        # 12 months = 252 trading days
+    reason: "Standard TSMOM lookback per Moskowitz, Ooi, Pedersen (2012)"
+  
+  # Directional constraints
+  directional:
+    longs_only: false         # Allow both long and short
+    reason: "TSMOM works bidirectionally - trends up and down"
+  
+  # Notes on Layer 1
+  notes:
+    - "Pure signal generation - no vol scaling in Layer 1"
+    - "Vol targeting applied separately in Layer 2 (closed-loop EWMA)"
+    - "Costs applied once on net portfolio in Layer 4"
+    - "Signal is simply sign(12-month return)"
+    - "Expected to be active 96%+ of time (always-on strategy)"

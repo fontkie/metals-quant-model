@@ -1,0 +1,124 @@
+# PORTFOLIO CONFIG: Baseline + TightStocks + VolCore
+# Three-way combination testing
+
+portfolio_name: "Baseline + TightStocks + VolCore"
+output_dir: "outputs/Copper/Portfolio/BaselineTightStocksVolCore"
+
+# Component sleeves
+components:
+  baseline:
+    path: "outputs/Copper/Portfolio/BaselineEqualWeight/latest/daily_series.csv"
+    position_col: "portfolio_pos"
+    pnl_col: "pnl_gross"
+    description: "Equal-weight TM + TI + MC"
+    
+  tightstocks:
+    path: "outputs/Copper/TightStocks_v1/Latest/daily_series.csv"
+    position_col: "pos"
+    pnl_col: "pnl_gross"
+    description: "Physical market tightness signal"
+    
+  volcore:
+    path: "outputs/Copper/VolCore_v1/Latest/daily_series.csv"
+    position_col: "pos"
+    pnl_col: "pnl_gross"
+    description: "Volatility risk premium signal"
+
+# Weight allocations to test
+# Format: {baseline: weight, tightstocks: weight, volcore: weight}
+# Weights will be normalized to sum to 1.0
+weight_tests:
+  # Required tests from seed document
+  - name: "Equal Weight"
+    weights: {baseline: 0.33, tightstocks: 0.33, volcore: 0.33}
+    
+  - name: "Defensive (Exec Summary)"
+    weights: {baseline: 0.25, tightstocks: 0.40, volcore: 0.35}
+    note: "For broken baseline periods (2023-2025)"
+    
+  - name: "Optimal (Exec Summary)"
+    weights: {baseline: 0.60, tightstocks: 0.25, volcore: 0.15}
+    note: "For normal market conditions"
+    
+  - name: "Baseline Heavy"
+    weights: {baseline: 0.70, tightstocks: 0.20, volcore: 0.10}
+    
+  # Baselines: Best two-way combinations
+  - name: "Best TS Two-Way (40/60/0)"
+    weights: {baseline: 0.40, tightstocks: 0.60, volcore: 0.0}
+    note: "From two-way validation: 1.000 Sharpe"
+    
+  - name: "Best VC Two-Way (60/0/40)"
+    weights: {baseline: 0.60, tightstocks: 0.0, volcore: 0.40}
+    note: "From two-way validation: 0.966 Sharpe"
+    
+  # Additional allocations
+  - name: "TS Primary (30/50/20)"
+    weights: {baseline: 0.30, tightstocks: 0.50, volcore: 0.20}
+    
+  - name: "Balanced (50/30/20)"
+    weights: {baseline: 0.50, tightstocks: 0.30, volcore: 0.20}
+    
+  - name: "VC Insurance (65/20/15)"
+    weights: {baseline: 0.65, tightstocks: 0.20, volcore: 0.15}
+
+# Grid search settings
+grid_search:
+  enabled: true
+  increment: 0.05  # Test in 5% increments
+  min_weight: 0.00  # Allow zero allocation
+  max_weight: 1.00
+  top_n_results: 10  # Show top 10 allocations
+
+# In-sample / Out-of-sample split
+is_oos_cutoff: "2019-01-01"
+
+# Data constraints
+data_notes: |
+  VolCore data starts 2011-06-13 (implied vol data availability)
+  TightStocks data starts 2000-01-04 (full history)
+  Common period: 2011-06-13 to 2025-11-12 (3,696 days)
+  
+  IS period: 2011-06-13 to 2018-12-31
+  OOS period: 2019-01-01 to 2025-11-12
+
+# Analysis settings
+analysis:
+  calculate_correlation: true
+  calculate_attribution: true
+  regime_analysis: true
+  period_breakdown:
+    - name: "Full Period"
+      start: null
+      end: null
+    - name: "In-Sample (2011-2018)"
+      start: "2011-06-13"
+      end: "2018-12-31"
+    - name: "Out-of-Sample (2019-2025)"
+      start: "2019-01-01"
+      end: null
+    - name: "Recent (2023-2025)"
+      start: "2023-01-01"
+      end: null
+      note: "Baseline broken period"
+    - name: "Pre-2019 (OOS1)"
+      start: "2019-01-01"
+      end: "2022-12-31"
+    - name: "Post-2022 (OOS2)"
+      start: "2023-01-01"
+      end: null
+
+# Validation criteria
+validation:
+  marginal_sharpe_threshold: 0.05  # Minimum marginal improvement
+  correlation_threshold: 0.30  # Maximum acceptable correlation
+  drawdown_improvement_threshold: 0.10  # Minimum DD reduction
+
+# Output files
+outputs:
+  daily_series: "daily_series.csv"
+  weight_comparison: "weight_comparison.json"
+  three_way_correlation_matrix: "three_way_correlation_matrix.csv"
+  optimal_allocation: "optimal_allocation.json"
+  validation_report: "validation_report.txt"
+  grid_search_results: "grid_search_results.csv"

@@ -1,0 +1,473 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" version="29.1.1" pages="3">
+  <diagram id="architecture" name="1. 5-Layer Architecture">
+    <mxGraphModel dx="2075" dy="752" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" value="COPPER QUANTAMENTAL MODEL V1" vertex="1">
+          <mxGeometry height="40" width="600" x="284.5" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=2" value="Systematic + Fundamental = Quantamental" vertex="1">
+          <mxGeometry height="25" width="400" x="384.5" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="layer1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;verticalAlign=top;" value="LAYER 1: DATA" vertex="1">
+          <mxGeometry height="80" width="1000" x="80" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="data1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="LME 3mo Copper&lt;br&gt;(Daily, 2000-2025)" vertex="1">
+          <mxGeometry height="40" width="140" x="100" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="data2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="LME Stocks&lt;br&gt;(On-Warrant)" vertex="1">
+          <mxGeometry height="40" width="140" x="260" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="data3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="LME 1mo IV&lt;br&gt;(Daily, 2011-2025)" vertex="1">
+          <mxGeometry height="40" width="140" x="420" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="data4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Chinese Economic&lt;br&gt;(PMI, Property, Grid + T+2 lag)" vertex="1">
+          <mxGeometry height="40" width="180" x="580" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="data5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;dashed=1;" value="Future: Supply Data&lt;br&gt;(Strikes, Outages, Capex)" vertex="1">
+          <mxGeometry height="40" width="180" x="780" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow12" edge="1" parent="1" source="layer1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;fillColor=#dae8fc;strokeColor=#6c8ebf;entryX=0.5;entryY=0;" target="layer2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="layer2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;verticalAlign=top;" value="LAYER 2: CORE COMPONENTS (Each 10% Vol Targeted)" vertex="1">
+          <mxGeometry height="160" width="1000" x="80" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="tech_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=3" value="Technical Sleeves" vertex="1">
+          <mxGeometry height="20" width="120" x="100" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="tm" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" value="TrendMedium&lt;br&gt;MA 25/70&lt;br&gt;0.68 OOS Sharpe" vertex="1">
+          <mxGeometry height="60" width="130" x="100" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="mc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" value="MomentumCore&lt;br&gt;21d lookback&lt;br&gt;0.49 OOS Sharpe" vertex="1">
+          <mxGeometry height="60" width="130" x="250" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="rf" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" value="RangeFader&lt;br&gt;50d mean reversion&lt;br&gt;0.35 OOS (0.65 ranging)" vertex="1">
+          <mxGeometry height="60" width="150" x="400" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="fund_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=3" value="Fundamental Overlays" vertex="1">
+          <mxGeometry height="20" width="140" x="630" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="ts" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" value="TightStocks V2&lt;br&gt;Inventory surprise&lt;br&gt;0.742 OOS Sharpe" vertex="1">
+          <mxGeometry height="60" width="140" x="630" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="vc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" value="VolCore V2&lt;br&gt;Vol risk premium&lt;br&gt;0.77 OOS Sharpe" vertex="1">
+          <mxGeometry height="60" width="140" x="790" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="vol_note" parent="1" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="Vol Targeting: EWMA λ=0.94, √252 annualization&lt;br&gt;Target: 10% per sleeve | Max leverage: 3.0x" vertex="1">
+          <mxGeometry height="30" width="450" x="100" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="corr_note" parent="1" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="Correlation: TM/MC/RF ~0.06&lt;br&gt;TS/VC ~0.06 to baseline" vertex="1">
+          <mxGeometry height="30" width="300" x="630" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow23" edge="1" parent="1" source="layer2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;fillColor=#d5e8d4;strokeColor=#82b366;entryX=0.5;entryY=0;" target="layer3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="layer3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;fontStyle=1;verticalAlign=top;" value="LAYER 3: BASELINE PORTFOLIO" vertex="1">
+          <mxGeometry height="100" width="1000" x="80" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="current_weights" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" value="Current: Equal-Weight&lt;br&gt;TM: 33% | MC: 33% | RF: 33%&lt;br&gt;0.767 OOS Sharpe (99% retention!)" vertex="1">
+          <mxGeometry height="60" width="250" x="100" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="future_weights" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;dashed=1" value="V1: Regime-Adaptive&lt;br&gt;RANGING: boost RF to 30%&lt;br&gt;TRENDING_VOL: kill RF to 0%&lt;br&gt;Target: +0.03-0.05 Sharpe" vertex="1">
+          <mxGeometry height="60" width="250" x="380" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="overlay_alloc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="TS/VC Allocation&lt;br&gt;Start: 25% TS, 5% VC*&lt;br&gt;Monitor correlation&lt;br&gt;Scale after 3-6 months" vertex="1">
+          <mxGeometry height="60" width="250" x="660" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow34" edge="1" parent="1" source="layer3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;fillColor=#ffe6cc;strokeColor=#d79b00;entryX=0.5;entryY=0;" target="layer4" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="layer4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;verticalAlign=top;" value="LAYER 4: FUNDAMENTAL SCALARS (Conviction Overlays)" vertex="1">
+          <mxGeometry height="100" width="1000" x="80" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="demand_scalar" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" value="Enhanced Demand Scalar ✓&lt;br&gt;DECLINING demand + Rally + Long&lt;br&gt;→ GO TO 0.0x (FLAT)&lt;br&gt;+24.0 OOS Sharpe improvement" vertex="1">
+          <mxGeometry height="60" width="280" x="100" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="supply_scalar" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;dashed=1" value="Tightness (Supply) Index (V2)&lt;br&gt;Supply disruptions + Tight inventory&lt;br&gt;→ Amplify conviction&lt;br&gt;Status: To be tested" vertex="1">
+          <mxGeometry height="60" width="280" x="410" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="scalar_note" parent="1" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="Scalars fire rarely (~1-2% of time) but high conviction&lt;br&gt;Demand: 17% win rate justifies 0.0x override" vertex="1">
+          <mxGeometry height="40" width="340" x="720" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow45" edge="1" parent="1" source="layer4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;fillColor=#f8cecc;strokeColor=#b85450;entryX=0.5;entryY=0;" target="layer5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="layer5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1;verticalAlign=top;" value="LAYER 5: PORTFOLIO CONSTRUCTION AND EXECUTION" vertex="1">
+          <mxGeometry height="100" width="1000" x="80" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="costs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Transaction Costs ✓&lt;br&gt;3 bps one-way&lt;br&gt;Applied ONCE at portfolio level&lt;br&gt;(Prevents double-counting)" vertex="1">
+          <mxGeometry height="60" width="200" x="100" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="risk_current" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Risk Management ✓&lt;br&gt;• Vol targeting (10%)&lt;br&gt;• Leverage cap (3.0x)&lt;br&gt;• Floor/cap bounds" vertex="1">
+          <mxGeometry height="60" width="180" x="320" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="risk_future" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;dashed=1" value="V1 To Build:&lt;br&gt;• Daily VAR monitoring&lt;br&gt;• Drawdown breakers&lt;br&gt;• Performance attribution" vertex="1">
+          <mxGeometry height="60" width="180" x="520" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="execution" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;dashed=1" value="Execution (Future):&lt;br&gt;• Staged execution&lt;br&gt;• Liquidity constraints&lt;br&gt;• Time-of-day optimization" vertex="1">
+          <mxGeometry height="60" width="200" x="720" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="perf_box" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b1ddf0;strokeColor=#10739e;fontSize=14;fontStyle=1;verticalAlign=top;" value="TARGET PERFORMANCE" vertex="1">
+          <mxGeometry height="100" width="200" x="950" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="perf_text" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" value="Current: 0.767 OOS Sharpe&lt;br&gt;+ Demand: 0.840 Sharpe&lt;br&gt;+ TS/VC: ~0.85-0.90&lt;br&gt;+ Regime: ~0.80-0.85&lt;br&gt;&lt;br&gt;V1 Target: 0.80-0.85" vertex="1">
+          <mxGeometry height="70" width="190" x="955" y="715" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_box" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=12;fontStyle=1;verticalAlign=top;" value="LEGEND" vertex="1">
+          <mxGeometry height="80" width="300" x="80" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="legend1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" value="✓ Production Ready" vertex="1">
+          <mxGeometry height="20" width="130" x="90" y="825" as="geometry" />
+        </mxCell>
+        <mxCell id="legend2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" value="Dashed = To Be Built" vertex="1">
+          <mxGeometry height="20" width="130" x="90" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="legend3" parent="1" style="text;html=1;strokeColor=none;fillColor=#fff2cc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="Technical = Yellow" vertex="1">
+          <mxGeometry height="20" width="130" x="230" y="825" as="geometry" />
+        </mxCell>
+        <mxCell id="legend4" parent="1" style="text;html=1;strokeColor=none;fillColor=#d5e8d4;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="Fundamental = Green" vertex="1">
+          <mxGeometry height="20" width="130" x="230" y="850" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="performance" name="2. Performance Summary">
+    <mxGraphModel dx="1434" dy="790" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title2" value="PERFORMANCE SUMMARY" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="334.5" y="40" width="500" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="comp_title" value="Individual Components (OOS 2019-2025)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="450" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="h1" value="Component" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="140" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="h2" value="Sharpe" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="230" y="140" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="h3" value="Current (2023-25)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="310" y="140" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="h4" value="Status" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="420" y="140" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r1c1" value="TrendMedium" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="80" y="170" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r1c2" value="0.68" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="230" y="170" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r1c3" value="Challenged" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="310" y="170" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r1c4" value="✓ Ready" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="170" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r2c1" value="MomentumCore" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="80" y="200" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r2c2" value="0.49" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="230" y="200" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r2c3" value="Challenged" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="310" y="200" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r2c4" value="✓ Ready" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="200" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r3c1" value="RangeFader" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="80" y="230" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r3c2" value="0.35 (0.65)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="230" y="230" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r3c3" value="Mixed" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="310" y="230" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r3c4" value="✓ Ready" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="230" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r4c1" value="TightStocks V2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="260" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r4c2" value="0.742" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="230" y="260" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r4c3" value="0.752 ⭐" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="310" y="260" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r4c4" value="✓ Ready" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="420" y="260" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r5c1" value="VolCore V2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="80" y="290" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r5c2" value="0.77" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="230" y="290" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r5c3" value="0.35 (insurance)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="310" y="290" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r5c4" value="✓ Ready" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="290" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="port_title" value="Portfolio Configurations (OOS 2019-2025)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="350" width="450" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ph1" value="Configuration" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="390" width="250" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ph2" value="OOS Sharpe" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="330" y="390" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ph3" value="Status" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="420" y="390" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1c1" value="Baseline Equal-Weight (TM/MC/RF)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="80" y="420" width="250" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1c2" value="0.767" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="330" y="420" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1c3" value="✓ Current" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="420" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c1" value="+ Enhanced Demand Scalar" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="80" y="450" width="250" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c2" value="0.840" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="330" y="450" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p2c3" value="✓ Validated" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="450" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p3c1" value="+ TightStocks (15% allocation)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="80" y="480" width="250" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p3c2" value="~0.85*" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="330" y="480" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p3c3" value="To Test" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="420" y="480" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p4c1" value="+ Regime Optimization" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="80" y="510" width="250" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p4c2" value="~0.80-0.85*" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="330" y="510" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p4c3" value="To Implement" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="420" y="510" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p5c1" value="V1 TARGET" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#b1ddf0;strokeColor=#10739e;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="540" width="250" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p5c2" value="0.80-0.85" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#b1ddf0;strokeColor=#10739e;fontStyle=1;fontSize=14" vertex="1" parent="1">
+          <mxGeometry x="330" y="540" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p5c3" value="6 Weeks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#b1ddf0;strokeColor=#10739e;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="420" y="540" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="insight_box" value="KEY INSIGHTS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="600" y="140" width="500" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="insight1_title" value="1. System Working As Designed (2023-2025)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="620" y="170" width="460" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="insight1_text" value="• Baseline: -0.78 Sharpe (low-trend environment)&lt;br&gt;• TightStocks: +0.752 Sharpe (working perfectly)&lt;br&gt;• Enhanced Demand: +102-113 Sharpe improvement&lt;br&gt;&lt;br&gt;Translation: Defensive overlays engaging exactly when needed.&lt;br&gt;This validates multi-sleeve, regime-aware design." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="620" y="195" width="460" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="insight2_title" value="2. TightStocks: Genuine Edge (Not Overfitting)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="620" y="310" width="460" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="insight2_text" value="• OOS Sharpe (0.742) is 85% BETTER than IS (0.400)&lt;br&gt;• This is rare - most strategies degrade OOS&lt;br&gt;• Indicates fundamental signal, not curve-fitting&lt;br&gt;• Correlation to baseline: 0.06 (excellent diversification)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="620" y="335" width="460" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="insight3_title" value="3. Enhanced Demand: Massive Defensive Value" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="620" y="420" width="460" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="insight3_text" value="• +24.0 OOS Sharpe improvement (0.767 to 0.840)&lt;br&gt;• Particularly strong in recent period (+102-113)&lt;br&gt;• Mathematical justification: 17% win rate when triggered&lt;br&gt;• Goes to 0.0x (flat), not short - conservative defensive" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="620" y="445" width="460" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="insight4_title" value="4. Rally Dependency Explained" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="620" y="530" width="460" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="insight4_text" value="• TrendMedium: 1137 Sharpe in big rallies vs 22 normal (50x!)&lt;br&gt;• System makes nearly ALL money in explosive moves&lt;br&gt;• Demand overlay protects when rallies exhaust&lt;br&gt;• This is feature, not bug - quantamental done right" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="620" y="555" width="460" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="bottom_note" value="* Estimates pending full validation | ⭐ Currently working while baseline struggles" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="80" y="590" width="1000" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="roadmap" name="3. V1 Completion Roadmap">
+    <mxGraphModel dx="1434" dy="790" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title4" value="V1 COMPLETION ROADMAP: 6 WEEKS TO PRODUCTION" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="134.5" y="40" width="900" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="timeline" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="1020" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="week12" value="Weeks 1-2&lt;br&gt;Integration" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="90" y="110" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="week34" value="Weeks 3-4&lt;br&gt;Optimization" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="260" y="110" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="week5" value="Week 5&lt;br&gt;Risk Framework" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="430" y="110" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="week6" value="Week 6&lt;br&gt;Documentation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="600" y="110" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="target" value="V1 READY" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b1ddf0;strokeColor=#10739e;fontStyle=1;fontSize=14" vertex="1" parent="1">
+          <mxGeometry x="770" y="110" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="current_marker" value="▼ TODAY" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#d62728;" vertex="1" parent="1">
+          <mxGeometry x="80" y="165" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="phase1_box" value="PHASE 1: PORTFOLIO INTEGRATION TESTING (Weeks 1-2)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="210" width="500" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_obj" value="Objective: Validate TightStocks/VolCore integration" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="100" y="240" width="460" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_task1" value="• Run 4+ portfolio combinations" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="270" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_task2" value="• Validate correlations (all pairs under 0.15)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="290" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_task3" value="• Test Enhanced Demand across configs" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="310" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_task4" value="• Analyze cost drag and turnover" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="330" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_task5" value="• Crisis period stress tests (2008, 2020)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="350" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_success" value="Success: OOS Sharpe ≥0.75 | Correlations under 0.15 | DD ≤-20%" style="text;html=1;strokeColor=#6c8ebf;fillColor=#dae8fc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="380" width="460" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="phase2_box" value="PHASE 2: REGIME OPTIMIZATION (Weeks 3-4)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="600" y="210" width="500" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_obj" value="Objective: Dynamic weights (+0.03-0.05 Sharpe)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="620" y="240" width="460" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_task1" value="• Validate regime detection (ADX + vol)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="620" y="270" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_task2" value="• Optimize weights for 9 regime states" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="620" y="290" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_task3" value="• Walk-forward validation (no look-ahead)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="620" y="310" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_task4" value="• Test transition rules (weekly rebalance)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="620" y="330" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_task5" value="• Cost analysis of rebalancing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="620" y="350" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_success" value="Success: +0.03-0.05 Sharpe | Smooth transitions | Cost under 0.02" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="620" y="380" width="460" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="phase3_box" value="PHASE 3: RISK FRAMEWORK (Week 5)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="430" width="500" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_obj" value="Objective: Production-ready risk management" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="100" y="460" width="460" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_task1" value="• Position limits (±3.0x net, gross TBD)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="490" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_task2" value="• Daily VAR monitoring (95% and 99%)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="510" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_task3" value="• Drawdown breakers (-12%, -20%, -30%)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="530" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_task4" value="• Performance attribution system" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="550" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_deliver" value="Deliverables: Dashboard | Alerts | Attribution" style="text;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="570" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="phase4_box" value="PHASE 4: DOCUMENTATION (Week 6)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="600" y="430" width="500" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_obj" value="Objective: Complete V1 documentation" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="620" y="460" width="460" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_task1" value="• Technical specification (architecture)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="620" y="490" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_task2" value="• Performance report (final metrics)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="620" y="510" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_task3" value="• Risk management guide" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="620" y="530" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_task4" value="• Operations manual (daily procedures)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="620" y="550" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_deliver" value="Deliverables: Tech Spec | Perf Report | Ops Manual" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="620" y="570" width="460" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="success_box" value="V1 SUCCESS CRITERIA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b1ddf0;strokeColor=#10739e;fontSize=14;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="620" width="1020" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="success_col1" value="Performance:" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="645" width="280" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="success1" value="• OOS Sharpe ≥ 0.80" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="660" width="280" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="success2" value="• Max DD ≤ -20%" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="672" width="280" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="success3" value="• IS/OOS retention ≥ 90%" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="684" width="280" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="success_col2" value="Validation:" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="400" y="645" width="280" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="success4" value="• No forward bias" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="400" y="660" width="280" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="success5" value="• Correlations under 0.15" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="400" y="672" width="280" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="success6" value="• Regime robust" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="400" y="684" width="280" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="success_col3" value="Production:" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="700" y="645" width="280" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="success7" value="• All configs tested" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="660" width="280" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="success8" value="• Risk framework live" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="672" width="280" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="success9" value="• Complete docs" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="684" width="280" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="bottom_box" value="TARGET: V1 PRODUCTION-READY BY DECEMBER 2025" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b1ddf0;strokeColor=#10739e;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="280" y="750" width="620" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

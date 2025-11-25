@@ -1,0 +1,28 @@
+# ==========================================================
+#  Copper Quant Model — Sleeve Registry
+#  Location: docs/copper/params.yaml
+#  Purpose:  Master registry of all copper sleeves
+# ==========================================================
+
+metal: "copper"
+version: 0.4.0
+description: "Copper Quant Model — modular sleeves for pricing, stocks, and positioning"
+
+# Global settings shared by all sleeves
+global:
+  vol_target:
+    annual: 0.10          # 10% annual vol target
+    lookback: 21
+    cap: 2.5
+  costs:
+    per_turnover_bps: 1.5
+  execution:
+    t_plus: 1
+  training_window:
+    in_sample: ["2008-01-01", "2017-12-31"]
+    out_of_sample: ["2018-01-01", "present"]
+
+# Active sleeves
+sleeves:
+  - name: "pricing_hookcore"
+    version: 0.4.0

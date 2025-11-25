@@ -1,0 +1,10 @@
+
+Composite v0.1 Summary
+======================
+Sleeves: TrendCore, TrendImpulse, HookCore, StockScore
+Inputs dir: outputs/Copper
+Annualised Return: 1.91%
+Annualised Vol: 1.99%
+Sharpe: 0.96
+Max Drawdown: 3.77%
+Policy Cost: 1.5 bps on avg turnover

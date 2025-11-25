@@ -1,0 +1,2 @@
+name,ALL_ann_return,ALL_ann_vol,ALL_sharpe,OOS_ann_vol,OOS_sharpe,max_drawdown,inputs,scalar,oos_vol_pre_scalar
+Composite_net,0.051784584491149255,0.09985277655052988,0.5186093594946294,0.1,0.6075128447345803,-0.22887975030115504,"Hook=return_biweekly, Stocks=pnl_net",2.189142486416951,0.04567998685351616

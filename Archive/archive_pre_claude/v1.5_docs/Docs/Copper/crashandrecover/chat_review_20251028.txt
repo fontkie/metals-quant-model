@@ -1,0 +1,22 @@
+I’ve run and audited the current Crash-and-Recover sleeve. A few issues stood out that need clarification or correction before we can rely on it:
+
+YAML Ignored:
+The build script doesn’t read or apply the parameters in crashandrecover_config.yaml — all key inputs (SMA, structure, volume lookback, thresholds, etc.) are hard-coded. Please fix so the sleeve is fully config-driven.
+
+Parameter Mismatch:
+The concept is based on a 200-day SMA regime framework, but the code uses a 60-day SMA. Confirm the intended lookback and make it adjustable via YAML.
+
+No Neutral / Exit Rule:
+Once a position is opened, it’s carried indefinitely until the opposite signal fires. This causes multi-year exposure. We need a clear neutral or exit condition when the regime evidence weakens.
+
+Volume Logic:
+The filter just compares total volume to its 20-day mean. It should distinguish distribution (down-volume) vs accumulation (up-volume) to capture the intended “crash vs recover” structure.
+
+Cost & Vol Targeting:
+The script omits both. Please integrate the standard 1.5 bps one-way cost and ~10% target volatility so results are consistent with other sleeves.
+
+Structure Calculation:
+The rolling max/min window comparison is a crude proxy for HH/HL vs LH/LL. Consider a more precise swing-point or ATR-based structure test.
+
+File Paths / Output:
+Paths are local and break our reproducible pipeline. Please align with the standard Metals folder conventions (src/build_*.py, outputs/Copper/CrashAndRecover/, etc.).

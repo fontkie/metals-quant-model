@@ -1,0 +1,99 @@
+# Config/Copper/hookcore_v4.yaml
+
+io:
+  commodity: Copper
+  sleeve: HookCore_v4
+
+policy:
+  calendar:
+    exec_weekdays: [0, 1, 2, 3, 4]  # Mon-Fri
+    origin_for_exec:
+      "0": "-1B"
+      "1": "-1B"
+      "2": "-1B"
+      "3": "-1B"
+      "4": "-1B"
+    fill_default: close_T
+
+  sizing:
+    ann_target: 0.10                      # 10% target vol
+    vol_lookback_days_default: 63         # ~3 months rolling vol
+    leverage_cap_default: 1.5             # Max 1.5x leverage
+
+  costs:
+    one_way_bps_default: 1.5              # 1.5 bps per trade
+
+  pnl:
+    formula: pos_lag_times_simple_return
+    t_plus_one_pnl: true                  # REQUIRED: T→T+1 accrual
+
+# HookCore v4.0 signal parameters
+signal:
+  # Core strategy
+  strategy_version: "4.0"
+  description: "Data-driven Bollinger mean reversion with regime filtering"
+  
+  # Bollinger bands (KEEP V3 - they work!)
+  bollinger:
+    lookback_days: 5         # KEEP V3 (proven effective)
+    sigma_multiplier: 1.5    # KEEP V3 (proven effective)
+    shift_bars: 1            # Use bands from T-1 (no look-ahead)
+  
+  # Basic filters (KEEP V3 THRESHOLDS - they work!)
+  filters:
+    trend_lookback: 10
+    trend_thresh: 0.05       # KEEP V3 (was correct)
+    vol_lookback: 20
+    vol_thresh: 0.025        # KEEP V3 (was correct)
+    autocorr_lookback: 10
+    autocorr_thresh: -0.05   # KEEP V3 (it works!)
+  
+  # Hold period (DATA-DRIVEN OPTIMAL)
+  holding:
+    hold_days_trading: 3     # v3: 5 → v4: 3 (OPTIMAL per analysis)
+  
+  # Regime filtering (DISABLED for V4.0 initial test)
+  regime:
+    use_regime_filter: false  # Disable initially - test core improvements first
+    stocks_tight_threshold: 0.40
+    reason: "Will enable in V4.1 after validating core BB/hold changes"
+  
+  # Tier 1 safety filters (DISABLED in V4.0 - incomplete data)
+  tier1_safety:
+    enabled: false  # Will enable in V5 with proper NaN handling
+    iv_shutdown: 30.0         # Flat if IV > 30% (for future use)
+    curve_weak_contango: -3.0 # Half size if < -3% (for future use)
+    reason: "IV data only from 2011+, kills pre-2011 signals"
+  
+  # Directional bias (from v3.0, kept)
+  directional:
+    longs_only: true
+    reason: "Shorts have no edge, bleed 42x turnover per previous analysis"
+
+# Expected performance (based on CORRECTED analysis)
+expected_improvements:
+  v3_0_sharpe: 0.51
+  v4_0_target_sharpe: 0.58  # V3 + 3-day hold = proven improvement
+  v3_0_turnover: 20.9
+  v4_0_target_turnover: 24.4  # Slightly higher due to shorter hold
+  v3_0_max_dd: -0.26
+  v4_0_target_max_dd: -0.20
+  
+  key_changes:
+    - "Hold: 5 days → 3 days (mean reversion completes faster)"
+    - "KEEP V3 BB params (5d/1.5σ - they work!)"
+    - "KEEP all V3 filters (they work!)"
+
+# Data requirements
+data:
+  required:
+    - copper_lme_3mo_canonical.csv          # Price data
+    - copper_lme_total_stocks_canonical.csv # For regime (has T+1 lag)
+  optional:
+    - copper_lme_1mo_impliedvol_canonical.csv  # For IV safety filter
+    - copper_lme_3mo_fut_canonical.csv         # For curve safety filter
+    - copper_lme_12mo_fut_canonical.csv        # For curve safety filter
+  
+  notes:
+    - "Stocks data has T+1 publication lag (today's print = yesterday's data)"
+    - "V4 handles this lag correctly via date alignment"
