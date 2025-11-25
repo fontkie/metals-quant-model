@@ -1,2 +1,0 @@
-name,ALL_ann_return,ALL_ann_vol,ALL_sharpe,OOS_ann_return,OOS_ann_vol,OOS_sharpe,OOS_max_drawdown,ALL_max_drawdown,inputs,vt_params
-Composite_net (T+1 VT),0.054254204710815976,0.10397570197440684,0.5217969552506471,0.05859273612842725,0.10405446590909702,0.5630967937411867,-0.20169804891838305,-0.24047436095302976,"Hook=return_biweekly, Stocks=pnl_net","target=10%, lookback=21, cap=2.5x"

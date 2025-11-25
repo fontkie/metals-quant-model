@@ -1,2 +1,0 @@
-name,ALL_ann_return,ALL_ann_vol,ALL_sharpe,OOS_ann_return,OOS_ann_vol,OOS_sharpe,OOS_max_drawdown,ALL_max_drawdown,inputs,scaling
-CopperComposite (tplus1_vt),0.030156820509745472,0.1159977140776044,0.2599777137789981,0.02858274284288962,0.11526319868261142,0.24797804649988103,-0.24143726716514025,-0.5059789784573695,"Hook=return_weekly, Stocks=ret","tplus1_vt (lookback=21, cap=2.5x)"

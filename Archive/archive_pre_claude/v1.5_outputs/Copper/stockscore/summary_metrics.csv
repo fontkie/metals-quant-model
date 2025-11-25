@@ -1,2 +1,0 @@
-sleeve,lb,threshold,exec,vol_target_annual,vol_lookback_days,lev_cap,costs_bps_turnover,IS_ann_return,IS_ann_vol,IS_sharpe,IS_maxDD,IS_cumRet,OOS_ann_return,OOS_ann_vol,OOS_sharpe,OOS_maxDD,OOS_cumRet,start,end
-StocksCore v0.1.1,20,1.0,"daily, T+1",0.1,21,2.5,1.5,0.012361782654488663,0.05304548457165607,0.233041186338676,0.15217343243905884,0.23031178397946123,0.028934670143172386,0.04868332502204021,0.594344575479857,0.10990747575889723,0.23228110198268936,2000-01-03,2025-10-01

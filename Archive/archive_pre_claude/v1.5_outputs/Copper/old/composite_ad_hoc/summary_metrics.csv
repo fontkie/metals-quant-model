@@ -1,2 +1,0 @@
-name,OOS_ann_return,OOS_ann_vol,OOS_sharpe,OOS_max_drawdown,OOS_corr_hook_stocks,ALL_ann_return,ALL_ann_vol,ALL_sharpe,ALL_max_drawdown,inputs,vt
-CopperComposite (weekly + T+1 VT),0.0561540765186706,0.09923333128298725,0.5658791838597872,-0.20036836305655692,0.07166100955177485,0.03645041589940778,0.09922803095440637,0.36733990938295247,-0.28124994667128045,"Hook=return_weekly, Stocks=pnl_net","target=10%, lookback=21, cap=2.5x"
